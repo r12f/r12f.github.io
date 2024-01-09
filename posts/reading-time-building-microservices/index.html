@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="虽然之前做过后台开发，很喜欢微服务的概念，也用了部分微服务的思想，但是回头再看之前很多事情的做法，觉得路子还是相当野的，特别是在微软呆了几年之后，对于Engineering System的理解加深了不少。最近看到了这本书，感觉算是对于这种后台设计思路有了一个非常好的总结，所以写一个小博客把所有的知识点总结一下。 1. 什么是微服务  **定义：**微服务是一些协同工作的小而自治的服务。通过将单一职">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《微服务架构》知识总结">
+<meta property="og:url" content="http://r12f.com/posts/reading-time-building-microservices/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="虽然之前做过后台开发，很喜欢微服务的概念，也用了部分微服务的思想，但是回头再看之前很多事情的做法，觉得路子还是相当野的，特别是在微软呆了几年之后，对于Engineering System的理解加深了不少。最近看到了这本书，感觉算是对于这种后台设计思路有了一个非常好的总结，所以写一个小博客把所有的知识点总结一下。 1. 什么是微服务  **定义：**微服务是一些协同工作的小而自治的服务。通过将单一职">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-05-26-reading-time-building-microservices/types-of-tests.png">
+<meta property="article:published_time" content="2017-05-26T19:33:05.000Z">
+<meta property="article:modified_time" content="2017-05-27T02:33:05.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="后台开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-05-26-reading-time-building-microservices/types-of-tests.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/reading-time-building-microservices/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/reading-time-building-microservices/","path":"posts/reading-time-building-microservices/","title":"《微服务架构》知识总结"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>《微服务架构》知识总结 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%BE%AE%E6%9C%8D%E5%8A%A1"><span class="nav-text">1. 什么是微服务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E4%BB%A3%E7%A0%81%E5%88%86%E8%A7%A3%E6%8A%80%E6%9C%AF%E5%92%8C%E5%85%B6%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-text">1.1. 其他代码分解技术和其优缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%94%E5%8C%96%E5%BC%8F%E6%9E%B6%E6%9E%84%E5%B8%88"><span class="nav-text">2. 演化式架构师</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BB%BA%E6%A8%A1%E6%9C%8D%E5%8A%A1"><span class="nav-text">3. 建模服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%86%E6%88%90"><span class="nav-text">4. 集成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E8%A7%A3%E5%8D%95%E5%9D%97%E6%9C%8D%E5%8A%A1"><span class="nav-text">5. 分解单块服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2"><span class="nav-text">6. 部署</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-text">7. 测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7"><span class="nav-text">8. 监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E5%85%A8"><span class="nav-text">9. 安全</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%B7%E5%A8%81%E5%AE%9A%E5%BE%8B%E5%92%8C%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1"><span class="nav-text">10. 康威定律和系统设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%84%E6%A8%A1%E5%8C%96%E5%BE%AE%E6%9C%8D%E5%8A%A1"><span class="nav-text">11. 规模化微服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">12. 小结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/reading-time-building-microservices/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="《微服务架构》知识总结 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《微服务架构》知识总结
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2017-05-26 12:33:05 / Modified: 19:33:05" itemprop="dateCreated datePublished" datetime="2017-05-26T12:33:05-07:00">2017-05-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/reading-time-building-microservices/" class="post-meta-item leancloud_visitors" data-flag-title="《微服务架构》知识总结" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/reading-time-building-microservices/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/reading-time-building-microservices/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>虽然之前做过后台开发，很喜欢微服务的概念，也用了部分微服务的思想，但是回头再看之前很多事情的做法，觉得路子还是相当野的，特别是在微软呆了几年之后，对于Engineering System的理解加深了不少。最近看到了这本书，感觉算是对于这种后台设计思路有了一个非常好的总结，所以写一个小博客把所有的知识点总结一下。</p>
+<h2 id="什么是微服务">1. 什么是微服务</h2>
+<ul>
+<li>**定义：**微服务是一些协同工作的小而自治的服务。通过将单一职责原则应用在独立的服务上，从而避免由于代码库过大而衍生出的各种问题。</li>
+<li>**服务多小合适：**一个微服务应该可以在两周内被完全重写。但是服务越小，微服务架构的优点和缺点也就越明显。使用的服务越小，独立性带来的好处就越多，但是管理也会越复杂。</li>
+<li>**微服务的自治性：**一个微服务是一个独立的实体；服务之间通过网络调用进行通信，避免紧耦合；服务可以彼此间独立进行修改和部署，而不影响其他服务。</li>
+<li><strong>微服务的好处：</strong>
+<ul>
+<li>**技术异构性：**微服务帮助你轻松地采用不同的技术。</li>
+<li>**弹性：**如果系统中一个组件不可用，不会导致级联故障，而影响其他组件。</li>
+<li>**扩展：**可以只对需要扩展的服务进行扩展，把那些不需要扩展的服务运行在更小的、性能稍差的硬件上。</li>
+<li>**简化部署：**可以更快地对特定部分的代码进行部署。出了问题，也只会影响一个服务，并且容易快速回滚。</li>
+<li>**与组织结构相匹配：**自治性，简化管理，提高团队工作热情。</li>
+<li>**可组合性：**在微服务架构中，系统会开放很多接缝供外部使用。人们可以通过不同的方式使用同一个接缝，从而当情况发生改变时，可以使用不同的方式构建应用。</li>
+<li>**对可替代性的优化：**可以在需要时轻易地重写服务，或者删除不再使用的服务。</li>
+</ul>
+</li>
+<li>**微服务不是银弹：**了解你的系统，找到最适合自己业务的方式。</li>
+</ul>
+<span id="more"></span>
+<h3 id="其他代码分解技术和其优缺点">1.1. 其他代码分解技术和其优缺点</h3>
+<ul>
+<li>**共享库：**将代码库分解为多个库，并在多个服务中重用这些代码。
+<ul>
+<li>**优点：**基本所有语言都支持这种分解，从而让不同的团队和服务共享功能。一些和业务领域无关的代码（网络通信不算），就非常适合通过这种方式进行分解和重用。</li>
+<li><strong>缺点：</strong>
+<ol>
+<li>无法选择异构的技术。一般来讲，这些库只能在同一种语言中，或者至少在同一个平台上使用。</li>
+<li>会失去独立地对系统某一部分进行扩展的能力。</li>
+<li>缺乏一个比较明显的接缝来建立架构的安全性保护措施，从而无法确保系统的弹性。</li>
+<li>除非使用动态链接库，否则每次当库有更新的时候，都需要重新部署整个进程，以至于无法独立地部署变更。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>**模块：**通过动态的在运行的进程中加载或停止模块，达到在不停止整个进程的前提下对某个模块进行修改，比如OSGI和Erlang。虽然其有所改进，但是还是有很多缺点：
+<ol>
+<li>如果没有语言级别的支持，那么就需要作者来对模块进行适当的隔离。</li>
+<li>和共享库一样，我们无法选择异构的技术，会失去独立对服务进行扩展的能力，并且有可能会导致使用过度耦合的集成技术，同时也会缺乏相应的接缝来进行架构的安全性保护。</li>
+</ol>
+</li>
+</ul>
+<h2 id="演化式架构师">2. 演化式架构师</h2>
+<ul>
+<li><strong>架构师的职责：</strong>
+<ul>
+<li>**愿景：**确保在系统级有一个经过充分沟通的技术愿景，这个愿景应该可以帮助你满足客户和组织的需求。</li>
+<li>**同理心：**理解你所做的决定对客户和同事带来的影响。</li>
+<li>**合作：**和尽量多的同事进行沟通，从而更好地对愿景进行定义、修订及执行。</li>
+<li>**适应性：**确保在你的客户和组织需要的时候调整技术愿景。</li>
+<li>**自治性：**在标准化和团队自治之间寻找一个正确的平衡点。</li>
+<li>**治理：**确保系统按照技术愿景的要求实现。创建治理小组，帮助进行治理。
+<ul>
+<li>**代码治理：**通过合作创建并提供范例和服务代码模板保证所有开发人员达成共识。</li>
+<li>**技术债务：**理解债务层次及其对系统的影响。</li>
+<li>**例外管理：**记录例外。如果出现多次，通过修改原则和实践固化我们的理解。</li>
+<li>**建设团队：**帮助队友成长，理解技术愿景，并保证他们可以积极地参与到愿景的实现和调整中来。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>**架构师，建筑师与城市规划师：**建筑师和工程师所具备的精确性和纪律性是计算机行业遥不可及的，如果让我们来造房子和造桥，那么简直就是灾难，因为我们要创造的东西无法一开始就设计的完美无缺，它从设计上来说就是要足够灵活，有很好的适应性，并且能够根据用户的需求进行演化。比起建筑师和工程师，软件架构师和城市规划师更像，城市会不时的发生变化，而未来的变化很难预见，所以与其对所有变化的可能性进行预测，不如做一个允许变化的设计。</li>
+<li>**代码的分区：**城市区域就是服务的边界，架构师应该主要关注区域之间的事情，而不应过多关注每个区域内发生的事情。</li>
+<li><strong>愿景：</strong>
+<ul>
+<li>**战略目标：**公司的走向以及如何才能让自己的客户满意，比如开辟新的市场。</li>
+<li>**原则：**为了达到战略目标，我们会制定一些具体的规则，并称为原则，比如服务必须方便部署。原则最好不要超过10个，不然很难记住而且容易互相重叠和发生冲突。</li>
+<li>**约束：**有些原则是约束，它和其他原则的区别在于，它很难改变，而原则是我们自己决定的。随着项目发展，每隔一段时间我们可以回顾一下所有的约束，看看它们是否还成立。</li>
+<li>**实践：**实践指导我们如何完成任务，从而保证原则能够得到实施，比如代码规范等等。</li>
+</ul>
+</li>
+<li>**如何定义实践：**系统允许多少可变性。
+<ul>
+<li>**监控：**在系统级别进行考虑，要能清晰地描绘出跨服务系统的健康状态。</li>
+<li>**接口：**只选用少数几种明确的接口技术，这样有助于新消费者的集成。</li>
+<li>**架构安全性：**每个服务都可以应对下游服务的错误请求。</li>
+</ul>
+</li>
+</ul>
+<h2 id="建模服务">3. 建模服务</h2>
+<ul>
+<li><strong>接缝：</strong>
+<ul>
+<li>**高内聚：**把相关的行为聚集在一起，把不相关的行为放在别处。</li>
+<li>**松耦合：**修改一个服务就不需要修改另一个服务。</li>
+</ul>
+</li>
+<li>**限界上下文：**一个由显式边界限定的特定职责。它是寻找接缝的一个重要工具。
+<ul>
+<li>**共享和隐藏模型：**限界上下文之间暴露的模型不一定要与内部实现完全一样。</li>
+<li>**发现限界上下文：**不要从共享数据的角度来考虑，而应该从提供的功能来考虑。</li>
+<li>**建模限界上下文：**对限界上下文使用模块建模，并使用共享和隐藏模型，为以后应用微服务架构做准备。</li>
+<li>**不要过早划分限界上下文：**先建立单块服务，理解服务，然后再逐步划分。先考虑比较大的粗粒度的上下文，等进一步发现合适的缝隙后，再做更细粒度的划分。</li>
+</ul>
+</li>
+</ul>
+<h2 id="集成">4. 集成</h2>
+<ul>
+<li><strong>原则：</strong>
+<ul>
+<li>避免破坏性的修改</li>
+<li>保证API的技术无关性</li>
+<li>使你的服务易于消费方使用</li>
+<li>隐藏内部实现细节</li>
+</ul>
+</li>
+<li><strong>无论如何避免共享数据库</strong>
+<ul>
+<li>共享数据库使得外部系统能够查看内部实现细节，并与其绑定在一起。</li>
+<li>共享数据库使得消费方与特定的技术选择绑定在了一起。</li>
+<li>如果消费方直接操作数据库，那么它们都需要对这些逻辑负责。对数据库进行操作的相似逻辑可能会出现在很多服务中。</li>
+</ul>
+</li>
+<li><strong>方法：编排和协同</strong>
+<ul>
+<li>**编排（Orchestration）：**依赖于某个中心大脑来指导并驱动整个流程。由于中心控制点承担了太多职责，它会成为网状结构的中心枢纽及很多逻辑的起点，而与其打交道的那些服务通常都会沦为贫血的、基于 CRUD 的服务。
+<ul>
+<li>**远程过程调用（RPC）：**允许你进行一个本地调用，但事实上结果是由某个远程服务器产生的。其虽然易于使用，但是其带来的代价要远远大于一开始快速启动的好处。
+<ul>
+<li>存在技术的耦合，如Java RMI，与特定的平台紧密绑定。</li>
+<li>其隐藏了远程调用的复杂性，而网络并不可靠，导致无法很好的区分其故障模式并进行处理。</li>
+<li>脆弱性：一旦RPC接口发生改变，则需要为服务端和所有的客户端都重新生成桩代码，并一起重新部署。</li>
+</ul>
+</li>
+<li>**表述性状态转移（REST）：**声明了一组对所有资源的标准方法。服务可以根据请求内容创建资源的不同的表示方式，从而将其与内部存储解耦合。
+<ul>
+<li>**REST与HTTP：**REST并不是HTTP，但是HTTP提供了很多功能，对于实现REST非常有用，所以我们经常看见使用HTTP实现的REST。</li>
+<li>**超媒体作为程序状态的引擎（Hypermedia As The Engine Of Application State，HATEOAS）：**通过向客户端提供指向其他资源的链接来和服务端进行交互，从而避免客户端和服务端产生耦合。但是其缺点是客户端和服务端之间的通信次数会比较多，因为客户端需要不断的发现链接，请求，再发现链接，知道找到自己想要进行的操作。</li>
+<li>**REST与XML：**REST并没有限制资源的表示形式，使用XML或者JSON属于我们自己的选择。</li>
+<li>**基于HTTP的REST的缺点：**一个是容易回到基于HTTP的RPC上去，第二是如果要求低延迟的场景，每个HTTP请求的封装开销可能会是个问题。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>**协同（Choreography）：**仅仅告知系统中各个部分各自的职责，而把具体怎么做的细节留给它们自己。其缺点是无法直观的看见业务流程。
+<ul>
+<li>基于事件的异步协作主要有两个部分：微服务发布事件机制和消费者接收事件机制。
+<ul>
+<li>如果使用消息队列，则尽量让中间件保持简单，而把业务逻辑放在自己的服务中。</li>
+<li>还可以使用HTTP来传播事件，比如Atom Feed。</li>
+</ul>
+</li>
+<li>异步的复杂性：灾难性故障转移（catastrophic failover），失败处理，监控等等。</li>
+</ul>
+</li>
+<li><strong>注意点：</strong>
+<ul>
+<li>理解 REST 和 RPC 之间的取舍，但总是使用 REST 作为请求 / 响应模式的起点</li>
+<li>相比编排，优先选择协同</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>**服务即状态机：**把关键领域的生命周期显示建模出来。方便在唯一的地方处理状态冲突和封装行为。</li>
+<li>**响应式扩展：**把多个调用的结果组装起来并在其基础上执行操作。</li>
+<li><strong>微服务 vs DRY原则和代码重用：</strong>
+<ul>
+<li>在微服务内部不要违反DRY原则，但是在跨服务的情况下可以适度违反DRY，因为共享代码可能造成过度耦合。</li>
+<li>使用第三方开发的SDK，以便于解耦合，或者仅仅使用客户端库处理与服务无关的事情，比如日志记录，错误处理等等。</li>
+</ul>
+</li>
+<li>**按引用访问：**在持有一个本地副本时，同时持有一个指向原始资源的引用，以便更新。</li>
+<li><strong>微服务的版本管理：</strong>
+<ul>
+<li>避免破坏性修改、理解 Postel 法则、使用容错性读取器</li>
+<li>利用契约来及早发现破坏性修改</li>
+<li>使用语义化的版本管理，使得版本兼容性变得易于查看</li>
+<li>让不同的接口共存以降低接口修改的影响</li>
+<li>如果实在代价过高，则同时使用多个版本的服务，并将老系统的请求逐步移动到新系统中</li>
+</ul>
+</li>
+<li>**用户界面：**将其视为一个组合层；如果与后台交互过于频繁，可以为特定的用户界面创建单块代理服务，对其逻辑进行编排，但是不要将太多逻辑放入其中。</li>
+<li>**与第三方服务集成：**使用第三方服务隐藏自己的服务，或者使用外观服务加绞杀者模式来隐藏第三方服务。</li>
+</ul>
+<h2 id="分解单块服务">5. 分解单块服务</h2>
+<ul>
+<li><strong>原则</strong>
+<ul>
+<li>关键是找接缝：抽取相对独立的一部分代码，对这部分代码的修改不影响系统的其他部分，另外接缝之间应该可以形成一个有向无环图。</li>
+<li>代码应该与组织相匹配，表示限界上下文的这些包之间的交互应该与组织中不同部分的实际交互方式一致。</li>
+<li>不要为了抽取而抽取，考虑抽取什么收益最大。</li>
+</ul>
+</li>
+<li><strong>数据库的处理</strong>
+<ul>
+<li>分离存储层：打破外键关系（SchemaSpy），使用配置共享静态数据，分离共享表</li>
+<li>先分离数据库结构，再分离服务</li>
+<li>处理事务方法：最终一致性，终止操作或者利用分布式事务。</li>
+<li>分离报告数据库：利用数据导出工具或者视图生成报告数据库，或者导出事件数据并创建报告服务重建报告数据库。</li>
+</ul>
+</li>
+</ul>
+<h2 id="部署">6. 部署</h2>
+<ul>
+<li>**持续集成（Continuous Integration，CI）：**保证新提交的代码与已有代码进行集成，从而让所有人保持同步。
+<ul>
+<li>你是否每天签入代码到主线？</li>
+<li>你是否有一组测试来验证修改？</li>
+<li>当构建失败后，团队是否把修复CI当做第一优先级的事情来做？</li>
+</ul>
+</li>
+<li>**同步发布（Lock-step release）：**必须一次性部署多个服务。
+<ul>
+<li>**解决方法：**分离CI构建——分离每个微服务的代码，并为其创建CI构建。</li>
+</ul>
+</li>
+<li>**持续交付（Continuous Delivery，CD）：**将每次提交都当成候选发布版本来对待。
+<ul>
+<li>**构建流水线：**将构建分解成多个阶段，从而很好的跟踪软件构建进度，并快速反馈构建结果。</li>
+<li>**平台特定的构建物：**利用Puppet和Chef这样的自动化配置管理工具部署这些构建物，如Apache和Nginx。</li>
+<li>**操作系统构建物：**创建脚本部署这些构建物，如系统服务等等。</li>
+<li><strong>定制化镜像：<strong>加快运行环境的配置，如Packer，并将镜像本身也作为构建物，实现</strong>不可变服务器</strong>。</li>
+<li>**环境问题：**应该最小化环境件配置的差异，配置环境应与生产环境尽量一致，但需要持续的做权衡。</li>
+<li>**选择合适的部署方式：**单主机多服务，应用程序容器，单主机单服务和平台即服务（PaaS）。</li>
+<li>**自动化：**管理大量主机。</li>
+<li>**主机虚拟化：**虚拟机，虚拟云（Vagrant），Linux容器，Docker。</li>
+<li>**部署接口：**使用统一接口来部署给定的服务。</li>
+</ul>
+</li>
+</ul>
+<h2 id="测试">7. 测试</h2>
+<ul>
+<li><strong>测试类型：</strong><br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-05-26-reading-time-building-microservices/types-of-tests.png" alt="types-of-tests"></li>
+<li>**测试金字塔：**单元测试，服务测试，端到端测试。从左到右范围更大，更有信心，从右到左运行更快，隔离越好。
+<ul>
+<li>**权衡：**为不同的目的选择不同的测试来覆盖不同的范围，优化快速反馈。</li>
+<li>**比例：**从左至右，前一个的数量要比后一个多一个量级。</li>
+</ul>
+</li>
+<li><strong>服务测试：</strong>
+<ul>
+<li>**打桩：**用一些预设的响应模拟真实的服务，隔离问题。常见的打桩服务器如Mountebank。</li>
+</ul>
+</li>
+<li>**端到端测试：**确保部署新的服务到生产环境后，变更不会破坏新服务的消费者，但是其缺点很多。
+<ul>
+<li>**测试文件版本控制问题和大量重叠的测试覆盖问题：**使用扇入模型解决。</li>
+<li>**测试脆弱：**任何地方的问题都可能引起端到端测试出错，所以应该使用更小范围的测试来代替。</li>
+<li>**测试场景笛卡尔积式爆炸：**测试重心放在少量的核心场景上。</li>
+</ul>
+</li>
+<li>**消费者驱动契约（CDC）：**代替端到端测试，并作为CI流水线的一部分，保证消费者不会被破坏。</li>
+<li>**部署后再测试：**部署不等于上线
+<ul>
+<li>冒烟测试和蓝/绿部署</li>
+<li>金丝雀发布（灰度发布）</li>
+<li>平均修复时间（Mean Time To Repair，MTTR）比平均故障间隔时间（Mean Time Between Failures，MTBF）要重要</li>
+</ul>
+</li>
+<li>**跨功能测试：**比如性能测试，如果运行时间很长，无法经常运行，则可以采用每天测试来保证尽快发现问题。</li>
+</ul>
+<h2 id="监控">8. 监控</h2>
+<ul>
+<li>**如何实践监控：**监控小的服务，然后聚合起来看整体。</li>
+<li>**收集服务器信息：**如CPU，内存等等，这样就可以跟踪流氓进程和进行容量规划。可以使用Nagios或者New Relic。</li>
+<li><strong>收集日志：</strong>
+<ul>
+<li>**单服务器：**logrotate</li>
+<li>**较少量的多服务器：**ssh-multiplexers</li>
+<li>**大量服务器：**需要专门的日志子系统，集中管理所有的日志。（logstash + kibana）</li>
+<li>**关联标识：**用以搜索和某一个具体请求相关的所有日志，他们可能来自于不同的服务。</li>
+</ul>
+</li>
+<li>**收集数据指标：**了解系统的秘诀，收集足够长时间的数据，直到出现清晰的模式。（Graphite）
+<ul>
+<li>永远无法知道什么数据是有用的，所以倾向于暴露一切数据，自己服务的数据指标也应该公开。</li>
+</ul>
+</li>
+<li>**综合监控：**最终用户到底能不能正常使用我们的系统。
+<ul>
+<li>**语义监控：**创建和合成事务，确保系统行为在语义上的正确性。</li>
+</ul>
+</li>
+<li>**级联：**每个服务的实例都应该追踪和显示其下游服务的健康状态，以避免级联故障。</li>
+<li>**标准化：**使用标准的格式记录日志。</li>
+<li>**考虑受众：**收集这些数据是为了帮助其他人完成工作，提醒他们现在需要知道的东西。</li>
+<li>**统一管理：**利用事件服务器对事件进行聚合和路由，从而将不同的指标（运营指标和业务指标）统一处理，这样简化架构还方便我们分析数据。（Riemann，Suro）</li>
+</ul>
+<h2 id="安全">9. 安全</h2>
+<ul>
+<li>**主体，身份验证和授权：**确认身份的过程叫身份验证，进行身份验证的人或事叫主体，将主体映射到他可以进行的操作中叫授权。</li>
+<li>**单点登录：**用一个单一标识表示一个主体并只需要进行一次验证。
+<ul>
+<li><strong>一般实践：<strong>当主体试图访问一个资源时，他会被定向到一个</strong>身份提供者</strong>那里进行身份验证。一旦身份提供者确认主体已通过身份验证，它会发消息给<strong>服务提供者</strong>，让服务提供者来决定是否允许他访问资源。</li>
+<li>**单点登录网关：**使用网关集中处理重定向用户的行为，提供粗粒度的身份验证，并将主体信息加入请求中传给服务提供者，但是这样会带来一种虚假的安全感，因为网关是唯一的安全防御。</li>
+</ul>
+</li>
+<li><strong>服务间的身份验证和授权：</strong>
+<ul>
+<li>**在边界内允许一切：**对中间人攻击毫无防备，但是这种形式依然被大多数组织采用。</li>
+<li>**HTTP(S)基本身份验证：**使用HTTP时，用户名和密码没有以安全的方式发送，HTTPS能解决这个问题，但是在管理多台机器的SSL证书时会出现问题，而且其流量无法被反向代理缓存。</li>
+<li>**使用SMAL或者OpenID Connect：**创建服务账户，并把所有服务的访问控制集中在中央目录服务器。不过如果想避免中间人攻击，我们仍然需要通过HTTPS来路由通信。而且安全存储凭证和重复和繁琐的身份验证代码也是一些问题。</li>
+<li>**客户端证书：**使用TLS建立安全地通信链路，但是证书管理的工作会比服务器端证书更加繁重，诊断问题也会更难。</li>
+<li>**HTTP之上的HMAC：**使用HMAC对请求进行签名，是OAuth规范的一部分。其缺点有三：客户端和服务器需要一个共享的密钥；它不是一个标准，所以有不同的实现方式；虽然第三方无法篡改请求，但是请求中的其他数据对网络嗅探是可见的。</li>
+<li>**API密钥：**通过API密钥识别出谁在进行调用，然后对他们进行限制，其重点关注的是对程序的易用性。通过与已有目录服务的连接，我们也可以控制这些密钥的生命周期。</li>
+<li>**注意混淆代理人攻击：**在服务间通信的上下文中，攻击者采用一些措施欺骗代理服务，让它调用其下游服务，从而做到一些他不应该能做的事情。</li>
+</ul>
+</li>
+<li>**静态数据安全：**数据加密。
+<ul>
+<li>使用众所周知的加密算法</li>
+<li>使用安全设备来单独加密和解密数据，或者使用单独的密钥库</li>
+<li>选择好需要加密的数据，因为加密解密计算开销很重</li>
+<li>在需要的时候才进行解密</li>
+<li>加密备份</li>
+</ul>
+</li>
+<li><strong>深度防御：</strong></li>
+<li>防火墙</li>
+<li>通过日志检测是否发生了不好的事情，以便恢复系统。这里需要注意敏感信息，不要存在日志里。</li>
+<li>入侵检测和预防系统</li>
+<li>网络隔离，将服务放进不同的网段，控制服务间的通讯。</li>
+<li>操作系统，给用户尽量少的权限，按时打补丁，并关注操作系统本身的安全模块的发展。</li>
+<li><strong>一些好的实践：</strong>
+<ul>
+<li>**保持节俭：**只存储完成业务运营或满足当地法律所需要的信息，因为如果你不存储它，就没人可以偷走它，也没人可以要它。</li>
+<li>**人的因素：**考虑一个心怀不满的前雇员会如何损坏你的系统。</li>
+<li>**黄金法则：**不要实现自己的加密算法，不要发明自己的安全协议。</li>
+<li>**内建安全：**熟悉OWASP十大列表和安全测试框架。</li>
+<li>**外部验证：**进行渗透测试。</li>
+</ul>
+</li>
+</ul>
+<h2 id="康威定律和系统设计">10. 康威定律和系统设计</h2>
+<ul>
+<li>**康威定律：**任何组织在设计一套系统（广义概念上的系统）时，所交付的设计方案在结构上都与该组织的沟通结构保持一致。
+<ul>
+<li>**推论：**组织的耦合度越低，其创建的系统的模块化就越好，耦合也越低；组织的耦合耦合度越高，其创建的系统的模块化也越差。</li>
+<li>**两个披萨团队：**没有一个团队应该大到两个披萨不够吃。</li>
+<li>**协调成本：**当协调变化的成本增加后，有一件事情会发生：人们要么想方设法降低协调/沟通成本，要么停止更改。前者导致新边界的产生，而后者导致我们最终产生庞大的、难以维护的代码库。</li>
+<li>**团队结构与限界上下文：**团队应该与限界上下文保持一致。这样哪怕是修改频率很低的服务也会有实际的所有者。</li>
+<li>**反向康威定律：**无论系统有什么设计缺陷，我们都不得不通过改变组织结构来推动系统的更改。</li>
+</ul>
+</li>
+<li>**服务所有权：**拥有服务的团队负责对该服务进行更改。只要更改不破坏服务的消费者，团队就可以随时重新组织代码。所有权程度的增加会提高自治和交付速度，也使其对工作更负责。</li>
+<li><strong>共享服务的原因：</strong>
+<ul>
+<li>**拆分服务成本太高：**大型单块系统中比较常见。</li>
+<li>**特性团队：**由于特性团队负责开发某一特性的所有功能，所以需要跨越组件或服务的边界。其缺点是大范围采用特性团队后，所有的服务都会变成共享的，最终导致代码守护者的缺失。</li>
+<li>**避免交付瓶颈：**人员缺失或者突然出现大量变更需求，我们不得不在多个组之间共享服务。</li>
+</ul>
+</li>
+<li>**内部开源：**如果无法找到方法来避免共享服务，可以使用内部开源的模式。
+<ul>
+<li>**守护者：**分理处一组受信任的提交者作为核心团队，负责对所有的更改做某种程度的审批。</li>
+<li>**服务成熟度：**服务越不稳定或越不成熟，就越难让核心团队之外的人提交更改。</li>
+</ul>
+</li>
+<li><strong>人的调整：</strong>
+<ul>
+<li>了解你的员工能够承受的变化，不要改变的太快。</li>
+<li>无论方法是什么，需要和员工阐明在微服务的世界里每个人的责任及其重要性。</li>
+<li>如果没有把每个人都拉到一条船上，你想要的任何变化从一开始就注定失败。</li>
+</ul>
+</li>
+</ul>
+<h2 id="规模化微服务">11. 规模化微服务</h2>
+<ul>
+<li>**故障无处不在：**从统计学来看，规模化后故障将成为必然事件。所以我们可以少花一些在阻止不可避免的故障上，而花更多时间来优雅地处理它。</li>
+<li>**关键思想：**假设一切都会失败。</li>
+<li><strong>扩展系统前，理解以下需求：</strong>
+<ul>
+<li>**响应时间/延迟：**负载和对应的操作时间。</li>
+<li>**可用性：**比如，能不能接受系统故障？</li>
+<li>**数据持久性：**比如，数据丢失和保存时间。</li>
+</ul>
+</li>
+<li>**功能降级：**当功能分散在多个不同的、有可能宕掉的微服务上时，能够安全地降级功能。</li>
+<li>**架构性安全措施：**确保如果事情真的出错了，不会引起严重的级联影响。
+<ul>
+<li>**反脆弱：**通过引发故障来确保其系统的容错性（Simian Army）；从故障中学习，不指责。</li>
+<li>**超时：**给所有的跨进程调用设置超时，并选择一个默认的超时时间。当超时发生后，记录到日志里看看发生了什么，并相应地调整它们。</li>
+<li>**舱壁：**把自己从故障中隔离开，比如，分离连接池，拆分服务，断路器，减载等等。
+<ul>
+<li>**减载（load shedding）：**系统资源达到饱和，则主动拒绝服务。</li>
+<li>**断路器：**当对下游资源的请求发生一定数量的失败后，断路器就会被打开。对于堆积的请求，我们可以稍后重试，或者快速失败。</li>
+</ul>
+</li>
+<li>**隔离：**减少服务间的依赖。</li>
+</ul>
+</li>
+<li>**利用幂等处理错误：**对幂等操作来说，其多次执行所产生的影响，均与一次执行的影响相同。</li>
+<li>**扩展系统：**帮助处理失败，提升性能。
+<ul>
+<li>**垂直扩展：**使用更强大的主机。</li>
+<li>**拆分负载：**拆分服务，拆分部署。</li>
+<li>**分散风险：**不要把鸡蛋放在一个篮子里，多机部署，多数据中心部署，异地部署。</li>
+<li>**负载均衡：**避免单点故障，配置多实例处理请求；利用HTTPS终止负载均衡器和VLAN保证安全。</li>
+<li>**使用基于Worker的系统：**和负载均衡类似，只是一个推一个拉；保存待办作业列表可能需要较高的可靠性，使用支持持久化的消息代理。</li>
+<li>**重新设计：**最初的架构和能应对很大负载容量的架构可能是不同的；不要在前期为准备大量负载而构建系统，因为可能负载永远不会来。</li>
+</ul>
+</li>
+<li><strong>扩展数据库：</strong>
+<ul>
+<li>**关键：**理解服务的可用性和数据的持久性</li>
+<li>**扩展读操作：**缓存和只读副本。</li>
+<li>**扩展写操作：**升级硬件，数据库分片或者考虑使用更适合的数据库系统。</li>
+<li>**共享数据库基础设施：**如果数据库出现故障，那么它会影响多个微服务，这可能导致灾难性故障。</li>
+<li>**命令查询职责分离（CQRS）：**它不仅仅是读写分离，命令和查询的模型本身可以完全独立，使用不同的服务或部署在不同的硬件上，甚至使用不同的数据存储。比如：我们可以选择把命令作为事件，存储起来，查询模型可以根据存储的事件推算出领域对象的状态，或者只是获取一个聚合，然后更新其他的存储。</li>
+</ul>
+</li>
+<li><strong>缓存：</strong>
+<ul>
+<li>**缓存分类：**客户端、代理和服务器端缓存</li>
+<li>**HTTP缓存：**cache-control和ETag</li>
+<li><strong>一些使用场景：</strong>
+<ul>
+<li>**为写使用缓存：**后写式缓存，先写入本地缓存，并在之后的某个时刻写入下游数据源中。</li>
+<li>**为弹性使用缓存：**如果源服务故障，可以先使用缓存中的数据。</li>
+<li>**隐藏源服务：**如果大片缓存突然消失，超过源服务处理能力的请求会被透传给源服务，这时可以让源服务推送数据给缓存，而隐藏源服务以保证服务的可用性。</li>
+</ul>
+</li>
+<li>**保持简单：**缓存越多，数据就越可能失效。</li>
+<li>**缓存中毒：**设置错误导致数据永远不失效。</li>
+</ul>
+</li>
+<li><strong>自动伸缩：</strong>
+<ul>
+<li>**条件：**完全自动化地创建虚拟主机以及部署你的微服务实例。</li>
+<li>**触发：**预测型伸缩和响应型伸缩，另外不要太仓促缩容。</li>
+</ul>
+</li>
+<li>**CAP定理：**一致性（consistency）、可用性（availability）和分区容忍性（partitiontolerance），三个中间我们最多只能保证两个。
+<ul>
+<li><strong>定义：</strong>
+<ul>
+<li>**一致性：**访问多个节点时能得到同样的值。</li>
+<li>**可用性：**每个请求都能获得响应。</li>
+<li>**分区容忍性：**集群中的某些节点在无法联系后，集群整体还能继续进行服务的能力。</li>
+</ul>
+</li>
+<li><strong>实践：</strong>
+<ul>
+<li>**牺牲一致性（AP）：**利用最终一致性来保证所有的节点在将来的某个时候都能看到更新后的数据。</li>
+<li>**牺牲可用性（CP）：**如果节点之间无法通信，我们唯一的选择就是拒绝响应请求。实现正确的一致性实在太难了，所以请使用现有的数据存储和锁服务，不要试图自己发明。</li>
+<li>**牺牲分区容忍性（CA）：**如果系统没有分区容忍性，就不能跨网络运行，所以CA系统在分布式系统中根本不存在。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>**服务发现：**找到现在正在运行的微服务。其原理基本都是提供一个机制给微服务实例注册，然后提供一种方法来搜索微服务。
+<ul>
+<li>**DNS：**将一个名称与一种服务关联在一起。优点是所有的技术栈都支持，缺点是因为TTL，更新DNS条目会有延迟，使用负载均衡器可以缓解这个问题。</li>
+<li>**动态服务注册：**Zookeeper，Consul和Eureka。</li>
+</ul>
+</li>
+<li>**文档服务：**描述接缝暴露出来的API。（Swagger和HAL）</li>
+<li>**自描述系统：**从活系统中抽取出一些数据，来形成静态Web页面或Wiki。</li>
+</ul>
+<h2 id="小结">12. 小结</h2>
+<ul>
+<li><strong>微服务的原则：</strong>
+<ul>
+<li>围绕业务概念建模</li>
+<li>接受自动化文化</li>
+<li>隐藏内部实现细节</li>
+<li>让一起都去中心化</li>
+<li>可独立部署</li>
+<li>隔离失败</li>
+<li>高度可观察</li>
+</ul>
+</li>
+<li>**什么时候不应该使用微服务：**如果你不了解一个领域，请不要使用微服务，因为无法找到正确的限界上下文。</li>
+<li><strong>其他建议：</strong>
+<ul>
+<li>尽量缩小每个决策的影响范围</li>
+<li>学会拥抱演进式架构的概念，持续地改变和演进系统</li>
+</ul>
+</li>
+</ul>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/reading-time-building-microservices/" target="_blank">《微服务架构》知识总结</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%90%8E%E5%8F%B0%E5%BC%80%E5%8F%91/" rel="tag"># 后台开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-chakracore-4-using-jsrt-api-2/" rel="prev" title="ChakraCore学习笔记（四）：使用JSRT API （二）">
+                  <i class="fa fa-chevron-left"></i> ChakraCore学习笔记（四）：使用JSRT API （二）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-technical-leadership/" rel="next" title="《技术领导力：程序员如何才能带团队》知识总结">
+                  《技术领导力：程序员如何才能带团队》知识总结 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

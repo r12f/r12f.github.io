@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="两年半没有更新过博客了，趁着最近难得的假期赶紧除除草，结果发现………………之前给hexo写的包有各种神奇的bug，于是更新博客变成了修bug…………然后对于我这种超级懒人，烦人的事情就来了————每次在本地执行npm的命令发布安装包真的好烦人，要是可以自动化就好了，于是就抱着试一试的心情看了一下Azure Pipeline，结果工作的相当好，而且还在一定额度之内免费（对我来说真的够用了）！所以在这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Azure Pipeline来编译和发布npm包">
+<meta property="og:url" content="http://r12f.com/posts/use-azure-pipeline-to-build-npm-package/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="两年半没有更新过博客了，趁着最近难得的假期赶紧除除草，结果发现………………之前给hexo写的包有各种神奇的bug，于是更新博客变成了修bug…………然后对于我这种超级懒人，烦人的事情就来了————每次在本地执行npm的命令发布安装包真的好烦人，要是可以自动化就好了，于是就抱着试一试的心情看了一下Azure Pipeline，结果工作的相当好，而且还在一定额度之内免费（对我来说真的够用了）！所以在这">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/01-new-project-button-on-azure-devops.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/02-new-project-on-azure-devops.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/03-add-service-connections.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/04-disable-azure-devops-services.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/05-create-build-pipeline-connect.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/06-pipeline-initial-template.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/07-pipeline-yml-assistant.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/08-create-release-pipeline-button.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/09-create-release-pipeline-template.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/10-create-release-pipeline-add-artifacts.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/11-create-release-pipeline-npmjs-extract.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/12-create-release-pipeline-github-release.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/13-build-pipeline-run.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/14-release-pipeline-run.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/15-npmjs-update.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/16-github-release-update.png">
+<meta property="article:published_time" content="2020-01-01T20:22:15.000Z">
+<meta property="article:modified_time" content="2020-01-02T04:22:15.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="azure pipeline">
+<meta property="article:tag" content="npm">
+<meta property="article:tag" content="npm package">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/01-new-project-button-on-azure-devops.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/use-azure-pipeline-to-build-npm-package/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/use-azure-pipeline-to-build-npm-package/","path":"posts/use-azure-pipeline-to-build-npm-package/","title":"使用Azure Pipeline来编译和发布npm包"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用Azure Pipeline来编译和发布npm包 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8Azure-DevOps%E4%B8%8A%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE%EF%BC%88Azure-DevOps%E7%94%A8%E6%88%B7%E8%AF%B7%E8%B7%B3%E8%BF%87%EF%BC%89"><span class="nav-text">1. 在Azure DevOps上创建项目（Azure DevOps用户请跳过）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5GitHub%E5%92%8Cnpmjs%E7%9A%84%E6%9C%8D%E5%8A%A1"><span class="nav-text">1.1. 连接GitHub和npmjs的服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E9%80%89-%E7%A6%81%E7%94%A8%E4%B8%80%E4%BA%9B%E4%B8%8D%E9%9C%80%E8%A6%81%E7%9A%84%E6%9C%8D%E5%8A%A1"><span class="nav-text">1.2. (可选) 禁用一些不需要的服务</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%92%8C%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">2. 编译和发布流水线</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%88Build-Pipeline%EF%BC%89"><span class="nav-text">2.1. 编译流水线（Build Pipeline）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%BC%96%E8%AF%91%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">2.1.1. 创建编译流水线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%BC%96%E8%AF%91%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">2.1.2. 配置编译流水线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E7%BC%96%E8%AF%91%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%9A%84%E7%89%88%E6%9C%AC%E7%AE%A1%E7%90%86"><span class="nav-text">2.1.3. 自动化编译流水线的版本管理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%9C%80%E7%BB%88%E7%A4%BA%E4%BE%8B"><span class="nav-text">2.1.4. 编译流水线最终示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%88Release-Pipeline%EF%BC%89"><span class="nav-text">2.2. 发布流水线（Release Pipeline）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">2.2.1. 创建发布流水线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">2.2.2. 配置发布流水线</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%80%89%E6%8B%A9Artifacts"><span class="nav-text">2.2.2.1. 选择Artifacts</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAnpmjs%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B"><span class="nav-text">2.2.2.2. 创建npmjs发布流程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89%E5%88%9B%E5%BB%BAGitHub-Release%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B"><span class="nav-text">2.2.2.3. （可选）创建GitHub Release发布流程</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%9C%80%E7%BB%88%E7%A4%BA%E4%BE%8B"><span class="nav-text">2.2.2.4. 发布流水线最终示例</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-text">3. 测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">4. 小结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/use-azure-pipeline-to-build-npm-package/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用Azure Pipeline来编译和发布npm包 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用Azure Pipeline来编译和发布npm包
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2020-01-01 12:22:15 / Modified: 20:22:15" itemprop="dateCreated datePublished" datetime="2020-01-01T12:22:15-08:00">2020-01-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/use-azure-pipeline-to-build-npm-package/" class="post-meta-item leancloud_visitors" data-flag-title="使用Azure Pipeline来编译和发布npm包" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/use-azure-pipeline-to-build-npm-package/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/use-azure-pipeline-to-build-npm-package/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>两年半没有更新过博客了，趁着最近难得的假期赶紧除除草，结果发现………………之前给hexo写的包有各种神奇的bug，于是更新博客变成了修bug…………然后对于我这种超级懒人，烦人的事情就来了————每次在本地执行npm的命令发布安装包真的好烦人，要是可以自动化就好了，于是就抱着试一试的心情看了一下Azure Pipeline，结果工作的相当好，而且还在一定额度之内免费（对我来说真的够用了）！所以在这里记录一下，也算是个安利了~</p>
+<p>这里就拿我的hexo-asset-path举例子吧（<a target="_blank" rel="noopener" href="https://github.com/r12f/hexo-asset-path">https://github.com/r12f/hexo-asset-path</a>）。</p>
+<h2 id="在Azure-DevOps上创建项目（Azure-DevOps用户请跳过）">1. 在Azure DevOps上创建项目（Azure DevOps用户请跳过）</h2>
+<p>因为hexo-asset-path的代码在github上，所以在使用Azure Pipeline之前需要先在Azure DevOps上创建一个项目。没有账号的童鞋可以和我一样直接用GitHub的账号注册。</p>
+<p>在登录之后的主界面上点击右上角的“New Project”按钮就可以创建新项目了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/01-new-project-button-on-azure-devops.png" alt="01-new-project-button-on-azure-devops"></p>
+<span id="more"></span>
+<p>项目可以是公开的，也可以是私有的，这个并不会影响Azure Pipeline的功能。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/02-new-project-on-azure-devops.png" alt="02-new-project-on-azure-devops"></p>
+<h3 id="连接GitHub和npmjs的服务">1.1. 连接GitHub和npmjs的服务</h3>
+<p>我们需要允许Azure Pipeline访问GitHub来获取代码，和npmjs来发布包，所以我们需要将GitHub和npmjs的服务添加到Azure DevOps连接的服务中：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/03-add-service-connections.png" alt="03-add-service-connections"></p>
+<p>更加具体的内容可以在这个文档中找到：<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&amp;tabs=yaml">https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&amp;tabs=yaml</a></p>
+<h3 id="可选-禁用一些不需要的服务">1.2. (可选) 禁用一些不需要的服务</h3>
+<p>因为我们并没有使用Azure DevOps的代码托管功能和任务管理，所以我们可以把它们关掉，这样界面会更加精简一些，如果是公开项目，也可以减少一些误会。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/04-disable-azure-devops-services.png" alt="04-disable-azure-devops-services"></p>
+<h2 id="编译和发布流水线">2. 编译和发布流水线</h2>
+<p>在连接好代码仓库之后我们就可以开始创建编译流水线（Build Pipeline）和发布流水线（Release Pipeline）了。从他们的名字上显而易见：</p>
+<ul>
+<li>编译流水线，用于编译源代码，生成需要发布的内容：<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/what-is-azure-pipelines?view=azure-devops">https://docs.microsoft.com/en-us/azure/devops/pipelines/get-started/what-is-azure-pipelines?view=azure-devops</a></li>
+<li>发布流水线，用于将编译生成的文件发布到指定的地点：<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/release/?view=azure-devops">https://docs.microsoft.com/en-us/azure/devops/pipelines/release/?view=azure-devops</a></li>
+</ul>
+<p>由于很多任务（Task）编译流水线和发布流水线都支持，比如npm的操作，所以我们其实可以使用编译流水线来执行包的发布，但是这里我们选择将这两条流水线分离。这样做的好处主要有两个：</p>
+<ul>
+<li>方便多次发布，比如一些特殊原因导致发布失败，那么我们只需要重新发布一次就好，不需要再次对源码进行编译</li>
+<li>方便发布到多个位置，并且易于扩展
+<ul>
+<li>比如，现在我们只发布到npmjs，以后我们可以很容易的增加发布到GitHub Release的任务，而不需要再次编译</li>
+</ul>
+</li>
+</ul>
+<h3 id="编译流水线（Build-Pipeline）">2.1. 编译流水线（Build Pipeline）</h3>
+<h4 id="创建编译流水线">2.1.1. 创建编译流水线</h4>
+<p>接下来我们就先来创建一个编译流水线吧！编译流水线在这里就叫做Pipeline。</p>
+<p>这里如果你的项目是在GitHub上，那么请选择GitHub，如果你的项目在Azure DevOps上，那么请选择Azure Repos Git：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/05-create-build-pipeline-connect.png" alt="05-create-build-pipeline-connect"></p>
+<p>之后选择好我们要连接的项目，这里就是hexo-asset-path了，然后初始模板可以选择Node.js，选择好之后就可以开始配置了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/06-pipeline-initial-template.png" alt="06-pipeline-initial-template"></p>
+<h4 id="配置编译流水线">2.1.2. 配置编译流水线</h4>
+<p>终于来到了第一个最关键的部分了！编译流水线的配置是由一个yml文件来控制的。由于支持的任务类型太多，没人能够记住，所以在编写这个文件的时候，Azure Pipeline提供了一个帮助工具，只要点右上角的小助手按钮就可以啦~<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/07-pipeline-yml-assistant.png" alt="07-pipeline-yml-assistant"></p>
+<p>由于npm打包过程非常简单，我们在编译流水线中执行的任务也非常简单，流程如下：</p>
+<ul>
+<li>安装node.js</li>
+<li>执行npm install，安装所需的npm包</li>
+<li>（可选）执行npm build编译</li>
+<li>（可选）执行npm test进行测试</li>
+<li>执行npm pack打包当前项目成一个.tgz文件</li>
+<li>拷贝.tgz文件到预发布目录（Artifact Staging Directory）</li>
+<li>发布预发布目录下的文件（Artifacts）</li>
+</ul>
+<p><strong>请注意</strong>：这里的发布并不是发布到npm，而是告诉Azure Pipeline，这些文件是编译最终产生的文件，需要保存，其他未发布的文件Azure Pipeline会当作是中间文件，编译后就可以销毁了。</p>
+<p>有了这个简单的流程，我们的编译流水线就基本能工作了！</p>
+<h4 id="自动化编译流水线的版本管理">2.1.3. 自动化编译流水线的版本管理</h4>
+<p>到了这里，很快我们就遇到了一个问题，虽然每次提交代码都会触发CI编译生成npm包，但是每次生成的包版本都是一样的，这样我们就没有办法进行自动化发布了啊！这里我们可以利用计数器自动在每次编译的的时候把版本号加1，具体的方法请参考：<a href="/posts/automatically-increase-version-number-in-azure-pipeline">使用Azure Pipeline在每次编译时自动升级版本号</a></p>
+<p>在获取到了版本号之后，我们就可以利用一个脚本来更新package.json文件中的版本号了：<a target="_blank" rel="noopener" href="https://github.com/r12f/hexo-asset-path/blob/master/Build/Update-BuildRevisionVersion.ps1">https://github.com/r12f/hexo-asset-path/blob/master/Build/Update-BuildRevisionVersion.ps1</a></p>
+<h4 id="编译流水线最终示例">2.1.4. 编译流水线最终示例</h4>
+<p>经过上面的修改，我们的编译流水线就能使用了！每次编译后，我们都将生成hexo-asset-path-<version>.tgz文件在编译目录中。最终的示例代码在这里：<a target="_blank" rel="noopener" href="https://github.com/r12f/hexo-asset-path/blob/master/azure-pipelines.yml">https://github.com/r12f/hexo-asset-path/blob/master/azure-pipelines.yml</a></version></p>
+<h3 id="发布流水线（Release-Pipeline）">2.2. 发布流水线（Release Pipeline）</h3>
+<p>现在我们有了npm包了，接下来就可以通过发布流水线来发布npm包了。</p>
+<h4 id="创建发布流水线">2.2.1. 创建发布流水线</h4>
+<p>发布流水线在Pipeline-&gt;Release下，我们打开这个页面就可以开始创建我们的第一个发布流水线了：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/08-create-release-pipeline-button.png" alt="08-create-release-pipeline-button"></p>
+<p>初始模板我们可以不选，使用一个空白模板开始：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/09-create-release-pipeline-template.png" alt="09-create-release-pipeline-template"></p>
+<p>接下来，我们可以给这个流水线命个名，这里就叫“Release NPM package”好了。</p>
+<h4 id="配置发布流水线">2.2.2. 配置发布流水线</h4>
+<h5 id="选择Artifacts">2.2.2.1. 选择Artifacts</h5>
+<p>首先，我们需要选择我们要发布的Artifacts，这里我们就选择从编译流水线生成的Artifacts，另外我们可以给source alias一个好一点的名字，如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/10-create-release-pipeline-add-artifacts.png" alt="10-create-release-pipeline-add-artifacts"></p>
+<h5 id="创建npmjs发布流程">2.2.2.2. 创建npmjs发布流程</h5>
+<p>接下来我们来定义npmjs的发布流程。</p>
+<p>由于npm不支持发布.tgz包，所以我们需要先把编译生成的.tgz包解压缩，然后在调用npm publish来发布，如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/11-create-release-pipeline-npmjs-extract.png" alt="11-create-release-pipeline-npmjs-extract"></p>
+<h5 id="（可选）创建GitHub-Release发布流程">2.2.2.3. （可选）创建GitHub Release发布流程</h5>
+<p>除了发布到npmjs以外，我们还可以利用GitHub Release任务将包传到GitHub的Release上，如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/12-create-release-pipeline-github-release.png" alt="12-create-release-pipeline-github-release"></p>
+<p><strong>注意</strong>：GitHub Release的执行需要git中对应的提交创建了tag，所以在执行这个发布流水线任务之前，请记得使用<code>git tag &lt;version-name&gt;</code>命令创建tag。</p>
+<h5 id="发布流水线最终示例">2.2.2.4. 发布流水线最终示例</h5>
+<p>最后创建出来的发布流水线大概如此示例所示：<a target="_blank" rel="noopener" href="https://r12f.visualstudio.com/hexo-asset-path/_release?_a=releases&amp;view=mine&amp;definitionId=1">https://r12f.visualstudio.com/hexo-asset-path/_release?_a=releases&amp;view=mine&amp;definitionId=1</a></p>
+<h2 id="测试">3. 测试</h2>
+<p>现在我们的编译流水线和发布流水线就都创建好了，赶紧来试一试吧！</p>
+<p>先试一试编译流水线：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/13-build-pipeline-run.png" alt="13-build-pipeline-run"></p>
+<p>然后不要忘记创建git tag，因为编译版本是1.0.4，所以这里我们可以运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git tag v1.0.4</span><br></pre></td></tr></table></figure>
+<p>接着运行发布流水线：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/14-release-pipeline-run.png" alt="14-release-pipeline-run"></p>
+<p>再来看看npmjs和github上有没有更新：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/15-npmjs-update.png" alt="15-npmjs-update"><br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2020-01-01-use-azure-pipeline-to-build-npm-package/16-github-release-update.png" alt="16-github-release-update"></p>
+<p>看起来两条流水线都工作正常！</p>
+<h2 id="小结">4. 小结</h2>
+<p>虽然只是简单的试用了一下Azure Pipeline，但是感觉确实还是非常好用的，设置简单，功能强大，确实可以减少不少日常开发的琐事，而且只要不是用的太多也不需要付费，对于个人的小项目还是非常不错的。</p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/use-azure-pipeline-to-build-npm-package/" target="_blank">使用Azure Pipeline来编译和发布npm包</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/azure-pipeline/" rel="tag"># azure pipeline</a>
+              <a href="/tags/npm/" rel="tag"># npm</a>
+              <a href="/tags/npm-package/" rel="tag"># npm package</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/automatically-increase-version-number-in-azure-pipeline/" rel="prev" title="使用Azure Pipeline在每次编译时自动升级版本号">
+                  <i class="fa fa-chevron-left"></i> 使用Azure Pipeline在每次编译时自动升级版本号
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/backend-service-scale-1-principle/" rel="next" title="后台服务扩展入门 —— 原则篇">
+                  后台服务扩展入门 —— 原则篇 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

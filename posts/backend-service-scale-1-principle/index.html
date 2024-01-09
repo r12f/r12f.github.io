@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="服务扩展是几乎每个做后台服务的开发都遇到过的问题，当业务大到一定的水平，当前的服务快要承受不住业务压力的时候，我们就要进行扩展了。一聊起服务扩展，很多人的第一想法都是增加运行实例，但是服务扩展有很多种方法，增加实例只是里面最简单的一种，而有时增加实例并不能改善问题，反而会让情况变得更糟。最近我们项目也在做类似服务扩展的事情，所以想把我之前学的东西大概总结一下，希望也能对项目有所帮助。内容比较粗浅，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="后台服务扩展入门 —— 原则篇">
+<meta property="og:url" content="http://r12f.com/posts/backend-service-scale-1-principle/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="服务扩展是几乎每个做后台服务的开发都遇到过的问题，当业务大到一定的水平，当前的服务快要承受不住业务压力的时候，我们就要进行扩展了。一聊起服务扩展，很多人的第一想法都是增加运行实例，但是服务扩展有很多种方法，增加实例只是里面最简单的一种，而有时增加实例并不能改善问题，反而会让情况变得更糟。最近我们项目也在做类似服务扩展的事情，所以想把我之前学的东西大概总结一下，希望也能对项目有所帮助。内容比较粗浅，">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-01-15T01:58:31.000Z">
+<meta property="article:modified_time" content="2020-01-15T01:58:31.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="后台">
+<meta property="article:tag" content="网站">
+<meta property="article:tag" content="架构">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/backend-service-scale-1-principle/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/backend-service-scale-1-principle/","path":"posts/backend-service-scale-1-principle/","title":"后台服务扩展入门 —— 原则篇"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>后台服务扩展入门 —— 原则篇 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E9%A9%B1%E5%8A%A8"><span class="nav-text">1. 业务驱动</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A5%A5%E5%8D%A1%E5%A7%86%E5%89%83%E5%88%80%E5%92%8C%E5%BA%B7%E5%A8%81%E5%AE%9A%E5%BE%8B"><span class="nav-text">1.1. 奥卡姆剃刀和康威定律</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3%E4%B8%9A%E5%8A%A1%EF%BC%8C%E5%90%88%E7%90%86%E8%A7%84%E5%88%92%E9%9C%80%E6%B1%82"><span class="nav-text">1.2. 了解业务，合理规划需求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E9%A9%B1%E5%8A%A8%EF%BC%8C%E6%8A%80%E6%9C%AF%E6%84%BF%E6%99%AF%E5%92%8C%E4%B8%9A%E5%8A%A1%E5%88%9B%E6%96%B0"><span class="nav-text">1.3. 业务驱动，技术愿景和业务创新</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%98%E4%B8%AD%EF%BC%88Trade-Off%EF%BC%89%E8%80%8C%E4%B8%8D%E8%BF%BD%E6%B1%82%E5%AE%8C%E7%BE%8E"><span class="nav-text">2. 折中（Trade Off）而不追求完美</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CAP%E5%8E%9F%E7%90%86"><span class="nav-text">2.1. CAP原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%B9%B6%E4%B8%8D%E6%98%AF%E8%B6%8A%E5%A4%8D%E6%9D%82%E8%B6%8A%E5%A4%A7%E5%9E%8B%E8%B6%8A%E5%A5%BD"><span class="nav-text">2.2. 服务并不是越复杂越大型越好</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E9%97%A8%E6%A7%9B%E7%9A%84%E6%8F%90%E9%AB%98"><span class="nav-text">2.2.1. 学习门槛的提高</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E5%A4%8D%E6%9D%82%E6%80%A7%E7%9A%84%E6%8F%90%E9%AB%98"><span class="nav-text">2.2.2. 管理复杂性的提高</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E7%8E%87%E7%9A%84%E6%8F%90%E9%AB%98"><span class="nav-text">2.2.3. 错误率的提高</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E8%B6%8A%E5%A4%A7%E6%80%A7%E8%83%BD%E5%8F%AF%E8%83%BD%E5%8F%8D%E8%80%8C%E8%B6%8A%E5%B7%AE"><span class="nav-text">2.2.4. 服务越大性能可能反而越差</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%A8%E6%85%8E%E5%AF%B9%E5%BE%85%E6%96%B0%E5%87%BA%E7%8E%B0%E7%9A%84%E6%8A%80%E6%9C%AF"><span class="nav-text">2.3. 谨慎对待新出现的技术</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B0%E6%8A%80%E6%9C%AF%E4%B8%8D%E4%B8%80%E5%AE%9A%E6%88%90%E7%86%9F"><span class="nav-text">2.3.1. 新技术不一定成熟</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9A%E5%B8%B8%E6%80%A7%EF%BC%88stationarity%EF%BC%89"><span class="nav-text">2.3.2. 定常性（stationarity）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9B%E5%8C%96%E8%AE%BA%E4%B8%8E%E6%BC%94%E5%8C%96%E8%AE%BA"><span class="nav-text">2.3.3. 进化论与演化论</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AB%98%E5%8F%AF%E8%B0%83%E8%AF%95%E6%80%A7%EF%BC%88debuggability%EF%BC%89"><span class="nav-text">3. 高可调试性（debuggability）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E7%90%86%E7%9A%84%E6%8C%87%E6%A0%87%E6%95%B0%E6%8D%AE%EF%BC%88metrics%EF%BC%89%E5%92%8C%E6%97%A5%E5%BF%97%EF%BC%88log%EF%BC%89"><span class="nav-text">3.1. 合理的指标数据（metrics）和日志（log）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%98%AF%E9%87%8D%E6%9E%84%E7%9A%84%E5%89%8D%E6%8F%90"><span class="nav-text">3.2. 测试是重构的前提</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E6%8A%A5%E8%AD%A6%E5%BF%85%E4%B8%8D%E5%8F%AF%E5%B0%91"><span class="nav-text">3.3. 业务报警必不可少</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E6%8E%A2%E9%92%88%E7%9A%84%E5%B1%80%E9%99%90%E6%80%A7"><span class="nav-text">3.3.1. 服务探针的局限性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%BB%91%E5%A4%A9%E9%B9%85%E4%B8%8E%E9%A9%AC%E5%A4%AA%E6%95%88%E5%BA%94"><span class="nav-text">3.3.2. 黑天鹅与马太效应</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7"><span class="nav-text">3.4. 辅助调试工具</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%EF%BC%88%E9%87%91%E4%B8%9D%E9%9B%80%E5%8F%91%E5%B8%83%EF%BC%8FCanary-Deployment%EF%BC%89"><span class="nav-text">4. 可灰度发布（金丝雀发布／Canary Deployment）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E5%9B%9E%E6%BB%9A"><span class="nav-text">5. 可回滚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%A6%81%E5%BF%98%E8%AE%B0%E7%BB%86%E8%8A%82"><span class="nav-text">6. 不要忘记细节</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">7. 小结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/backend-service-scale-1-principle/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="后台服务扩展入门 —— 原则篇 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          后台服务扩展入门 —— 原则篇
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2020-01-14 17:58:31" itemprop="dateCreated datePublished" datetime="2020-01-14T17:58:31-08:00">2020-01-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/backend-service-scale-1-principle/" class="post-meta-item leancloud_visitors" data-flag-title="后台服务扩展入门 —— 原则篇" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/backend-service-scale-1-principle/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/backend-service-scale-1-principle/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>服务扩展是几乎每个做后台服务的开发都遇到过的问题，当业务大到一定的水平，当前的服务快要承受不住业务压力的时候，我们就要进行扩展了。一聊起服务扩展，很多人的第一想法都是增加运行实例，但是服务扩展有很多种方法，增加实例只是里面最简单的一种，而有时增加实例并不能改善问题，反而会让情况变得更糟。最近我们项目也在做类似服务扩展的事情，所以想把我之前学的东西大概总结一下，希望也能对项目有所帮助。内容比较粗浅，希望大家不要介意~</p>
+<p>在对服务扩展时，我发现有些原则如果扩展过程中可以遵守，对整个过程会很有帮助，所以在讨论具体的方法论之前，我们先来了解一下它们。</p>
+<hr>
+<h2 id="业务驱动">1. 业务驱动</h2>
+<p>首先，我们必须得了解一个事实——业务才是解决用户问题的核心，后台服务的目的是为业务提供支撑。因为如此，一个后台的架构好不好并不是看它看起来有多么的华丽，有没有用到最前沿的技术，有什么技术情节和情怀，而是看它是不是能真正好的服务于产品，服务于业务，所以无论是后台服务的设计还是扩展，都必须由业务驱动，而所有的架构和设计都必须是为了解决实际的问题。有技术追求是好事，但是千万不要为了技术而技术，为了架构而架构。</p>
+<h3 id="奥卡姆剃刀和康威定律">1.1. 奥卡姆剃刀和康威定律</h3>
+<p>在执行业务驱动的时候，有两个理论特别好用：奥卡姆剃刀和康威定律。</p>
+<p>很多时候我们在设计服务的时候都会纠结，一些地方要不要设计的更灵活一些，但是如果真的那么设计了，实现起来可能会复杂很多，这里我们就可以运用奥卡姆剃刀了。奥卡姆剃刀告诉我们：“如无必要，勿增实体”。要是一个服务可有可无，那么我们就把他砍掉，千万不要为了架构而架构，并不是越大型的架构就越好，后面我们说折中的时候会更详细的讨论这一点。不过，也请不要忘记奥卡姆提出奥卡姆剃刀时的后半句话，过分精简也是不好的。所以请了解自己的业务，做出最适合自己业务的决定。</p>
+<p>另外在设计服务的时候，还要注意康威定律的使用。康威定律告诉我们：软件架构是组织架构的一种反映。所以在做任何服务设计和扩展时，我们都应该把组织架构考虑进去，这样我们才能设计出真正“高内聚，低耦合”的服务，让组织之间的沟通成本降到最低。</p>
+<span id="more"></span>
+<h3 id="了解业务，合理规划需求">1.2. 了解业务，合理规划需求</h3>
+<p>既然所有的架构都来源于业务，那么很自然的，在设计后台服务的时候，我们也必须要了解业务，然后根据当前拥有的资源合理的进行规划，并在资源不够的时候合理进行反馈（这里不仅仅包括物理资源，比如机器，也包括人力资源），然后与业务合作找到大家都能接受的解决方案。</p>
+<p>我在2009年的时候做过一个项目，项目比较复杂，上线之后活跃用户量估计会有好几百万，虽然现在看来可能并不算什么，但是在当时来说还算是比较大的。虽然服务设计并不算困难，但是让人头疼的事情是部门最多只能拿到8台机器和1个数据库节点。经过简单的估算，这些资源完全没有办法支撑所有用户的请求，所以当时我们采用的解决方案就是通过与业务部门合作，先优先对最高级的会员开放，然后再逐步向其他人开放，这样就把需求量大大降低了，最后服务也按时上了线。而根据之后资源投入的情况，我们可以来反过来决定如何合理的扩展业务来保证服务质量（如果老板们不同意，那就让他们投资源，哈哈！）。同时，这样做的好处还有一个，如果业务不成功，我们的损失也不会太大。</p>
+<h3 id="业务驱动，技术愿景和业务创新">1.3. 业务驱动，技术愿景和业务创新</h3>
+<p>业务驱动可能听起来可能比较极端，我们毕竟是技术人员，难道就不应该有自己的技术追求吗？技术团队难道就不应该有自己的技术愿景吗？</p>
+<p>有技术追求其实非常好的，也是应该鼓励的，只是在实行的过程中也可以考虑如何与业务挂钩，毕竟人的精力都是有限的，不可能什么技术都学习得很深，所以我们可以围绕着业务的核心功能来定义技术团队的技术愿景。我现在所在的部门在做和软件定义网络（SDN）相关项目，所以团队的技术愿景就可以定义为打造世界上最强的SDN团队，而由此也可以催生出我们的业务愿景，打造世界上最稳定和最好用的软件网络。</p>
+<p>有了技术愿景和业务愿景，业务创新的方向就变得很直观了，比如能不能进一步增加业务的核心竞争力，有没有什么特殊的用户场景我们还没有支持，等等等等。而一旦有了方向，技术团队就能走在业务之前，进而推动业务发展。</p>
+<hr>
+<h2 id="折中（Trade-Off）而不追求完美">2. 折中（Trade Off）而不追求完美</h2>
+<p>在设计和扩展后台服务时进行合理的折中听上去很简单，但是实际执行起来却经常容易被忘记。很多时候，我们都想一开始就拿出一个“完美”的设计，然后一步到位把所有事情做好。我相信大家在工作中经常会听到以下问题：</p>
+<ul>
+<li>“如果不这么设计的话，那这一个服务不就在干两件事情了吗？”</li>
+<li>“如果不这么设计的话，那万一我们收集的数据出现了噪音怎么办？”</li>
+<li>“如果不这么设计的话，万一我们来了一个超级大的用户把系统压垮了怎么办？”</li>
+<li>等等等等</li>
+</ul>
+<p>这个想法其实来源于几个对后台服务的理解：</p>
+<ul>
+<li>存在完美的解决方案</li>
+<li>复杂大型的解决方案一定比简单小巧的解决方案更好</li>
+<li>新技术一定比老的技术更好</li>
+</ul>
+<p>这些理解其实都是有问题的，而这些想法也导致了越是负责，越是有技术追求的人反而可能越容易忘记进行合理的折中，我们这里来一一讨论。</p>
+<h3 id="CAP原理">2.1. CAP原理</h3>
+<p>一般来说分布式系统有三个重要的指标：</p>
+<ul>
+<li>一致性（Consistency）：所有应用程序都能访问同一份最新的数据</li>
+<li>可用性（Availability）：任何时候，任何应用程序都能访问数据和服务</li>
+<li>分区耐受性（Partition Tolerance）：保证数据可持久存储，在各种情况下都不会出现数据丢失的问题</li>
+</ul>
+<p>而<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CAP_theorem">CAP原理</a>告诉我们，这三个指标无法同时满足，而只能满足三项中的两项，这个定理在很多书上都详细的解释过，<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/20399316">网上也有不错的文章详细讲解其推导和应用</a>，这里便不在赘述了。也正是因为CAP原理，完美的解决方案并不存在。如果我们在设计服务的时候发现自己开始尝试着找寻完美方案的时候，不妨停下来，想想CAP原理，说不定会发现我们其实正在找一个已经被证明的理论上不可能的方案……</p>
+<h3 id="服务并不是越复杂越大型越好">2.2. 服务并不是越复杂越大型越好</h3>
+<p>为什么我们总是会不自主的觉得复杂大型的解决方案更好，其实很好理解，因为这些解决方案确实解决了一些问题，带来了很多方便，但是问题在于这些系统同时也带来了更多的复杂性：</p>
+<h4 id="学习门槛的提高">2.2.1. 学习门槛的提高</h4>
+<p>看上去越方便简单的东西，往往就越难学，因为系统需要帮我们隐藏了更多的细节（不然就不会方便了）。一个简单的例子就是HTML，现在估计小学生都能写网页，但是能说自己精通HTML的人又有多少呢？我们来看看<a target="_blank" rel="noopener" href="https://dom.spec.whatwg.org/">DOM上千页的spec</a>就知道为什么了。</p>
+<h4 id="管理复杂性的提高">2.2.2. 管理复杂性的提高</h4>
+<p>这个其实很好理解，本来是需要管理一个实例，拆分之后，每个子服务都需要管理，另外由于服务中间隐藏了大量细节，在不了解这些细节的前提下，一旦出错<a target="_blank" rel="noopener" href="https://img-bbs.csdn.net/upload/201407/15/1405389203_837997.gif">调试起来将异常困难</a>。</p>
+<h4 id="错误率的提高">2.2.3. 错误率的提高</h4>
+<p>这个比较有意思，出现这种情况一般有两个原因：</p>
+<ul>
+<li>部署的实例增加，导致实例所在的运行环境本身的错误率增加，比如CPU和磁盘的损坏
+<ul>
+<li>在这种情况下，假定每一个实例的错误率为p，而我们扩展了n个实例，那么新的错误率就是<code>1 - ((1 - p) ^ n)</code></li>
+</ul>
+</li>
+<li>服务的纵向分割，比如：子服务的拆分导致的服务链（最终请求需要在多个服务之间传递才能完成）
+<ul>
+<li>链上每一层服务都可能会出错，如果我们假定一个层服务的错误率为p，而服务链中子服务的是n，那么新的错误率和上面一样，也将变成<code>1 - ((1 - p) ^ n)</code></li>
+</ul>
+</li>
+</ul>
+<p>这里举个例子，我们假设初始时n是1，错误率p是1%，换算成时间的话就是全年会有大约3天半的时间服务是出问题的，现在扩展后n从1变成了3，那么总体的错误率将变为<code>1 - (1 - 1%) ^ 3 = 2.98%</code>，也就是大约11天的时间服务会出现问题。而当n变为5层的时候，错误率将变为4.91%，也就是大约18天的时间，平均每个月都会有一天半。在这种错误率下，整个团队的工作都将大大的受到影响。</p>
+<h4 id="服务越大性能可能反而越差">2.2.4. 服务越大性能可能反而越差</h4>
+<p>这个主要来源于两个方面，一个是更复杂的管理带来的开销，一个是更多的服务之间的通信带来的开销。这也是为什么我们经常会听到人们说，管理的实例数每提高一个数量级，解决方案都会需要变化。</p>
+<h3 id="谨慎对待新出现的技术">2.3. 谨慎对待新出现的技术</h3>
+<p>同样的道理，新技术总是为了解决一些问题而出现的，所以他们看起来很诱人，但是新技术并不总是比老技术更好。</p>
+<h4 id="新技术不一定成熟">2.3.1. 新技术不一定成熟</h4>
+<p>首先，新技术并不一定成熟，一个技术的生命周期一般都有几个阶段：创新者阶段、早期采用者阶段、早期大众阶段、晚期大众阶段与落后者阶段。在创新者阶段和早期采用着阶段的时候，任何技术都将不可避免的有很多的坑，而且和学习门槛一样，看上去越方便的技术，坑就可能越多，所以如果可能，我们一般都比较倾向于在早期大众阶段和晚期大众阶段这种问题较少而社区也较为成熟的时候开始真正采用一门技术，而在前两个阶段我们只需要保持跟进就可以了。</p>
+<h4 id="定常性（stationarity）">2.3.2. 定常性（stationarity）</h4>
+<p>在《随机漫步的傻瓜》中，塔勒布提到了一个非常重要的概念：我们生活的世界没有定常性。你永远也不知道太阳明天是否会正常升起，这就像布莱恩阿瑟在《技术的本质》里面提到的一样：</p>
+<blockquote>
+<p>“技术的进化根本就没有可以预先决定的确切顺序。我们无法事先就知道哪个现象会被发现并转化为新技术的基础；也无法在巨大的组合可能性中事先指出哪种组合会被创造；无法知道当这些被实现的时候，哪些机会之门会被开启。作为这些不确定性的结果，技术体的进化具有历史偶然性。”</p>
+</blockquote>
+<p>往往现实就是这么的幽默，就在当我们认为当前的方案完美无比的时候，谁知道会出现什么事情让现在的方案漏洞百出，最后甚至在下一秒中就最变成了最差的方案。</p>
+<h4 id="进化论与演化论">2.3.3. 进化论与演化论</h4>
+<p>让我们认为新技术比老技术更好还有一个大的原因，那就是进化论。这个我们从小听到大的理论每次出现都经常伴随着一个<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Tree_of_life_(biology)#/media/File:Tree_of_life_by_Haeckel.jpg">类似这样的树状图（Tree of life）</a>，它总是让我们觉得现在的生物要比古代的更加高级，而我们人类是地球上最高级的生物，然而其实并不然，现在地球上的所有生物都只不过是大自然演化的幸存者而已，我们并不比其他的生物高级什么，比如尼安德特人就拥有比我们智人更大的脑容量，更聪明，那按现在社会的标准来说是不是他们要更加高级呢？结果在历史中尼安德特人被智人屠杀得一干二净。所以现在生物学都更喜欢用演化论来代替进化论，而树状图（Tree of life）也变成了<a target="_blank" rel="noopener" href="https://www.scientificamerican.com/article/all-2-3-million-species-are-mapped-into-a-single-circle-of-life1/">圆环图（Circle of life）</a>。</p>
+<p>同样的，后台服务的设计其实也不存在所谓的“最高级”的技术，根据业务需要和当前项目状态的不同，最后设计出来的服务可能千差万别，甚至有些时候你会看到架构或技术选型的回滚。《大型网站技术架构》这本书中提到了一个很有趣的例子————淘宝网的技术架构演化：一开始淘宝使用的技术栈就是简单的LAMP。而随着业务发展，由于PHP和MySQL的维护成本过高，淘宝逐渐的转向了Java与Oracle，使用Weblogic和Oracle虽然昂贵，但是却有大公司们保驾护航，大大降低的基础业务的开发成本。再到后来由于这些企业应用的成本上来了，淘宝便从复杂的Weblogic和EJB逐步的转向了Spring, JBoss和Jetty。而再到后来，淘宝技术慢慢成熟了之后，Oracle也不再是必须的了，于是又转回了MySQL。</p>
+<p>《微服务设计》这本书中提到了一个观点，我觉得说的非常好：</p>
+<blockquote>
+<p>“软件架构师和城市规划师更像，城市会不时的发生变化，而未来的变化很难预见，所以与其对所有变化的可能性进行预测，不如做一个允许变化的设计。”</p>
+</blockquote>
+<p>设计后台服务应该如同设计城市一样，根据当前的需求进行合理的规划并为后续的扩展留好足够的余地，然后伴随着业务的发展逐步的进行演进。在业务初期如果就使用一个非常复杂的方案反而会导致业务受阻，最后服务还没有上线，业务就已经死了……</p>
+<hr>
+<h2 id="高可调试性（debuggability）">3. 高可调试性（debuggability）</h2>
+<p>调试大神张银奎在《软件调试》这本书中提出了一个很重要但却经常被人忽略的概念：程序的可调试性。开发功能写代码可能确实是很开心，但是一旦发布之后出了问题就变成调试地狱。所以在开发的过程中，我们要时时刻刻注意保持我们服务的可调试性。</p>
+<p>这里我们只先讨论一下和可调试性相关的因素，在接下来的准备篇中，我们会更加具体的讨论实现时的方法论。</p>
+<h3 id="合理的指标数据（metrics）和日志（log）">3.1. 合理的指标数据（metrics）和日志（log）</h3>
+<p>“知己知彼，百战不殆”，后台服务扩展最关键的部分其实并不是扩展本身，而是数据收集，了解当前的业务状态远比扩展本身要重要。</p>
+<p>指标数据与日志是后台服务中最常用的调试方法了，由于线上服务非常忌讳在线调试，毕竟一旦加载调试器，服务也就随之中断了，所以我们一般都是通过观察指标数据的变化和阅读日志来进行调试，所以添加合理的指标数据和日志非常重要。我曾经就接手过一个服务，这个服务的实例规模巨大（上千万），但却几乎没有这些调试数据，最后这个服务就成了值班（Oncall）的恶梦。</p>
+<h3 id="测试是重构的前提">3.2. 测试是重构的前提</h3>
+<p>测试是保证服务在改动之后还能正常工作的最直接的方法。它不仅仅能帮助我们自己避免错误，还能保证我们的功能不会被后续的修改所破坏。《代码大全》中提到了一个关于缺陷修复很有意思的结论：发现错误的时间要尽可能接近引入该错误的时间，而一个缺陷存在的时间越长，消除它的代价就越高昂。其数据如下：</p>
+<table>
+<thead>
+<tr>
+<th>引入缺陷的时间（行）<br>检测到缺陷的时间 (列)<br>修复成本（内容）</th>
+<th>需求</th>
+<th>架构</th>
+<th>构建</th>
+<th>系统测试</th>
+<th>发布之后</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>需求</td>
+<td>1</td>
+<td>3</td>
+<td>5-10</td>
+<td>10</td>
+<td>10 - 100</td>
+</tr>
+<tr>
+<td>架构</td>
+<td>-</td>
+<td>1</td>
+<td>10</td>
+<td>15</td>
+<td>25 - 100</td>
+</tr>
+<tr>
+<td>构建</td>
+<td>-</td>
+<td>-</td>
+<td>1</td>
+<td>10</td>
+<td>10 - 25</td>
+</tr>
+</tbody>
+</table>
+<p>这个结论和其提供出来的数据和现实中开发的感受是如此的贴切，第一次读到的时候甚至让我觉得这不是在说废话么？可也正是这触目惊心的数据让我们不得不重视测试的重要性。一个问题如果在编码时引入而如果在系统测试中被发现，那么修复它的成本将是编码阶段的15倍，而发布之后才发现则可以达到25到100倍！</p>
+<p>所以，所有的改动，优化和扩展都需要能且经过测试！这也是为什么几乎所有讲软件开发思想的书都对测试乐此不疲的原因。</p>
+<p>同样，测试是也我们进行CI和CD的前提。读过《持续交付》这本书这本书的朋友肯定会记得：</p>
+<blockquote>
+<p>持续交付真正想要做的事情其实是为软件的发布创建一个可重复且可靠的过程，……，而这种可重复性和可靠性来自于以下两个原则：（1）几乎将所有事情自动化；（2）将构建、部署、测试和发布软件所需的东西全部纳入到版本控制管理之中。</p>
+</blockquote>
+<p>而如果缺少了测试，在持续交付中，自动化带来的部署速度的提高将带来巨大的灾难（参见<a target="_blank" rel="noopener" href="https://landing.google.com/sre/sre-book/chapters/emergency-response/#process-induced-emergency">《Google SRE》，第13章</a>）。</p>
+<h3 id="业务报警必不可少">3.3. 业务报警必不可少</h3>
+<p>业务报警是监控服务是否工作正常的另外一个常用手段，而即便在增加了测试之后，我们也不能忽略业务报警。</p>
+<h4 id="服务探针的局限性">3.3.1. 服务探针的局限性</h4>
+<p>为了进一步确认服务是正常工作的并及时的阻止问题随着自动化部署而扩散，很多系统都会使用服务探针定时扫描当前服务有没有响应，一旦探针扫描失败，则会将服务置为出错（Unhealthy）的状态。如果服务出错到达一定时间，而此时更新发布又正在进行中，自动化部署就会停止。</p>
+<p>虽然服务探针很好用，但是它也有其局限性：它很少能进行彻底的检查。由于大部分的服务探针都只是定时给当前服务发送一个请求看看响应是否正常，这个检查大多的很泛泛，但是问题却可能出现在任何地方，比如出乎意料的用户数据，隐藏很深的业务逻辑问题，升级过程中为注意到的接口兼容问题，这些都很难通过简单的探针反映出来，这个时候就必须要靠针对业务逻辑的设计的数据来进行报警了。</p>
+<h4 id="黑天鹅与马太效应">3.3.2. 黑天鹅与马太效应</h4>
+<p>另外一个需要业务报警的重要原因就是上面提到的我们的世界缺乏定常性了，测试全都通过了并不代表上线后就会一切正常。当服务大到一定规模之后，哪怕是小概率事件也会变为必然事件。另外当我们的业务变得越来越大之后，马太效应也会开始显现出来，谁也不知道明天会不会突然出现一个大客户来测试一下我们的系统，如果没有合理的监控和报警，那么谁也不知道线上的服务是否真的工作正常。</p>
+<h3 id="辅助调试工具">3.4. 辅助调试工具</h3>
+<p>当有了合理的数据，测试和报警的支持，一般我们都能够比较快的发现问题了，可是能很快的发现问题并不代表能很快的找到问题的原因。虽然我们可以使用日志来进行故障排查，但是日志是一把双刃剑，过少的日志会导致信息不足无法定位问题，而日志太多又会导致噪音太大，日志过期迅速而导致可调试的时间窗口变短等等的问题。这个时候，好的辅助调试工具就能很好的帮忙补齐这个缺口。</p>
+<hr>
+<h2 id="可灰度发布（金丝雀发布／Canary-Deployment）">4. 可灰度发布（金丝雀发布／Canary Deployment）</h2>
+<p>一旦达到了高可调试性，我们就可以开始建立并且自动化我们的发布流水线了。根据项目和发布目标的不同，我们可以选择使用持续交付（CD）或者使用固定的发布周期的方式来进行发布，而且必须能进行灰度发布。</p>
+<p>灰度发布（金丝雀发布）这一概念相信大家都不陌生，它有时候也叫作安全部署流程，它是定常性的又一应用，几乎每个后台组甚至客户端组都有属于自己的流程，比如首先发布到测试环境（Test），然后到预发布环境（PPE / Canary / Stage），然后到先行者环境（Pilot），最后到所有用户，一旦前一个环境出了问题，则停止发布到下一个环境，问题严重的则自动回滚。这个流程对故障排查非常有帮助，但是在实践时千万不要忘记：灰度发布必须以合理有效的测试和报警作为前提，不然这个流程就会沦为一个自我安慰的形式。</p>
+<hr>
+<h2 id="可回滚">5. 可回滚</h2>
+<p>可回滚也是一个非常重要的原则，如果不可回滚，那一旦新版本里存在问题发布出去之后就很难进行补救了。</p>
+<p>一般而言，对于单纯的计算型服务，那基本上都是默认可回滚的，唯一要注意的地方可能就是调用接口的兼容，影响回滚的大多都是和数据相关的升级，而一旦出现了不可回滚的操作，我们就需要对其进行拆分，把它变为可回滚的服务升级和无业务影响的垃圾清理。</p>
+<p>对于数据而言，一般来说，添加字段是可以回滚的，但是修改和删除字段则不行，在这个时候我们就应该使用上面的原则对其拆分。比如字段的修改就需要拆分成如下几步进行：</p>
+<ol>
+<li>添加新的数据字段（可回滚）</li>
+<li>改动代码逻辑，更新时同时写入老字段和新字段（可回滚）</li>
+<li>改动代码逻辑，读取时使用新字段（可回滚）</li>
+<li>改动代码逻辑，更新时不写入老字段（可回滚）</li>
+<li>再确认没有服务使用老字段之后，清理老的字段（不可回滚，但没有业务影响）</li>
+</ol>
+<p>如果想更加安全的话，我们还可以使用数据备份，让最后一步也实现可回滚。而当回滚做的较好了之后，我们便可以将其自动化，现在很多框架也都提供了这样的支持。</p>
+<hr>
+<h2 id="不要忘记细节">6. 不要忘记细节</h2>
+<p>软件开发是一个非常有意思的行业，我们一旦谈起架构就会想到几个方框和一些箭头简单的表述一下大致的流程，里面几乎看不到一点细节的影子。这种抽象的思维虽然能帮我们快速的理解一个系统，但是相信大家都听过一句话：“Devils are in the details”，千万不要忘记细节的重要性。很多时候底层提供的支持会决定部分上层的实现，所以在我们设计后台服务时，不要一上来就开始绘制大框架，花一点时间做技术调研。每一种技术都会有自己的思想，范式和限制，这直接决定了我们应该如何使用这些技术。在了解这些细节之后再开始设计服务，我们就能避免很多后续的问题。</p>
+<p>有一天，我打开了我家的房屋设计图，想看看我家房子的架构（architecture），结果我在里面看到了无数的细节，用的什么材料，钉子都在什么位置，木头和木头如何连接，固定桩的角度都是多少，开口具体是多大，甚至还有版本历史，等等等等。我当时就愣住了，然后才明白过来，在其他行业里面，所有的这些细节原来都是架构的一部分。</p>
+<p>所以，请把细节也当做架构的一部分来看待！表达的时候可以使用抽象思维帮助其他人理解，但是设计的时候一定不要忘记细节。</p>
+<hr>
+<h2 id="小结">7. 小结</h2>
+<p>关于原则篇我们就大概讨论这么多：业务驱动，让技术为业务服务；保持高可调试性，帮助我们定位和排查问题，这也是自动化的前提，比如CI和CD；可灰度发布，缩小影响范围；可回滚，让我们发布没有后顾之忧；最后，设计服务时不要忘记细节的重要性，“Devils are in the details”。</p>
+<p>这一篇我们只是大概讨论了一些原则和思想，后面我们会更加详细的讨论每一项具体的方法论，虽然只是个人粗浅经验的一些总结，但是希望对大家也能有所帮助。</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/backend-service-scale-1-principle/">后台服务扩展入门 —— 原则篇</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/backend-service-scale-1-principle/" target="_blank">后台服务扩展入门 —— 原则篇</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%90%8E%E5%8F%B0/" rel="tag"># 后台</a>
+              <a href="/tags/%E7%BD%91%E7%AB%99/" rel="tag"># 网站</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84/" rel="tag"># 架构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/use-azure-pipeline-to-build-npm-package/" rel="prev" title="使用Azure Pipeline来编译和发布npm包">
+                  <i class="fa fa-chevron-left"></i> 使用Azure Pipeline来编译和发布npm包
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-essential-learning-materials/" rel="next" title="Go语言学习笔记：学习资料汇总">
+                  Go语言学习笔记：学习资料汇总 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

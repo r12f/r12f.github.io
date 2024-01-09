@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="SONiC是微软Azure推出的一个开源的网络操作系统，它通过微服务的思想，将网络操作系统中各个服务容器化，并利用中心Redis数据库进行协作，使得每个服务都可以独立的开发、测试、部署、升级，大大的提高了网络操作系统的可靠性、可扩展性、可维护性。现在SONiC支持的交换机厂商也非常的多，包括：Arista、Broadcom、Cisco、Dell、Edgecore、Mellanox等等。然而，一台D">
+<meta property="og:type" content="article">
+<meta property="og:title" content="通过GNS3快速搭建本地SONiC Lab">
+<meta property="og:url" content="http://r12f.com/posts/sonic-local-lab-gns3/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="SONiC是微软Azure推出的一个开源的网络操作系统，它通过微服务的思想，将网络操作系统中各个服务容器化，并利用中心Redis数据库进行协作，使得每个服务都可以独立的开发、测试、部署、升级，大大的提高了网络操作系统的可靠性、可扩展性、可维护性。现在SONiC支持的交换机厂商也非常的多，包括：Arista、Broadcom、Cisco、Dell、Edgecore、Mellanox等等。然而，一台D">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-new-project.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-menu.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-select-image.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-image.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-done.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-console.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-ping.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-capture.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-capture-live.png">
+<meta property="article:published_time" content="2023-04-19T17:00:25.000Z">
+<meta property="article:modified_time" content="2023-04-20T00:00:25.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="SONiC">
+<meta property="article:tag" content="NOS">
+<meta property="article:tag" content="Switch">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-new-project.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/sonic-local-lab-gns3/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/sonic-local-lab-gns3/","path":"posts/sonic-local-lab-gns3/","title":"通过GNS3快速搭建本地SONiC Lab"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>通过GNS3快速搭建本地SONiC Lab | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85GNS3"><span class="nav-text">1. 安装GNS3</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96"><span class="nav-text">1.1. 安装依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85GNS3-2"><span class="nav-text">1.2. 安装GNS3</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87SONiC%E7%9A%84%E9%95%9C%E5%83%8F"><span class="nav-text">2. 准备SONiC的镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E9%95%9C%E5%83%8F"><span class="nav-text">3. 导入镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%BD%91%E7%BB%9C"><span class="nav-text">4. 创建网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%BD%91%E7%BB%9C"><span class="nav-text">5. 配置网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%93%E5%8C%85"><span class="nav-text">6. 抓包</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/sonic-local-lab-gns3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="通过GNS3快速搭建本地SONiC Lab | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          通过GNS3快速搭建本地SONiC Lab
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-04-19 10:00:25 / Modified: 17:00:25" itemprop="dateCreated datePublished" datetime="2023-04-19T10:00:25-07:00">2023-04-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/sonic-local-lab-gns3/" class="post-meta-item leancloud_visitors" data-flag-title="通过GNS3快速搭建本地SONiC Lab" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/sonic-local-lab-gns3/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/sonic-local-lab-gns3/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>SONiC是微软Azure推出的一个开源的网络操作系统，它通过微服务的思想，将网络操作系统中各个服务容器化，并利用中心Redis数据库进行协作，使得每个服务都可以独立的开发、测试、部署、升级，大大的提高了网络操作系统的可靠性、可扩展性、可维护性。现在SONiC支持的交换机厂商也非常的多，包括：Arista、Broadcom、Cisco、Dell、Edgecore、Mellanox等等。然而，一台DCN交换机的价格是非常昂贵的。如果你和我一样，想试一试SONiC，但是又不想花钱买一台SONiC的硬件设备，那么这篇文章就是为你准备的。本文会大概总结一下如何通过GNS3在本地搭建一个虚拟的SONiC的Lab，让你可以很快的在本地体验一把SONiC的基本功能。</p>
+<p>在本地运行SONiC的方法很好几种，比如docker + vswitch，p4软交换机等等，对于初次使用而言，用GNS3可能是最方便快捷的了，所以本文就以GNS3为例，介绍一下如何在本地搭建一个SONiC的Lab。那么，我们就开始吧！</p>
+<span id="more"></span>
+<h2 id="安装GNS3">1. 安装GNS3</h2>
+<p>首先，我们要先来安装一下GNS3。</p>
+<p><a target="_blank" rel="noopener" href="https://www.gns3.com/">GNS3，全称为Graphical Network Simulator 3，是一个图形化的网络仿真软件</a>。它支持多种不同的虚拟化技术，比如：QEMU、VMware、VirtualBox等等。这样，我们在等会搭建虚拟网络的时候，就不需要手动的运行很多命令，或者写脚本了，大部分的工作都可以通过图形界面来完成了。</p>
+<h3 id="安装依赖">1.1. 安装依赖</h3>
+<p>安装它之前，我们需要先安装几个其他的软件：docker, wireshark, putty, qemu, ubridge, libvirt和bridge-utils，已经装好的小伙伴可以自行跳过。</p>
+<p>首先是Docker，它们的安装过程，大家可以自己通过下面的传送门去安装：<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/">https://docs.docker.com/engine/install/</a></p>
+<p>其他的在ubuntu上安装都非常简单，只需要执行下面的命令就可以了。这里安装时要注意，ubridge和Wireshark的安装过程中会询问是不是要创建wireshark用户组来bypass sudo，这里一定要选择Yes。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils wireshark putty ubridge</span><br></pre></td></tr></table></figure>
+<p>安装好了之后，我们就可以来安装GNS3了。</p>
+<h3 id="安装GNS3-2">1.2. 安装GNS3</h3>
+<p>在Ubuntu上，GNS3的安装非常简单，只需要执行下面的命令就可以了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo add-apt-repository ppa:gns3/ppa</span><br><span class="line">sudo apt update                                </span><br><span class="line">sudo apt install gns3-gui gns3-server</span><br></pre></td></tr></table></figure>
+<p>然后把你的用户加入到如下的组中，这样GNS3就可以去访问docker，wireshark等功能而不用sudo了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> g <span class="keyword">in</span> ubridge libvirt kvm wireshark docker; <span class="keyword">do</span></span><br><span class="line">    sudo usermod -aG <span class="variable">$g</span> &lt;user-name&gt;</span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
+<p>如果你使用的不是Ubuntu，更详细的安装文档可以参考<a target="_blank" rel="noopener" href="https://docs.gns3.com/docs/getting-started/installation/linux/">他们的官方文档</a>。</p>
+<h2 id="准备SONiC的镜像">2. 准备SONiC的镜像</h2>
+<p>首先，我们需要一个SONiC的镜像。由于需要支持大量不同的厂商，而每个厂商的底层实现都不一样，所以最后每个厂商都会编译一个自己的镜像。这里因为我们是软件模拟交换机，所以我们需要使用基于VSwitch的镜像：sonic-vs.img.gz。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-buildimage">SONiC镜像的项目在这里</a>，虽然我们可以自己去编译，但是速度实在有点慢，所以为了节省时间，我们可以直接<a target="_blank" rel="noopener" href="https://sonic-build.azurewebsites.net/ui/sonic/pipelines/142/builds?branchName=master">去这里下载最新的镜像</a>。只要找一个最新的成功的Build就行，在Artifacts中找到sonic-vs.img.gz，下载就可以了。</p>
+<p>然后，我们来准备一下项目：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> --recurse-submodules https://github.com/sonic-net/sonic-buildimage.git</span><br><span class="line"><span class="built_in">cd</span> sonic-buildimage/platform/vs</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将下载的镜像放在这个目录下，然后运行下面这个命令进行解压缩。</span></span><br><span class="line">gzip -d sonic-vs.img.gz</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下面这个命令会生成GNS3的镜像配置文件</span></span><br><span class="line">./sonic-gns3a.sh</span><br></pre></td></tr></table></figure>
+<p>执行完成之后，我们运行<code>ls</code>命令就可以看到我们需要的镜像文件了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">r12f@r12f-svr:~/code/sonic/sonic-buildimage/platform/vs</span><br><span class="line">$ l</span><br><span class="line">total 2.8G</span><br><span class="line">...</span><br><span class="line">-rw-rw-r--  1 r12f r12f 1.1K Apr 18 16:36 SONiC-latest.gns3a  <span class="comment"># &lt;= 这个是GNS3的镜像配置文件</span></span><br><span class="line">-rw-rw-r--  1 r12f r12f 2.8G Apr 18 16:32 sonic-vs.img        <span class="comment"># &lt;= 这个是我们解压出来的镜像</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="导入镜像">3. 导入镜像</h2>
+<p>现在，在命令行里面输入<code>gns3</code>，就可以启动GNS3了。如果你是ssh到另外一台机器上，可以试着启用X11转发，这样就可以在远程运行GNS3，但是图形界面显示在本地了。我就是这样，将GNS3运行在了远程的服务器上，但是图形界面通过MobaXterm显示在了本地的Windows机器上。</p>
+<p>运行起来之后，GNS3会让我们创建一个项目，很简单，填个目录地址就好。如果你是使用的X11转发，请注意，这个目录是在你远程服务器上，而不是本地。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-new-project.png" alt></p>
+<p>然后，我们就可以通过<code>File -&gt; Import appliance</code>来导入我们刚刚生成的镜像了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-menu.png" alt></p>
+<p>选择我们刚刚生成的<code>SONiC-latest.gns3a</code>镜像配置文件，然后点击<code>Next</code>。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-select-image.png" alt></p>
+<p>这个时候就可以看到我们的ji镜像了，点击<code>Next</code>。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-image.png" alt></p>
+<p>这个时候会开始导入镜像，这个过程可能会比较慢，因为GNS3需要将镜像转换成qcow2格式，放入我们的项目目录中。导入完成之后，我们就可以看到我们的镜像了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-import-appliance-done.png" alt></p>
+<p>好的！完成！</p>
+<h2 id="创建网络">4. 创建网络</h2>
+<p>好了！现在一切就绪，我们还是创建一个虚拟的网络吧！</p>
+<p>GNS3的图形界面非常的好用，基本上就是打开侧边栏，把交换机拖进来，把VPC拖进来，然后把线连起来就可以了。连接好之后记得点上面的Play按钮开始网络模拟。这里我们就不多说了，直接上图。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-console.png" alt></p>
+<p>接着，在交换机上点击右键，选择<code>Custom Console</code>，再选择Putty，就可以打开我们的上面看到的交换机的Console了。这里，SONiC的默认用户名和密码是<code>admin</code>和<code>YourPaSsWoRd</code>。登录进去之后，我们就可以运行熟悉的命令，用<code>show interfaces status</code>或者<code>show ip interface</code>来查看网络的状态了。我们这里也可以看到，前面两个我们连接好了的Interface的状态都是<code>up</code>的了。</p>
+<p>除了这种简单的网络以外，GNS3还可以创建非常复杂的网络，比如多层ECMP结构等等。这里就不多说了，有兴趣的可以自己去试一试~</p>
+<h2 id="配置网络">5. 配置网络</h2>
+<p>SONiC软交换机下，默认的端口使用的是10.0.0.x的子网（如下），而且都是eth pair：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">admin@sonic:~$ show ip interfaces</span><br><span class="line">Interface    Master    IPv4 address/mask    Admin/Oper    BGP Neighbor    Neighbor IP</span><br><span class="line">-----------  --------  -------------------  ------------  --------------  -------------</span><br><span class="line">Ethernet0              10.0.0.0/31          up/up         ARISTA01T2      10.0.0.1</span><br><span class="line">Ethernet4              10.0.0.2/31          up/up         ARISTA02T2      10.0.0.3</span><br><span class="line">Ethernet8              10.0.0.4/31          up/up         ARISTA03T2      10.0.0.5</span><br></pre></td></tr></table></figure>
+<p>这里，我们比较方便的做法是创建一个小的vlan，把我们的端口都包在里面（我们这里用的是Ethernet4和Ethernet8）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Remove old config</span></span><br><span class="line">sudo config interface ip remove Ethernet4 10.0.0.2/31</span><br><span class="line">sudo config interface ip remove Ethernet8 10.0.0.4/31</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create VLAN with id 2</span></span><br><span class="line">sudo config vlan add 2</span><br><span class="line"></span><br><span class="line"><span class="comment"># Add ports to VLAN</span></span><br><span class="line">sudo config vlan member add -u 2 Ethernet4</span><br><span class="line">sudo config vlan member add -u 2 Ethernet8</span><br><span class="line"></span><br><span class="line"><span class="comment"># Add IP address to VLAN</span></span><br><span class="line">sudo config interface ip add Vlan2 10.0.0.0/24</span><br></pre></td></tr></table></figure>
+<p>这样，我们的vlan就创建好了，我们可以通过<code>show vlan brief</code>来查看一下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">admin@sonic:~$ show vlan brief</span><br><span class="line">+-----------+--------------+-----------+----------------+-------------+-----------------------+</span><br><span class="line">|   VLAN ID | IP Address   | Ports     | Port Tagging   | Proxy ARP   | DHCP Helper Address   |</span><br><span class="line">+===========+==============+===========+================+=============+=======================+</span><br><span class="line">|         2 | 10.0.0.0/24  | Ethernet4 | untagged       | disabled    |                       |</span><br><span class="line">|           |              | Ethernet8 | untagged       |             |                       |</span><br><span class="line">+-----------+--------------+-----------+----------------+-------------+-----------------------+</span><br></pre></td></tr></table></figure>
+<p>然后，我们就可以给所有的主机配置一个10.0.0.x的IP地址了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># VPC1</span></span><br><span class="line">ip 10.0.0.2 255.0.0.0 10.0.0.1</span><br><span class="line"></span><br><span class="line"><span class="comment"># VPC2</span></span><br><span class="line">ip 10.0.0.3 255.0.0.0 10.0.0.1</span><br></pre></td></tr></table></figure>
+<p>好的，现在我们来Ping一下吧！</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-ping.png" alt></p>
+<p>通了！</p>
+<h2 id="抓包">6. 抓包</h2>
+<p>上面，我们安装GNS3前，我们特意安装了Wireshark，这样我们就可以在GNS3里面抓包了。我们只需要右键点击图中我们想抓包的Link上，然后选择<code>Start capture</code>，就可以开始抓包了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-capture.png" alt></p>
+<p>稍等一下，Wireshark就会自动打开，实时的显示所有的包，非常的方便：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-19-sonic-local-lab-gns3/gns3-capture-live.png" alt></p>
+<hr>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/sonic-local-lab-gns3/" target="_blank">通过GNS3快速搭建本地SONiC Lab</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/SONiC/" rel="tag"># SONiC</a>
+              <a href="/tags/NOS/" rel="tag"># NOS</a>
+              <a href="/tags/Switch/" rel="tag"># Switch</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/interrupts-2-local-apic/" rel="prev" title="漫谈中断（二）：Local APIC">
+                  <i class="fa fa-chevron-left"></i> 漫谈中断（二）：Local APIC
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/sonic-1-intro/" rel="next" title="SONiC学习笔记（一）：概述与安装">
+                  SONiC学习笔记（一）：概述与安装 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

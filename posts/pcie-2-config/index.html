@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在上一篇中，我们简单的介绍了PCIe的总体架构，设备树和主要组成部分，并且了解了如何通过lspci命令和Windows下的设备管理器来查看PCIe的系统结构。这一篇，我们来更加深入的看看PCIe中的设备相关的信息，如配置空间，来帮助我们了解PCIe和这些命令的工作原理。 1. It is all about memory 理解PCIe的关键，我个人觉得是理解内存的访问。这里先小小的剧透一下，PCI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PCIe（二） —— 配置空间">
+<meta property="og:url" content="http://r12f.com/posts/pcie-2-config/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在上一篇中，我们简单的介绍了PCIe的总体架构，设备树和主要组成部分，并且了解了如何通过lspci命令和Windows下的设备管理器来查看PCIe的系统结构。这一篇，我们来更加深入的看看PCIe中的设备相关的信息，如配置空间，来帮助我们了解PCIe和这些命令的工作原理。 1. It is all about memory 理解PCIe的关键，我个人觉得是理解内存的访问。这里先小小的剧透一下，PCI">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/mmu.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-layout.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-common.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-address-mapping.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-type-0.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-bar-address.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-bar-address-after-init.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-type-1.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-enumeration.png">
+<meta property="article:published_time" content="2023-05-23T23:53:51.000Z">
+<meta property="article:modified_time" content="2023-05-24T06:53:51.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="pcie">
+<meta property="article:tag" content="hardware">
+<meta property="article:tag" content="bus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/mmu.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pcie-2-config/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pcie-2-config/","path":"posts/pcie-2-config/","title":"PCIe（二） —— 配置空间"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PCIe（二） —— 配置空间 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#It-is-all-about-memory"><span class="nav-text">1. It is all about memory</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E5%A4%87%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4"><span class="nav-text">2. 设备配置空间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4%E7%9A%84%E5%88%86%E9%85%8D%E4%B8%8E%E8%AE%BF%E9%97%AE"><span class="nav-text">3. 配置空间的分配与访问</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Type-0%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4"><span class="nav-text">4. Type 0配置空间</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Type-0%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BB%93%E6%9E%84"><span class="nav-text">4.1. Type 0配置空间的结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BAR%EF%BC%88Base-Address-Register%EF%BC%89"><span class="nav-text">4.2. BAR（Base Address Register）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Type-1%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4%E4%B8%8EPCIe%E9%81%8D%E5%8E%86"><span class="nav-text">5. Type 1配置空间与PCIe遍历</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E8%B7%AF%E7%94%B1"><span class="nav-text">6. 消息路由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%A9%BA%E9%97%B4%E8%AE%BF%E9%97%AE%E6%B5%81%E7%A8%8B"><span class="nav-text">7. 配置空间访问流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">8. 总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">9. 参考资料</span></a></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pcie-2-config/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PCIe（二） —— 配置空间 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PCIe（二） —— 配置空间
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-05-23 16:53:51 / Modified: 23:53:51" itemprop="dateCreated datePublished" datetime="2023-05-23T16:53:51-07:00">2023-05-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pcie-2-config/" class="post-meta-item leancloud_visitors" data-flag-title="PCIe（二） —— 配置空间" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pcie-2-config/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pcie-2-config/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在<a href="/posts/pcie-1-basics/">上一篇中，我们简单的介绍了PCIe的总体架构，设备树和主要组成部分</a>，并且了解了如何通过<code>lspci</code>命令和Windows下的设备管理器来查看PCIe的系统结构。这一篇，我们来更加深入的看看PCIe中的设备相关的信息，如配置空间，来帮助我们了解PCIe和这些命令的工作原理。</p>
+<h2 id="It-is-all-about-memory">1. It is all about memory</h2>
+<p>理解PCIe的关键，我个人觉得是理解内存的访问。这里先小小的剧透一下，PCIe中主要定义了4种请求：Memory Transaction，I/O request，Configuration Space Access和Message。除了最后一种以外，其余三种全都是基于内存访问的，甚至连中断发起都是基于内存访问的，所以如果我们能很好的理解内存的访问，我们就能很好的理解PCIe。</p>
+<span id="more"></span>
+<p>学过操作系统的小伙伴对虚拟内存这个概念肯定不陌生。在现代的操作系统中，当CPU想去访问一段内存的时候，它访问的地址并不是真实内存的物理地址，而是一个虚拟地址，这个地址需要经过MMU进行地址转换，将其变为物理地址之后才能通过总线去物理内存拿到真实的数据 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Memory_management_unit">[2]</a>。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/mmu.png" alt></p>
+<p>而PCIe中基于内存访问的请求的实现，也正是利用类似的机制：</p>
+<ul>
+<li>PCIe中的每一个设备，无论是Endpoint（Type 0）还是Switch（Type 1），都会分配自己的内存地址空间，而这个地址空间会被映射到系统的<strong>物理地址空间</strong>中，并最终映射到虚拟内存中去。</li>
+<li>当CPU发起一个内存读写请求的时候，如果这个地址经过了MMU的翻译，最后的<strong>物理地址</strong>落到了PCIe某个设备的内存空间之后，就会触发Root Complex将其转换为PCIe的请求，并通过PCIe总线发给对应的设备。</li>
+</ul>
+<p>“但是等等，你说物理地址？？？物理地址不应该就是物理内存的地址吗？”嗯，没错，这里就是物理地址，物理地址空间中不仅仅有物理内存，还有PCIe设备的内存，在访问物理地址的时候，处理器会将请求发给内存控制器，内存控制器会根据总线上各个Root Complex的Host Bridge的配置，将其传递给DRAM或者对应的Root Complex，最终交给对应的PCIe的设备。</p>
+<p>然而，系统是如何知道哪些地址的访问需要转换为PCIe的请求，最后又发送给哪些设备呢？这就需要我们来看看PCIe的配置空间了。</p>
+<h2 id="设备配置空间">2. 设备配置空间</h2>
+<p>在PCIe中，每个设备都会拥有一块独立的配置空间（Configuuraiton Space），这块空间的大小是4096字节，其中头部和PCI3.0保持兼容，有64个字节，这块空间的大小是固定的，不会随着设备的类型或者系统的重启而改变。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-layout.png" alt></p>
+<p><a href="/posts/pcie-1-basics/">上一章我们提到过，PCIe中有两类设备：Type 0表示终端设备，和Type 1表示Switch</a>。由于职责的不同，其配置空间的内容也不同。但是为了保持一致，方便管理，这两类设备的配置有很多相同的部分，比如配置空间的头部，如下图所示：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-common.png" alt></p>
+<p>除了我们上面提到的Vector ID和Device ID，这个头部还包含了很多其他的字段。由于太多细节对我们前期理解PCIe并没有太多帮助，我们这里就不一一介绍了，感兴趣小伙伴可以移步PCIe的规范文档7.5.1.1 Type 0/1 Common Configuration Space进行查看 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>。</p>
+<h2 id="配置空间的分配与访问">3. 配置空间的分配与访问</h2>
+<p>在系统启动时，BIOS会通过ACPI（Advanced Configuration and Power Interface）找到所有的PCIe设备，并为其分配配置空间，映射到物理地址空间中，然后通过ECAM（Enhanced Configuration Access Mechanism）转交给操作系统。我们通过<code>acpidump</code>对MCFG表进行导出，然后使用<code>iasl</code>就可以查看到ECAM的基址了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Dump MCFG table from ACPI as binary file: mcfg.dat</span></span><br><span class="line">$ sudo acpidump -n MCFG -b</span><br><span class="line"></span><br><span class="line"><span class="comment"># Disassemble MCFG table</span></span><br><span class="line">$ iasl ./mcfg.dat; <span class="built_in">cat</span> mcfg.dsl</span><br><span class="line">...</span><br><span class="line">[000h 0000   4]                    Signature : <span class="string">&quot;MCFG&quot;</span>    [Memory Mapped Configuration table]</span><br><span class="line">...</span><br><span class="line">[02Ch 0044   8]                 Base Address : 00000000E0000000</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>而为了方便访问，PCIe使用BDF来构造每个配置空间相对于ECAM的偏移。由于每个空间都是4096个字节，所以PCIe将BDF向左移位了12位，对其进行预留。其地址映射关系如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-address-mapping.png" alt></p>
+<p>打个比方，如果某个设备的BDF是<code>46:00.1</code>，ECAM基址是0xE0000000，那么其配置空间起始地址就是：<code>0xE0000000 + (0x46 &lt;&lt; 20) | (0x00 &lt;&lt; 15) | (0x01 &lt;&lt; 12) = 0xE46001000</code>。或者简单的记忆就是BDF的Hex后面跟三个0。我们这里也可以通过<code>lspci</code>和<code>/dev/mem</code>进行直接的物理内存访问来验证：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -s 46:00.1  -nn</span><br><span class="line">46:00.1 Ethernet controller [0200]: Broadcom Inc. and subsidiaries NetXtreme BCM5720 Gigabit Ethernet PCIe [14e4:165f]</span><br><span class="line"></span><br><span class="line">$ sudo hexdump -x --skip 0xe4601000 /dev/mem | <span class="built_in">head</span></span><br><span class="line">e4601000    14e4    165f    0406    0010    0000    0200    0010    0080</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这段内存的前面几个数字<code>14e4</code>和<code>165f</code>就是这个设备的Vendor ID和Device ID，这和我们通过<code>lspci</code>看到的完全一致：<code>[14e4:165f]</code>。</p>
+<p>当然，每次这样进行计算和转换来查看原始的配置空间是非常麻烦的，所以我们可以通过<code>setpci</code>来直接访问：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ setpci -s 46:00.1 00.w</span><br><span class="line">14e4</span><br><span class="line"></span><br><span class="line">$ setpci -s 46:00.1 02.w</span><br><span class="line">165f</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>使用<code>setpci</code>的时候需要注意：无论是读取和写入，请务必按照目标字段的长度来进行输入，PCIe的内存地址的IO并不一定是内存的读取，而有可能被转换成PCIe的请求，如果长度不对，则很有可能出现错误。</p>
+</blockquote>
+<h2 id="Type-0配置空间">4. Type 0配置空间</h2>
+<p>接下来，我们来看看每一类设备的配置空间。由于PCIe上大部分我们使用的设备都是Type 0的终端设备，我们就先从Type 0开始吧！</p>
+<h3 id="Type-0配置空间的结构">4.1. Type 0配置空间的结构</h3>
+<p>Type 0设备的配置空间如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-type-0.png" alt></p>
+<p>和公共字段相比，Type 0的配置空间多了一些字段：</p>
+<ul>
+<li><strong>Subsystem ID和Subsystem Vendor ID</strong>：顾名思义，用来帮助每个设备厂商标识更细粒度设备信息</li>
+<li><strong>Cardbus CIS Pointer Register</strong>：已经废弃，以前用于<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PC_Card">PC-Card</a>中</li>
+<li><strong>Expansion ROM Base Address Register</strong>：用于描述设备的ROM的地址，这里和我们的主要内容关系不大，就不过多展开了</li>
+</ul>
+<h3 id="BAR（Base-Address-Register）">4.2. BAR（Base Address Register）</h3>
+<p>除了上面这些字段，其中最重要的就是BAR了。在Type 0的配置空间中，BAR区域有24个字节，可以保存6个指针/地址，每一个都可以用来描述一个不同的内存空间或者IO空间的地址和范围。</p>
+<p>为了描述不同类型的地址空间，这里的指针不是单纯的指针，而有着自己的结构，如下 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a> <a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">[3]</a> ：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-bar-address.png" alt></p>
+<p>其中：</p>
+<ul>
+<li>最低位Bit 0：是一个标志位，用于描述地址空间的类型，0表示内存空间，1表示IO空间</li>
+<li>Memory Space中的Bit [2:1] - Type：用于描述内存空间的类型，00表示32位地址空间，10表示64位地址空间</li>
+<li>Memory Space中的Bit 3 - Prefetchable：用于描述内存空间是否支持预取，0表示不支持，1表示支持。如果一段内存空间支持预取，它意味着读取时不会产生任何副作用，所以CPU可以随时将其预取到DRAM中。而如果预取被启用，在读取数据时，内存控制器也会先去DRAM查看是否有缓存。当然，这是一把双刃剑，如果数据本身不支持预取，那么除了可能导致数据不一致，多一次DRAM的查询还会导致速度下降。</li>
+</ul>
+<p>另外也许你会觉得很奇怪，一个32位的空间，又是如何又表示地址又表示范围呢？这里其实和BAR的初始化过程有关。BAR的寄存器初始化主要有三步 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>（7.5.1.2.1 Base Address Registers）：</p>
+<ol>
+<li>BIOS将全1的地址写入BAR寄存器，这样会导致BAR寄存器的值被重置，并被设备重新写入初始值。这个初始值是一个地址，表示如果将这个BAR寄存器指向的内存放在物理内存的最后，其地址为多少。比如，如果我们需要4KB的内存空间，那么这个地址就是0xFFFFF000，当然这里还需要加上最低几位表示类型的Flag。另外，如何这个空间不可用，那么返回全0。</li>
+<li>BIOS读取BAR寄存器的值，并去除掉最后几位Flag，然后将其取反并加1，求出其大小。比如0xFFFFF000，取反之后就是0x00000FFF，加1之后就是0x00001000，也就是4KB。</li>
+<li>BIOS接着进行真正的地址分配和映射，并将这个新的地址重新写入BAR。这个时候设备没有权利拒绝这个修改，并且也不能再对这个地址进行任何的更改了，不然系统可能会整个崩溃。</li>
+</ol>
+<p>在这样的握手之后，我们就通过BAR中这一个地址大小的空间，又表示了地址，又传递了大小了。</p>
+<p>对于BAR空间中保存的所有的地址，我们都可以通过<code>lspci</code>来查看到：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ sudo lspci -s 81:00.0 -nn -vv</span><br><span class="line">81:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104 [GeForce RTX 2080] [10de:1e82] (rev a1) (prog-if 00 [VGA controller])</span><br><span class="line">        Subsystem: Gigabyte Technology Co., Ltd TU104 [GeForce RTX 2080] [1458:37c1]</span><br><span class="line">        ...</span><br><span class="line">        Region 0: Memory at f0000000 (32-bit, non-prefetchable) [size=16M]</span><br><span class="line">        Region 1: Memory at 20030000000 (64-bit, prefetchable) [size=256M]</span><br><span class="line">        Region 3: Memory at 20040000000 (64-bit, prefetchable) [size=32M]</span><br><span class="line">        Region 5: I/O ports at b000 [size=128]</span><br><span class="line">        ...</span><br></pre></td></tr></table></figure>
+<p>从上面我们可以看到，这块显卡中有4个地址空间，三块是内存空间，一块是I/O空间。Region的编号表示其地址在BAR中间的偏移，比如Region 1就是BAR中的第二个DWORD，Region 3就是BAR中的第4个DWORD（Region 1是64位，所以需要占用8个字节），以此类推。这里我们也可以把原始的物理内存dump出来，进行验证。这里我把不同的地址，用不同的颜色标记了出来：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-bar-address-after-init.png" alt></p>
+<h2 id="Type-1配置空间与PCIe遍历">5. Type 1配置空间与PCIe遍历</h2>
+<p>接下来我们来看看Type 1设备，也就是Switch，的配置空间。它的配置空间和Type 0配置空间有着很大的不同。虽然我们可以看到它们大小是一样的，但是其中BAR空间和设备信息的字段变成了很多的地址信息，如下 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-configuration-space-header-type-1.png" alt></p>
+<p>这些改动的原因是因为作为Switch，它并不需要也不会实现特定的功能，它的作用就是为PCIe的消息提供路由转发的机制，所以中间所有的字段几乎都变成了和路由转发相关的地址信息。</p>
+<ul>
+<li><strong>Primary Bus Number / Secondary Bus Number / Subordinate Bus Number</strong>：用于基于BDF的转发</li>
+<li><strong>Memory Base / Memory Limit</strong>：用于基于内存空间地址的转发</li>
+<li><strong>Prefetchable Memory Base (Upper) / Prefetchable Memory Limit (Upper)</strong>：也是用于基于内存空间地址的转发，不过是Prefetchable的地址</li>
+<li><strong>IO Base / IO Limit</strong>：用于基于IO空间地址的转发</li>
+</ul>
+<p>然而，说到路由转发，一个很奇怪的问题就出现了：为什么我们没有在配置空间中看到我们网络交换机中的那种复杂的路由表呢？这其实和PCIe如何进行ID和地址的分配有关，这个过程叫做<strong>PCIe的遍历（PCIe Enumeration）</strong>。我们这里就用下面这张图来说明一下这个过程是如何进行的：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-23-pcie-2-config/pcie-enumeration.png" alt></p>
+<p>整个PCIe的遍历过程其实是一个简单的DFS和线段树，拿上图的BDF来举例子，每一个Bridge中都保存着三个用于路由的关键信息：</p>
+<ul>
+<li><strong>Primary Bus Number（Pri）</strong>：这个Bridge所在的Bus Number，也就是它的上游连接的Bus Number</li>
+<li><strong>Secondary Bus Number（Sec）</strong>：这个Bridge所连接的下一个Bridge的Bus Number</li>
+<li><strong>Subordinate Bus Number（Sub）</strong>：这个Bridge所连接的下游所有的Bus的最大的Bus Number</li>
+</ul>
+<p>这些信息形成了一个递归的结构来帮助我们进行基于BDF进行路由，而PCIe的遍历就是来建立这个递归的结构。我们来看看上图中的遍历过程：</p>
+<ol>
+<li>首先，我们从Root Complex的Host Bridge出发。Host Bridge略有不同，因为他的上游没有连接任何总线，所以没有Pri，它的下游连接的是Root Complex中的总线，也就是Bus 0，所以我们的遍历从Bus 0开始，此时Host Bridge中的Sec是0。另外，虽然此时Sub未知，但是为了安全，在向下遍历的过程中，我们会把Sub设置为最大值，也就是0xFF，这样即便是出错，我们也不会出现无法路由的情况。</li>
+<li>然后，我们遍历到了Root Complex中的第一个Bridge，很明显它的Pri是0。由于桥接的原因，它的下游总线的Bus Number要保证唯一，于是我们加1，所以它的Sec是1，同样Sub还是改为0xFF。</li>
+<li>然后，我们继续递归，到了第一个Switch的Upstream Bridge，因为它所连接的Bus Number是1，所以它的Pri是1，而同理，它的下游会连接到它的内部总线，于是需要把Bus Number再加1，变成2，于是Sec为2。</li>
+<li>继续递归到第一个Downstream Bridge，同样它的下游的Bus Number需要加一，于是Pri为2，Sec为3。</li>
+<li>继续递归，到了第一个Endpoint，它的下游没有任何设备，所以开始回溯。</li>
+<li>回到了步骤4所在的Bridge，此时最大的Bus Number为3，所以Sub更新为3，最后Pri为3，Sec为3，Sub为3。</li>
+<li>同理，第二个Bridge的Pri为3，Sec为4，Sub为4。</li>
+<li>然后回到步骤3访问的Bridge，此时最大的Bus Number为4，所以Sub更新为4，最后Pri为1，Sec为2，Sub为4。</li>
+<li>依次类推，直到所有的设备完成。</li>
+</ol>
+<p>等所有的步骤结束，我们就会得到上面这张图中对应的分配了！类似的，内存的空间，IO的地址空间，Prefetchable的地址空间，都会进行类似的遍历和分配，然后把最后合并的区间保存在上游的配置空间中，这样大家应该就理解了为什么配置空间中只需要保存一个区间就可以进行路由了，而不需要保存复杂的路由表了。</p>
+<blockquote>
+<p>另外，PCIe的热插拔其实就是靠在遍历过程中预留更多的Bus Number来实现的，这样就可以在不影响已有设备的情况下，插入新的设备了。</p>
+</blockquote>
+<h2 id="消息路由">6. 消息路由</h2>
+<p>现在，有了上面的路由信息，我们就可以很轻松的来对PCIe的消息进行路由了！它其实就是一个非常简单的线段树，我们假设需要将一个消息从CPU发给BDF为<code>04:00.0</code>的设备，那么其路由过程如下：</p>
+<ol>
+<li>首先，CPU会请求Host Bridge产生消息，然后由于Bus 4在第一个Bridge的Sec和Sub之间，Root Complex会将这个消息通过这个Bridge转发出去。</li>
+<li>然后继续递归，这个消息将通过Bus 1传递给下游Switch中的连接上游总线的Bridge。而这个Switch会来检查它下游所有Bridge的配置，最后发现Bus 4在它的第二个下游Bridge的Sec和Sub之间，于是这个Switch会将这个消息通过这个Bridge转发出去。</li>
+<li>消息经过Bus 4到达Function <code>04:00.0</code>。</li>
+</ol>
+<h2 id="配置空间访问流程">7. 配置空间访问流程</h2>
+<p>为了总结，我们就从CPU出发，用对配置空间的读请求做一个例子，来对整体的流程来一个总结吧！</p>
+<ol>
+<li>首先，CPU执行内存访问指令来读取虚拟内存中映射的，在ECAM中的，某个配置空间的内容。比如：<code>mov ax, [0x10e8100000]</code>。</li>
+<li>然后，这个读请求的地址经过MMU，查询页表得到物理内存的地址。假设，这个物理地址是BDF为 <code>81:00.0</code> 的设备的配置空间地址：<code>0xe8100000</code>。</li>
+<li>这个读请求会被发送给Memory Controller，Memory Controller检查这个地址之后，发现这个地址不属于DRAM，于是转发给对应的PCIE控制器，到Root Complex中。</li>
+<li>Root Complex的Host Bridge收到这个请求，发现这个请求属于设备的配置空间，于是将这个请求转换为一个配置空间的读请求（请求名称叫CfgR0，具体的结构后面会介绍），地址是BDF <code>81:00.0</code>，Offset是0，长度是2个字节，并利用BDF开始路由。</li>
+<li>Root Complex根据所有连接到其上面的设备和桥的配置空间里的配置，将这个请求转发给对应的设备。如果是设备本身就检查Device Number和Function Number，如果是桥，就检查Secondary Bus Number和Subordinate Bus Number，然后进行递归的转发。</li>
+<li>最后，请求到达设备。</li>
+</ol>
+<p>数据返回的流程和请求的流程非常类似，只不过是从设备出发，返回给CPU，这里就不再赘述了。</p>
+<h2 id="总结">8. 总结</h2>
+<p>好了，这一篇我们把配置空间的结构，分配和访问，都大概总结了一遍，并且还介绍了它们的头部字段和这些字段的意义，包括BAR和消息路由的原理。之后，如果有时间，我们会继续来探索PCIe的数据报文的结构和传输等等。</p>
+<h1>9. 参考资料</h1>
+<ul>
+<li>[1]: <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">PCI Express Base Specification</a></li>
+<li>[2]: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Memory_management_unit">Memory Management Unit</a></li>
+<li>[3]: <a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">OSDev WIKI - PCI</a></li>
+<li>[4]: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-introduction-basics-paper.pdf">White Paper: Introduction to Intel® Architecture</a></li>
+<li>[5]: <a target="_blank" rel="noopener" href="https://www.mindshare.com/files/resources/MindShare_Intro_to_PCIe.pdf">Mindshare - An Introduction to PCI Express</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-4-phy/">PCIe（四）—— 物理层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-3-tl-dll/">PCIe（三）—— PCIe协议栈，事务层和数据链路层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-2-config/">PCIe（二） —— 配置空间</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-1-basics/">PCIe（一） —— 基础概念与设备树</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pcie-2-config/" target="_blank">PCIe（二） —— 配置空间</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pcie/" rel="tag"># pcie</a>
+              <a href="/tags/hardware/" rel="tag"># hardware</a>
+              <a href="/tags/bus/" rel="tag"># bus</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/pcie-1-basics/" rel="prev" title="PCIe（一） —— 基础概念与设备树">
+                  <i class="fa fa-chevron-left"></i> PCIe（一） —— 基础概念与设备树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/pcie-3-tl-dll/" rel="next" title="PCIe（三）—— PCIe协议栈，事务层和数据链路层">
+                  PCIe（三）—— PCIe协议栈，事务层和数据链路层 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

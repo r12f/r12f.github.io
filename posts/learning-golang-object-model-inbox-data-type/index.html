@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="也许是从C++转过来的习惯，学习一门语言，我总是比较喜欢先弄明白它的对象模型，所以自己就做了一些简单的实验，看看Go的对象模型～  1. 前置准备 为了查看对象的内存布局，我们这里先写一个非常简单的小函数，利用反射递归地遍历对象的所有成员，然后输出其内存位置，从而了解其在内存中的真实状态。 123456789101112131415161718192021222324252627func Prin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言学习笔记：深入对象模型之内置类型">
+<meta property="og:url" content="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="也许是从C++转过来的习惯，学习一门语言，我总是比较喜欢先弄明白它的对象模型，所以自己就做了一些简单的实验，看看Go的对象模型～  1. 前置准备 为了查看对象的内存布局，我们这里先写一个非常简单的小函数，利用反射递归地遍历对象的所有成员，然后输出其内存位置，从而了解其在内存中的真实状态。 123456789101112131415161718192021222324252627func Prin">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-03-learning-golang-object-model-inbox-data-type/function-variable-pointer.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-03-learning-golang-object-model-inbox-data-type/function-variable-closure.png">
+<meta property="article:published_time" content="2021-01-03T20:41:02.000Z">
+<meta property="article:modified_time" content="2021-01-04T04:41:02.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-03-learning-golang-object-model-inbox-data-type/function-variable-pointer.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-golang-object-model-inbox-data-type/","path":"posts/learning-golang-object-model-inbox-data-type/","title":"Go语言学习笔记：深入对象模型之内置类型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Go语言学习笔记：深入对象模型之内置类型 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E5%87%86%E5%A4%87"><span class="nav-text">1. 前置准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%B1%BB%E5%9E%8B"><span class="nav-text">2. 基础类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%8D%E5%90%88%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="nav-text">3. 复合数据类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E7%BB%84"><span class="nav-text">3.1. 数组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slice"><span class="nav-text">3.2. Slice</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%90%86%E8%A7%A3Go%E7%9A%84%E5%BC%95%E7%94%A8%E7%B1%BB%E5%9E%8B"><span class="nav-text">3.2.1. 理解Go的引用类型</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Map"><span class="nav-text">3.3. Map</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Channel"><span class="nav-text">4. Channel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E5%8F%98%E9%87%8F"><span class="nav-text">5. 函数变量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E6%8C%87%E9%92%88%EF%BC%88Function-Pointer%EF%BC%89"><span class="nav-text">5.1. 函数指针（Function Pointer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AD%E5%8C%85%EF%BC%88Closure%EF%BC%89"><span class="nav-text">5.2. 闭包（Closure）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-text">6. 结论</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Go语言学习笔记：深入对象模型之内置类型 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go语言学习笔记：深入对象模型之内置类型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-01-03 12:41:02 / Modified: 20:41:02" itemprop="dateCreated datePublished" datetime="2021-01-03T12:41:02-08:00">2021-01-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-golang-object-model-inbox-data-type/" class="post-meta-item leancloud_visitors" data-flag-title="Go语言学习笔记：深入对象模型之内置类型" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-golang-object-model-inbox-data-type/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-golang-object-model-inbox-data-type/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>也许是从C++转过来的习惯，学习一门语言，我总是比较喜欢先弄明白它的对象模型，所以自己就做了一些简单的实验，看看Go的对象模型～</p>
+<hr>
+<h2 id="前置准备">1. 前置准备</h2>
+<p>为了查看对象的内存布局，我们这里先写一个非常简单的小函数，利用反射递归地遍历对象的所有成员，然后输出其内存位置，从而了解其在内存中的真实状态。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">PrintObjectDumpTableHeader</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;%-12s%-15s%-20s%-10s %-11s %-4s\n&quot;</span>, <span class="string">&quot;Var&quot;</span>, <span class="string">&quot;Type&quot;</span>, <span class="string">&quot;Address&quot;</span>, <span class="string">&quot;RootOffset&quot;</span>, <span class="string">&quot;LocalOffset&quot;</span>, <span class="string">&quot;Size&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">DumpObject</span><span class="params">(name <span class="type">string</span>, p reflect.Value)</span></span> &#123;</span><br><span class="line">    v := p.Elem()</span><br><span class="line">    dumpObject(name, v, v.UnsafeAddr(), v.UnsafeAddr())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">dumpObject</span><span class="params">(path <span class="type">string</span>, v reflect.Value, rootBaseAddr <span class="type">uintptr</span>, localBaseAddr <span class="type">uintptr</span>)</span></span> &#123;</span><br><span class="line">    dumpObjectDetail(path, v, rootBaseAddr, localBaseAddr)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">switch</span> v.Kind() &#123;</span><br><span class="line">    <span class="keyword">case</span> reflect.Struct:</span><br><span class="line">        childLocalBaseAddr := v.UnsafeAddr()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; v.NumField(); i++ &#123;</span><br><span class="line">            fieldPath := fmt.Sprintf(<span class="string">&quot;%s.%s&quot;</span>, path, v.Type().Field(i).Name)</span><br><span class="line">            dumpObject(fieldPath, v.Field(i), rootBaseAddr, childLocalBaseAddr)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">dumpObjectDetail</span><span class="params">(path <span class="type">string</span>, v reflect.Value, rootBaseAddr <span class="type">uintptr</span>, localBaseAddr <span class="type">uintptr</span>)</span></span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;%-12s%-15s0x%016x  %10v %11v %4v\n&quot;</span>, path, v.Type().String(), v.UnsafeAddr(),</span><br><span class="line">        v.UnsafeAddr() - rootBaseAddr, v.UnsafeAddr() - localBaseAddr, v.Type().Size())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，我们就可以非常简单的调用这个函数来查看任何对象的内存布局了，如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">PrintObjectDumpTableHeader()</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> b <span class="type">bool</span></span><br><span class="line">DumpObject(<span class="string">&quot;b&quot;</span>, reflect.ValueOf(&amp;b))</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<hr>
+<h2 id="基础类型">2. 基础类型</h2>
+<p>首先，我们先来看看最简单的基础数据类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">b           bool           0x000000c000114368           0           0    1</span><br><span class="line">i           int            0x000000c000114378           0           0    8</span><br><span class="line">i8          int8           0x000000c000114388           0           0    1</span><br><span class="line">i16         int16          0x000000c000114398           0           0    2</span><br><span class="line">i32         int32          0x000000c0001143a8           0           0    4</span><br><span class="line">i64         int64          0x000000c0001143b8           0           0    8</span><br><span class="line">u8          uint8          0x000000c0001143c8           0           0    1</span><br><span class="line">u16         uint16         0x000000c0001143d8           0           0    2</span><br><span class="line">u32         uint32         0x000000c0001143e8           0           0    4</span><br><span class="line">u64         uint64         0x000000c0001143f8           0           0    8</span><br><span class="line">p           uintptr        0x000000c000114408           0           0    8</span><br><span class="line">f32         float32        0x000000c000114418           0           0    4</span><br><span class="line">f64         float64        0x000000c000114428           0           0    8</span><br><span class="line">c64         complex64      0x000000c000114438           0           0    8</span><br><span class="line">c128        complex128     0x000000c000114450           0           0   16</span><br><span class="line">s           string         0x000000c0001086f0           0           0   16</span><br><span class="line">r           int32          0x000000c000114460           0           0    4</span><br></pre></td></tr></table></figure>
+<p>这里非常的直接，毕竟Go是一门编译语言，所以每个类型的大小都和它的描述一样。这里只有三个地方需要注意：</p>
+<ul>
+<li>与C++不同，<code>int</code>是8个字节的</li>
+<li>字符串会占用16个字节，无论其长度是多少，因为其在runtime中的定义就是一个包含有<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/?m=all#stringStruct">buffer指针和长度的struct</a>：<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> stringStruct <span class="keyword">struct</span> &#123;</span><br><span class="line">    str unsafe.Pointer</span><br><span class="line">    <span class="built_in">len</span> <span class="type">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>一般会被简单理解成其他语言的char类型的<code>rune</code>，其实只是int32的别名，会占用4个字节，而不是1个字节。这是因为Go的字符串对Unicode的支持，如果觉得这里奇怪的朋友可以看一看<a target="_blank" rel="noopener" href="https://blog.golang.org/strings">Go官方对于string的解释</a>，这里就不再赘述了。</li>
+</ul>
+<hr>
+<h2 id="复合数据类型">3. 复合数据类型</h2>
+<p>复合数据类型虽然稍稍复杂一点但是也相对直接：</p>
+<h3 id="数组">3.1. 数组</h3>
+<p>首先是数组，和C/C++的数据一样，数组的大小取决于元素的大小与个数，而拥有0个元素的数组也是合法的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">a0          [0]int         0x0000000000d15c88           0           0    0</span><br><span class="line">a1          [1]int         0x000000c00000a448           0           0    8</span><br><span class="line">a5          [5]int         0x000000c00000c4b0           0           0   40</span><br><span class="line">b5          [5]bool        0x000000c00000a460           0           0    5</span><br></pre></td></tr></table></figure>
+<h3 id="Slice">3.2. Slice</h3>
+<p>然后是Slice，Slice无论类型，都是24个Byte。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">si          []int          0x000000c000004520           0           0   24</span><br><span class="line">si32        []int32        0x000000c000004540           0           0   24</span><br></pre></td></tr></table></figure>
+<p>这是因为Slice的实现是三个成员变量：一个指向内部数组的指针，一个int类型的Slice长度，一个int类型的Slice的cap。三个变量每个都是8个字节，所以就是24个字节了。其<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/?m=all#slice">定义在runtime中</a>如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> slice <span class="keyword">struct</span> &#123;</span><br><span class="line">    array unsafe.Pointer</span><br><span class="line">    <span class="built_in">len</span>   <span class="type">int</span></span><br><span class="line">    <span class="built_in">cap</span>   <span class="type">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>关于具体的实现和内部机制，Go的官方博客介绍的非常详细：<a target="_blank" rel="noopener" href="https://blog.golang.org/slices-intro">Go Slices: usage and internals</a>。耗子哥也写了一篇中文版在这里：<a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21128.html#Slice">GO编程模式：切片，接口，时间和性能</a>。</p>
+<h4 id="理解Go的引用类型">3.2.1. 理解Go的引用类型</h4>
+<p>众所周知，Go有4个引用类型：Slice，Map，Chan和functions/methods，而在函数调用时，这些类型将作为引用传递，然而我们知道Go里面我们是无法自己定义引用类型的，所以Go会专门为这几个类型单独开后门么？这里我们就来看一看Slice在参数传递时的真正行为：</p>
+<p>这里我们先写了一个简单的测试代码，如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CheckSliceInternal</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> s []<span class="type">int</span></span><br><span class="line">    UpdateSlice(s)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterReturn: %v\n&quot;</span>, s)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//go:noinline</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">UpdateSlice</span><span class="params">(s []<span class="type">int</span>)</span></span> &#123;</span><br><span class="line">    s = <span class="built_in">append</span>(s, <span class="number">1</span>)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterUpdate: %v\n&quot;</span>, s)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果slice的传引用和其他语言一样，那么我们应该会看到在调用UpdateSlice之后，CheckSliceInternal中定义的s也会发生变化，但是实际上却不然：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">=== RUN   TestObjectModelFunctionCallWithSlice</span><br><span class="line">AfterUpdate: [1]</span><br><span class="line">AfterReturn: []</span><br></pre></td></tr></table></figure>
+<p>这是为什么呢？没关系，汇编语言永远都是我们的好朋友，我们来看看调用UpdateSlice的时候究竟发生了什么？</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// GOSSAFUNC=CheckSliceInternal go build -gcflags &quot;-S -N&quot; object_def.go object_dump.go object_model_exp.go</span><br><span class="line">// ......</span><br><span class="line">00010 (+96) MOVQ $0, (SP)           // Load s.array to SP -&gt; Copy s.array</span><br><span class="line">00011 (96) XORPS X0, X0             // Zero out X0</span><br><span class="line">00012 (96) MOVUPS X0, 8(SP)         // Load X0 (128bit) to SP+8 -&gt; Copy s.len and s.cap</span><br><span class="line">00013 (+96) CALL &quot;&quot;.UpdateSlice(SB) // Call UpdateSlice(s)</span><br><span class="line">// ......</span><br></pre></td></tr></table></figure>
+<p>我们知道Slice是由24个字节组成的，而且我们定义的s是一个空Slice，所以我们可以从上面的代码看到Go将在堆栈上对我们的Slice进行了一次值拷贝！也就是说，虽然在UpdateSlice函数中，s依然指向原数组，但是CheckSliceInternal中的s是不会发生改变的，<strong>所谓的传引用，其实是传值</strong>！</p>
+<p>我们把代码稍稍改一下，把指针打印出来，可以看到我们的理论是正确的（代码改动过于简单，这里就不列了）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">=== RUN   TestObjectModelFunctionCallWithSlice</span><br><span class="line">AfterUpdate: [1] (Ptr = 0xc00010e4e0)</span><br><span class="line">AfterReturn: [] (Ptr = 0xc00010e4c0)</span><br></pre></td></tr></table></figure>
+<p>同样的道理，我们马上也可以看到Map的传引用的行为也是一样。</p>
+<h3 id="Map">3.3. Map</h3>
+<p>接下来是map，无论类型，大小都是8个字节。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">mii         map[int]int    0x000000c000006038           0           0    8</span><br><span class="line">mi32i       map[int32]int  0x000000c000006040           0           0    8</span><br><span class="line">mii32       map[int]int32  0x000000c000006048           0           0    8</span><br></pre></td></tr></table></figure>
+<p>这是因为map的真正实现其实是一个指向hashmap的指针，runtime中叫做：<a target="_blank" rel="noopener" href="https://golang.org/src/runtime/map.go">hmap</a>。这里我们同样也来写一段小代码，看看内部的实现：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> m <span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span> = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span>)</span><br><span class="line">m[<span class="number">5</span>] = <span class="number">3</span></span><br></pre></td></tr></table></figure>
+<p>把编译生成的汇编代码拿出来之后就能看到如下内容（为了清楚只截取了部分代码演示map的原理）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// ......</span><br><span class="line">00009 (+96) LEAQ type.map[int]int(SB), AX    // Load map type info to AX</span><br><span class="line">00011 (96) MOVQ AX, (SP)                     // Load map type into to SP+0 (First arg)</span><br><span class="line">00012 (96) MOVQ $0, 8(SP)                    // Load hmap to SP+8 (Second arg)</span><br><span class="line">00013 (96) MOVQ $5, 16(SP)                   // Load key (5) to SP+16 (Third arg)</span><br><span class="line">00014 (96) CALL runtime.mapassign_fast64(SB) // Call runtime.mapassign</span><br><span class="line">// ......</span><br></pre></td></tr></table></figure>
+<p>通过对比Go Runtime中的<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/?m=all#mapassign_fast64">mapassign_fast64</a>函数，我们可以看到参数中t是这个map的类型信息，h便是我们真正的map对象实例了。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">mapassign</span><span class="params">(t *maptype, h *hmap, key unsafe.Pointer)</span></span> unsafe.Pointer</span><br></pre></td></tr></table></figure>
+<p>所以map说到底只是一个指针，所以只占用8个字节。这也是为什么Map和Slice不同，Slice可以定义了之后就可以马上使用，但是<strong>map则必须显式创建</strong>！比如，如下代码会导致运行时错误，因为真正的map还没有创建：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> m <span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span> <span class="comment">// This means &quot;hmap *m;&quot; in C</span></span><br><span class="line">m[<span class="number">5</span>] = <span class="number">3</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">panic: assignment to entry in nil map [recovered]</span><br><span class="line">	panic: assignment to entry in nil map</span><br><span class="line"></span><br><span class="line">goroutine 19 [running]:</span><br><span class="line">testing.tRunner.func1.1(0x526fa0, 0x575a20)</span><br><span class="line">	C:/Tools/Go/src/testing/testing.go:1072 +0x310</span><br><span class="line">testing.tRunner.func1(0xc000104480)</span><br><span class="line">	C:/Tools/Go/src/testing/testing.go:1075 +0x43a</span><br><span class="line">panic(0x526fa0, 0x575a20)</span><br><span class="line">	C:/Tools/Go/src/runtime/panic.go:969 +0x1c7</span><br><span class="line">objmodelexp.CheckMapInternal()</span><br><span class="line">	X:/Code/learning-golang/src/objmodelexp/object_model_exp.go:117 +0x71</span><br><span class="line">objmodelexp.TestObjectModelFunctionCallWithMap(0xc000104480)</span><br><span class="line">	X:/Code/learning-golang/src/objmodelexp/object_def_test.go:20 +0x27</span><br><span class="line">testing.tRunner(0xc000104480, 0x554ff8)</span><br><span class="line">	C:/Tools/Go/src/testing/testing.go:1123 +0xef</span><br><span class="line">created by testing.(*T).Run</span><br><span class="line">	C:/Tools/Go/src/testing/testing.go:1168 +0x2b3</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：也许我说Slice定义之后就可以马上使用会让你出乎意料，因为就连<a target="_blank" rel="noopener" href="https://tour.golang.org/moretypes/12">Go的Tutorial上都专门有一章说Slice判空的问题</a>，但是目前我还没有找到反例，所有的API都可以在不需要做任何额外的nil check的情况下接受空Slice作为参数：</p>
+<ul>
+<li>比如append函数，只要做一个nil check就可以让它表现的像是能使用，但是其实在<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/?m=all#growslice">growslice</a>的里面并不会判断slice是不是nil，只要长度不够就足够了</li>
+<li>比如len函数，其实现就是直接读取slice中的len字段：<code>MOVQ 8(AX), AX</code>。</li>
+<li>比如for range，最后的实现就是用len函数读取长度，然后使用下标生成for循环：<a target="_blank" rel="noopener" href="https://github.com/golang/gofrontend/blob/49b07690a93a813585047d8265e326de8efd95c6/go/statements.cc#L6711">For_range_statement::lower_range_slice</a></li>
+<li>比如没创建的时候直接访问内部元素，得到的panic是下标越界而不是Access Violation：<code>panic: runtime error: index out of range [1] with length 0</code>。</li>
+</ul>
+</blockquote>
+<p>那对于参数传递呢？我们也可以用和Slice同样的方法来验证，把指针输出：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CheckMapInternal</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> m <span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span> = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span>)</span><br><span class="line">    m[<span class="number">5</span>] = <span class="number">3</span></span><br><span class="line">    fmt.Printf(<span class="string">&quot;BeforeCall: %v (Ptr = %p)\n&quot;</span>, m, &amp;m)</span><br><span class="line">    UpdateMap(m)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterReturn: %v (Ptr = %p)\n&quot;</span>, m, &amp;m)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//go:noinline</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">UpdateMap</span><span class="params">(m <span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span>)</span></span> &#123;</span><br><span class="line">    m = <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="type">int</span>]<span class="type">int</span>)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterUpdate: %v (Ptr = %p)\n&quot;</span>, m, &amp;m)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">=== RUN   TestObjectModelFunctionCallWithMap</span><br><span class="line">BeforeCall: map[5:3] (Ptr = 0xc000006038)</span><br><span class="line">AfterUpdate: map[] (Ptr = 0xc000006040)</span><br><span class="line">AfterReturn: map[5:3] (Ptr = 0xc000006038)</span><br></pre></td></tr></table></figure>
+<p>可以看到，虽然map是一个指针，但是在传参的时候依然是以传值的方式进行的。</p>
+<hr>
+<h2 id="Channel">4. Channel</h2>
+<p>Channel和Map非常类似，无论类型，同样都是8个字节，实现方法也非常相似，内部使用<a target="_blank" rel="noopener" href="https://golang.org/src/runtime/chan.go">runtime中的hchan结构</a>的指针实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">ci          chan int       0x000000c000006050           0           0    8</span><br><span class="line">cb          chan bool      0x000000c000006058           0           0    8</span><br></pre></td></tr></table></figure>
+<p>因此，和Map一样：</p>
+<ul>
+<li>Channel必须使用make函数创建之后才能使用，其调用的是runtime中的<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/?m=all#makechan">makechan</a></li>
+<li>参数传递时依然是传值，该值为hchan的指针</li>
+</ul>
+<hr>
+<h2 id="函数变量">5. 函数变量</h2>
+<p>函数变量有两种情况，一种就是普通的函数指针（Function Pointer），另外一种是闭包（Closure）。这里我们分开来看。</p>
+<h3 id="函数指针（Function-Pointer）">5.1. 函数指针（Function Pointer）</h3>
+<p>函数指针在Go中也只占用8个字节。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">f           func()         0x000000c000006060           0           0    8</span><br></pre></td></tr></table></figure>
+<p>因为这种情况下该变量就是一个指针，所以让我们不由得不猜测这个是不是就是一个简单的地址，那我们就也来实验一次：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CheckFunctionInternal</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> f <span class="function"><span class="keyword">func</span><span class="params">()</span></span> = CheckFunctionInternal</span><br><span class="line">    UpdateFunction(f)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterReturn: Ptr = %p\n&quot;</span>, &amp;f)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//go:noinline</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">UpdateFunction</span><span class="params">(f <span class="keyword">func</span>()</span></span>) &#123;</span><br><span class="line">    f = CheckChannelInternal</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterUpdate: Ptr = %p\n&quot;</span>, &amp;f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后我们还是一样把汇编代码调出来：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// ......</span><br><span class="line">00007 (+143) LEAQ type.func()(SB), AX                   // Load function type info</span><br><span class="line">00009 (143) MOVQ AX, (SP)</span><br><span class="line">00010 (143) CALL runtime.newobject(SB)                  // Call runtime.newobject to allocate the object</span><br><span class="line">00012 (143) MOVQ 8(SP), DI                              // Save the address of the new object (SP+8) to DI</span><br><span class="line">00014 (143) MOVQ DI, &quot;&quot;.&amp;f-144(SP)                      // Save the address the new object to local variable</span><br><span class="line">00017 (143) CMPL runtime.writeBarrier(SB), $0</span><br><span class="line">00018 (143) JEQ 20</span><br><span class="line">00019 (143) JMP 144</span><br><span class="line">00020 (143) LEAQ &quot;&quot;.CheckFunctionInternal·f(SB), AX     // Load address of CheckFunctionInternal to AX</span><br><span class="line">00021 (143) MOVQ AX, (DI)                               // Save address of CheckFunctionInternal to the newly allocated object</span><br><span class="line">00022 (143) JMP 23</span><br><span class="line">// ......</span><br></pre></td></tr></table></figure>
+<p>因为function类型在Go里面大小是8，所以runtime.newobject会申请一个大小为8的内存，所以函数变量其实是一个指向包含有指向原始函数地址的n内存的指针！</p>
+<!--
+@startuml
+digraph g {
+    graph [ rankdir = "LR" ];
+    subgraph cluster1 {
+        label="Stack"
+        node [ fontsize = "16" shape = "ellipse" ];
+        "node0" [
+            label = "<f0> f | <f1> | <f2> ..."
+            shape = "record"
+        ];
+    }
+    subgraph cluster2 {
+        label="Heap"
+        "node1" [
+            label = "<f0> Address of CheckFunctionInternal"
+            shape = "record"
+        ];
+    }
+    subgraph cluster3 {
+        label="Code"
+        "node2" [
+            label = "CheckFunctionInternal"
+            shape = "record"
+        ];
+    }
+    "node0":f0 -> "node1":f0 [ id = 0 ];
+    "node1":f0 -> "node2":f0 [ id = 1 ];
+}
+@enduml
+-->
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-03-learning-golang-object-model-inbox-data-type/function-variable-pointer.png" alt="Function variable - Pointer"></p>
+<p>这里让人感觉非常奇怪，为什么不直接使用函数地址呢？我们来看一看函数是怎么被调用的，再确认一次：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// ...</span><br><span class="line">00069 (+167) MOVQ &quot;&quot;.&amp;f-144(SP), AX // Load the address of the function pointer to AX</span><br><span class="line">00071 (167) MOVQ (AX), DX           // Load the function address to DX</span><br><span class="line">00072 (167) MOVQ (DX), AX           // Move the function address to AX</span><br><span class="line">00074 (167) CALL AX                 // Call the actual function</span><br><span class="line">// ...</span><br></pre></td></tr></table></figure>
+<p>所以还真的是这么实现的。这里我们先不着急，等看完之后的Closure实现，我们就明白了～</p>
+<h3 id="闭包（Closure）">5.2. 闭包（Closure）</h3>
+<p>那闭包呢？闭包应该会创建上下文（Context），所以一个指针应该表示不了了，我们也来试一试。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">cls         func()         0x000000c000006068           0           0    8</span><br></pre></td></tr></table></figure>
+<p>居然还是8个字节！我们这就来看看是怎么回事，老办法，先写个小代码：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">CheckClosureInternal</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> i <span class="type">int</span> = <span class="number">1</span></span><br><span class="line">    <span class="keyword">var</span> f <span class="function"><span class="keyword">func</span><span class="params">()</span></span> = <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        i = <span class="number">2</span></span><br><span class="line">        fmt.Printf(<span class="string">&quot;i = %v\n&quot;</span>, i)</span><br><span class="line">    &#125;</span><br><span class="line">    UpdateClosure(f)</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterReturn: Ptr = %p\n&quot;</span>, &amp;f)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//go:noinline</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">UpdateClosure</span><span class="params">(f <span class="keyword">func</span>()</span></span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> b <span class="type">bool</span> = <span class="literal">false</span></span><br><span class="line">    f = <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        b = <span class="literal">true</span></span><br><span class="line">        fmt.Printf(<span class="string">&quot;i = %v\n&quot;</span>, b)</span><br><span class="line">    &#125;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;AfterUpdate: Ptr = %p\n&quot;</span>, &amp;f)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再拿一下汇编：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">// ......</span><br><span class="line">00007 (+162) LEAQ type.int(SB), AX                      // Load int type info to AX</span><br><span class="line">00009 (162) MOVQ AX, (SP)</span><br><span class="line">00010 (162) CALL runtime.newobject(SB)                  // Create a int</span><br><span class="line">00012 (162) MOVQ 8(SP), AX                              // Save the address of the int to AX</span><br><span class="line">00014 (162) MOVQ AX, &quot;&quot;.&amp;i-152(SP)                      // Save the address of the int to stack SP+(&amp;i-152)</span><br><span class="line">00016 (162) MOVQ $1, (AX)                               // Set the value of the newly allocated int</span><br><span class="line">00018 (+163) LEAQ type.func()(SB), AX                   // Load function func() type info to AX</span><br><span class="line">00020 (163) MOVQ AX, (SP)</span><br><span class="line">00021 (163) CALL runtime.newobject(SB)                  // Allocate the buffer for holding the func object</span><br><span class="line">00023 (163) MOVQ 8(SP), AX</span><br><span class="line">00026 (163) MOVQ AX, &quot;&quot;.&amp;f-144(SP)                      // Save the func address to SP+(&amp;f-144)</span><br><span class="line">00028 (163) LEAQ type.noalg.struct &#123; F uintptr; &quot;&quot;.i *int &#125;(SB), AX  // Load the closure context type info, which captures the pointer to the int.</span><br><span class="line">00030 (163) MOVQ AX, (SP)</span><br><span class="line">00031 (163) CALL runtime.newobject(SB)                  // Create the closure context</span><br><span class="line">00033 (163) MOVQ 8(SP), AX</span><br><span class="line">00035 (163) MOVQ AX, &quot;&quot;..autotmp_15-168(SP)             // Save the closure context address to temp variable SP+(&quot;&quot;..autotmp_15-168)</span><br><span class="line">00036 (163) LEAQ &quot;&quot;.CheckClosureInternal.func1(SB), CX  // Load the annoymous function address</span><br><span class="line">00038 (163) MOVQ CX, (AX)                               // Update the function address in closure context</span><br><span class="line">00040 (163) MOVQ &quot;&quot;..autotmp_15-168(SP), AX</span><br><span class="line">00041 (163) TESTB AX, (AX)</span><br><span class="line">00044 (163) MOVQ &quot;&quot;.&amp;i-152(SP), CX                      // Load the address of the int</span><br><span class="line">00046 (163) LEAQ 8(AX), DI                              // Load the address of the int pointer in the closure context</span><br><span class="line">00049 (163) CMPL runtime.writeBarrier(SB), $0</span><br><span class="line">00050 (163) JEQ 52</span><br><span class="line">00051 (163) JMP 190</span><br><span class="line">00052 (163) MOVQ CX, 8(AX)                              // Update the int pointer in the closure context to the int it created above</span><br><span class="line">00053 (163) JMP 54</span><br><span class="line">00056 (163) MOVQ &quot;&quot;.&amp;f-144(SP), DI                      // Load the function address back to DI</span><br><span class="line">00059 (163) MOVQ &quot;&quot;..autotmp_15-168(SP), AX             // Load the closure context address back to AX</span><br><span class="line">00062 (163) CMPL runtime.writeBarrier(SB), $0</span><br><span class="line">00063 (163) JEQ 65</span><br><span class="line">00064 (163) JMP 188</span><br><span class="line">00065 (163) MOVQ AX, (DI)                               // Save the closure context as the function address</span><br><span class="line">00066 (163) JMP 67</span><br><span class="line">// ......</span><br></pre></td></tr></table></figure>
+<p>从上面的汇编我们可以看到，闭包的实现是：</p>
+<ol>
+<li>为闭包创建一个上下文，其第一个变量是函数地址，之后跟着所有捕获的变量指针</li>
+<li>将堆上申请一个指针，然后这个闭包的上下文的地址保存在上面</li>
+<li>该新申请的指针就是我们的函数对象了</li>
+</ol>
+<!--
+@startuml
+digraph g {
+    graph [ rankdir = "LR" ];
+    subgraph cluster1 {
+        label="Stack"
+        node [ fontsize = "16" shape = "ellipse" ];
+        "node0" [
+            label = "<f0> f | <f1> | <f2> ..."
+            shape = "record"
+        ];
+    }
+    subgraph cluster2 {
+        label="Heap"
+        "node1" [
+            label = "<f0> Address of CheckFunctionInternal | <f1> int* i"
+            shape = "record"
+        ];
+    }
+    subgraph cluster3 {
+        label="Code"
+        "node2" [
+            label = "CheckFunctionInternal"
+            shape = "record"
+        ];
+    }
+    "node0":f0 -> "node1":f0 [ id = 0 ];
+    "node1":f0 -> "node2":f0 [ id = 1 ];
+}
+@enduml
+-->
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-03-learning-golang-object-model-inbox-data-type/function-variable-closure.png" alt="Function variable - Closure"></p>
+<p>这里我们发现了一个好玩的事情，虽然普通的函数指针需要取两次地址才能调用，然而调用普通函数指针的代码同样也能调用Closure！</p>
+<p>呃…………等等，我们好像忘记了什么…………那Closure里面捕获下来的int在Closure里面要怎么获取获取到呢？我们再来看看闭包的实现：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// ......</span><br><span class="line">00007 (163) MOVQ 8(DX), AX</span><br><span class="line">// ......</span><br></pre></td></tr></table></figure>
+<p>还记得调用函数对象时DX中间保存的是什么吗？DX就是这个上下文的地址呀，所以DX+8就是捕获下来的int变量的指针了！</p>
+<p>所以本质上来说，Go是为不同的函数指针也创建了一个调用上下文，只不过这个上下文中只有这个函数指针！用这个方法，普通函数指针和闭包的操作便统一起来了。</p>
+<hr>
+<h2 id="结论">6. 结论</h2>
+<ol>
+<li>基础数值类型的变量，占用的空间和其定义的大小一致</li>
+<li>Go语言，函数调用时不存在传引用的参数，所有的参数都是传值，需要修改外部变量必须通过指针来进行操作。</li>
+<li>String和Slice本质上都是struct，由于Go的参数都是传值，所以调用时会有一次拷贝，会在栈上占用16字节和24字节。</li>
+<li>Map，Channel，Function的表示都是一个指针，所以他们都只占8个字节，并且由于其是指针，调用之前必须要创建对应的对象或者赋值以避免空值。</li>
+<li>函数指针和闭包都会创建调用上下文，只是函数指针的上下文只有被调用函数的指针，而闭包中还有被捕获的变量的指针。</li>
+</ol>
+<p>为了让代码更加可读，本文中所有的汇编代码都将PCDATA的指令删除了。另外本文所有的相关代码都可以在<a target="_blank" rel="noopener" href="https://github.com/r12f/learning-golang-resources/tree/master/src/objmodelexp">这个Github的Repo</a>中找到，如果有问题，欢迎大家指正，非常感谢～</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-struct/">Go语言学习笔记：深入对象模型之结构体</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/">Go语言学习笔记：深入对象模型之内置类型</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-essential-learning-materials/">Go语言学习笔记：学习资料汇总</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/">Go语言学习笔记：搭建Windows下的Go开发环境</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/" target="_blank">Go语言学习笔记：深入对象模型之内置类型</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go/" rel="tag"># go</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-essential-learning-materials/" rel="prev" title="Go语言学习笔记：学习资料汇总">
+                  <i class="fa fa-chevron-left"></i> Go语言学习笔记：学习资料汇总
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-object-model-struct/" rel="next" title="Go语言学习笔记：深入对象模型之结构体">
+                  Go语言学习笔记：深入对象模型之结构体 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

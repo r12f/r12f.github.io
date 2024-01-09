@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在上一篇中，我们介绍了PCIe设备的配置空间，及其设计的目的，最后我们说到了消息路由的设计。所以，这一篇我们就继续这个话题，来看看PCIe设备之间的通信方式吧。 1. PCIe协议栈 PCIe是以包（Packet）为单位传输数据的。和计算机网络类似，其协议也是分层的。其协议栈主要分为三层：物理层（Physical Layer），数据链路层（Data Link Layer）和事务层（Transact">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PCIe（三）—— PCIe协议栈，事务层和数据链路层">
+<meta property="og:url" content="http://r12f.com/posts/pcie-3-tl-dll/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在上一篇中，我们介绍了PCIe设备的配置空间，及其设计的目的，最后我们说到了消息路由的设计。所以，这一篇我们就继续这个话题，来看看PCIe设备之间的通信方式吧。 1. PCIe协议栈 PCIe是以包（Packet）为单位传输数据的。和计算机网络类似，其协议也是分层的。其协议栈主要分为三层：物理层（Physical Layer），数据链路层（Data Link Layer）和事务层（Transact">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-stack.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-header-common-fields.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-memory-tx-desc.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-tx-attributes.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tc-vc-config.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-address.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-id.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-id-ari.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-transaction-layer-arch.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-layout.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-tlp-packet.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-tlp-receive.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-dllp.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-ack-nak.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-fc.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-sfc.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-arch.png">
+<meta property="article:published_time" content="2023-05-27T21:27:24.000Z">
+<meta property="article:modified_time" content="2023-05-28T04:27:24.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="pcie">
+<meta property="article:tag" content="hardware">
+<meta property="article:tag" content="bus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-stack.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pcie-3-tl-dll/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pcie-3-tl-dll/","path":"posts/pcie-3-tl-dll/","title":"PCIe（三）—— PCIe协议栈，事务层和数据链路层"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PCIe（三）—— PCIe协议栈，事务层和数据链路层 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#PCIe%E5%8D%8F%E8%AE%AE%E6%A0%88"><span class="nav-text">1. PCIe协议栈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E5%B1%82%EF%BC%88Transaction-Layer%EF%BC%89"><span class="nav-text">2. 事务层（Transaction Layer）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%EF%BC%88Transaction%EF%BC%89"><span class="nav-text">2.1. 事务（Transaction）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TLP%EF%BC%88Transaction-Layer-Packet%EF%BC%89"><span class="nav-text">2.2. TLP（Transaction Layer Packet）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TLP%E5%A4%B4"><span class="nav-text">2.2.1. TLP头</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E6%8F%8F%E8%BF%B0%E7%AC%A6%EF%BC%88Transaction-Descriptor%EF%BC%89"><span class="nav-text">2.2.2. 事务描述符（Transaction Descriptor）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1ID%EF%BC%88Transaction-ID%EF%BC%89"><span class="nav-text">2.2.2.1. 事务ID（Transaction ID）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%B1%9E%E6%80%A7%EF%BC%88Attributes%EF%BC%89"><span class="nav-text">2.2.2.2. 消息属性（Attributes）</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%A4%84%E7%90%86%E9%A1%BA%E5%BA%8F%EF%BC%88Ordering%EF%BC%89"><span class="nav-text">2.2.2.2.1. 消息处理顺序（Ordering）</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#No-Snoop"><span class="nav-text">2.2.2.2.2. No Snoop</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%B5%81%E9%87%8F%E5%88%86%E7%B1%BB%EF%BC%88Traffic-Class%EF%BC%89"><span class="nav-text">2.2.2.3. 流量分类（Traffic Class）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TLP%E4%BA%8B%E5%8A%A1%E8%B7%AF%E7%94%B1"><span class="nav-text">2.3. TLP事务路由</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TLP%E5%B0%8F%E7%BB%93"><span class="nav-text">2.4. TLP小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%93%BE%E8%B7%AF%E5%B1%82%EF%BC%88Transaction-Layer%EF%BC%89"><span class="nav-text">3. 数据链路层（Transaction Layer）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TLP%E4%BA%8B%E5%8A%A1%E6%B6%88%E6%81%AF%E7%9A%84%E4%BC%A0%E8%BE%93"><span class="nav-text">3.1. TLP事务消息的传输</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8C%85%E6%A0%BC%E5%BC%8F%E5%92%8C%E6%95%B0%E6%8D%AE%E5%8F%91%E9%80%81"><span class="nav-text">3.1.1. 数据包格式和数据发送</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%8E%A5%E6%94%B6"><span class="nav-text">3.1.2. 数据接收</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E6%B6%88%E6%81%AF%EF%BC%9ADLLP%EF%BC%88Data-Link-Layer-Packet%EF%BC%89"><span class="nav-text">3.2. 控制消息：DLLP（Data Link Layer Packet）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Ack-Nak"><span class="nav-text">3.2.1. Ack&#x2F;Nak</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#VC%EF%BC%88Virtual-Channel%EF%BC%89%E4%B8%8E%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6"><span class="nav-text">3.2.2. VC（Virtual Channel）与流量控制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%93%BE%E8%B7%AF%E5%B1%82%E5%B0%8F%E7%BB%93"><span class="nav-text">3.3. 数据链路层小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">4. 小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">5. 参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pcie-3-tl-dll/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PCIe（三）—— PCIe协议栈，事务层和数据链路层 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PCIe（三）—— PCIe协议栈，事务层和数据链路层
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-05-27 14:27:24 / Modified: 21:27:24" itemprop="dateCreated datePublished" datetime="2023-05-27T14:27:24-07:00">2023-05-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pcie-3-tl-dll/" class="post-meta-item leancloud_visitors" data-flag-title="PCIe（三）—— PCIe协议栈，事务层和数据链路层" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pcie-3-tl-dll/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pcie-3-tl-dll/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在上一篇中，我们介绍了PCIe设备的配置空间，及其设计的目的，最后我们说到了消息路由的设计。所以，这一篇我们就继续这个话题，来看看PCIe设备之间的通信方式吧。</p>
+<h2 id="PCIe协议栈">1. PCIe协议栈</h2>
+<p>PCIe是以包（Packet）为单位传输数据的。和计算机网络类似，其协议也是分层的。其协议栈主要分为三层：物理层（Physical Layer），数据链路层（Data Link Layer）和事务层（Transaction Layer），如下图所示：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-stack.png" alt></p>
+<span id="more"></span>
+<h2 id="事务层（Transaction-Layer）">2. 事务层（Transaction Layer）</h2>
+<p>PCIe的协议栈最上层叫做事务层，这一层定义了所有和用户相关的PCIe的操作，所以这也会时大家最感兴趣的一层。</p>
+<h3 id="事务（Transaction）">2.1. 事务（Transaction）</h3>
+<p>PCIe的所有操作都被称为一个事务（Transaction），这些事务分为四种类型：</p>
+<ul>
+<li>内存事务（Memory Transaction）</li>
+<li>IO事务（IO Transaction）</li>
+<li>配置事务（Configuration Transaction）</li>
+<li>消息事务（Message Transaction）</li>
+</ul>
+<p>一个事务根据其请求的处理方式又被分为两种：</p>
+<ul>
+<li><strong>Non-Posted</strong>：每个事务的请求消息发送出去后，会需要一个完成消息（Completion）来完成事务。比如，读内存。</li>
+<li><strong>Posted</strong>：请求发送后不需要完成消息，属于Fire and forget。比如，写内存和所有的消息事务（这也是唯二的两类请求）</li>
+</ul>
+<p>所以，事务层的消息有三类：Non-Posted（NP），Posted（P）和Completion（Cpl）。</p>
+<h3 id="TLP（Transaction-Layer-Packet）">2.2. TLP（Transaction Layer Packet）</h3>
+<p>PCIe的事务请求和完成消息都是以TLP（Transaction Layer Packet）为单位传输的。其结构如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp.png" alt></p>
+<ul>
+<li><strong>TLP Prefix</strong>：用来实现一些高级特性，比如精确时间测量（Precision Time Measurement），因为它不是必须的，所以我们先跳过。</li>
+<li><strong>TLP Digest</strong>：4个字节，可以存放诸如CRC的校验码，不过一般不需要开启，因为后面说的数据链路层已经自带了校验了，这里相当于是双保险。</li>
+<li><strong>TLP Header</strong>：这个是TLP中最重要的部分，我们后面马上会详细介绍。</li>
+<li><strong>TLP Payload</strong>：这个是TLP中的数据部分，根据不同的事务类型，其大小也不同。比如，读事务就不需要Payload。另外Payload的大小也是有限制的，它不能超过<code>Max_Payload_Size</code>，最大为4096字节。</li>
+</ul>
+<h4 id="TLP头">2.2.1. TLP头</h4>
+<p>TLP的头部根据处理地址长度的不同，会有12字节（称为3DW）或者16字节（称为4DW）宽。其前4个字节（第一个DW）是公共的头部，包含了绝大部分的用于描述该事务本身的信息和行为的字段，其后的8个字节（第二个和第三个DW）会根据事务种类的不同而产生变化。其前四个字节如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-header-common-fields.png" alt></p>
+<ul>
+<li><strong>Fmt</strong>: TLP头的格式
+<ul>
+<li><strong>Bit 7</strong>：如果是1，则Fmt必须是100，表示这个头是TLP Prefix</li>
+<li><strong>Bit 6</strong>：1 = 读事务（TLP头之后没有Payload），0 = 写事务（TLP头之后有Payload）</li>
+<li><strong>Bit 5</strong>：1 = 使用32位地址，头部长度12字节（3DW Header），0 = 使用64位地址，头部长度16字节（4DW Header）</li>
+</ul>
+</li>
+<li><strong>Type</strong>：事务类型，表示这个事务是什么类型的事务，比如内存事务、IO事务、配置事务、消息事务等</li>
+<li><strong>LN（Lightweight Notification）</strong>：用于标识当前这个内存请求或者完成消息是不是一个轻量级通知</li>
+<li><strong>TH（TLP Hints）</strong>：用于表示TPH（TLP Processing Hint）是否启用和TPH TLP Prefix是否存在</li>
+<li><strong>TD（TLP Digest）</strong>：1 = 有TLP Digest，0 = 没有TLP Digest</li>
+<li><strong>EP（Error Poisoning）</strong>：1 = 有错误，0 = 没有错误</li>
+<li><strong>AT（Address Translation）</strong>：虚拟化相关的字段，00 = 无地址转换，01 = 需要地址转换，10 = 地址转换已完成，11 = 保留</li>
+<li><strong>Length</strong>：Payload的长度，<strong>单位为DW（Double Word）</strong>，1DW = 4字节</li>
+</ul>
+<p>这里由两个字段TC和Attr我们没有介绍，因为它们是事务描述符的一部分，我们马上就会介绍。</p>
+<h4 id="事务描述符（Transaction-Descriptor）">2.2.2. 事务描述符（Transaction Descriptor）</h4>
+<p>为了帮助通信的双方知道对方的信息和对消息的处理方式进行描述，在TLP的头中有几个公共的字段，合在一起被称为事务描述符：事务ID（Requester ID和Tag两个字段），消息的属性（Attr字段），流量分类（TC字段）。虽然TLP头中第二个DW开始的部分会随着请求类型的不同而发生变化，但是这四个字段几乎会在所有的消息中存在（某些情况下Tag会被忽略），所以这里我们用一个内存请求的消息来做例子，展示它们在TLP中的位置：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-memory-tx-desc.png" alt></p>
+<h5 id="事务ID（Transaction-ID）">2.2.2.1. 事务ID（Transaction ID）</h5>
+<p>事务ID由Requester ID和Tag两个字段组成，用于标识一个事务。其中，</p>
+<ul>
+<li><strong>Requester ID</strong>：一共16个bit，用于标识发起这个事务的设备，是请求发起者的BDF</li>
+<li><strong>Tag</strong>：一共10个bit，每个发出的TLP都会被赋予一个唯一的标签，帮助PCIe进行数据传输的跟踪和管理，比如并行处理，流控或乱序处理。这里注意T8和T9两个bits，它们和其他的tag的bits不在一起（绿色高亮），且需要修改<code>10-Bit Tag Requester Enable</code>配置寄存器启用</li>
+</ul>
+<h5 id="消息属性（Attributes）">2.2.2.2. 消息属性（Attributes）</h5>
+<p>消息属性一共有三个bits：高两位 Attr[2:1]（Byte 1 - Bit 2，Byte 2 - Bit 5）用于控制消息处理的顺序，而最低位 Attr[0]（Byte 2 - Bit 4）用于控制Coherency。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-tx-attributes.png" alt></p>
+<h6 id="消息处理顺序（Ordering）">2.2.2.2.1. 消息处理顺序（Ordering）</h6>
+<p>Attr[2:1]这两个Bits用于控制消息处理的顺序，一共有四种情况：</p>
+<table>
+<thead>
+<tr>
+<th>Attr[2]</th>
+<th>Attr[1]</th>
+<th>顺序类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>强制顺序</td>
+<td>默认值，不允许乱序处理</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>Relaxed Ordering</td>
+<td>允许接收者在当前请求没有完成的时候，同时处理任何后续的请求</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>ID-based Ordering</td>
+<td>允许接收者在当前请求没有完成的时候，同时处理来自其他设备的请求</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>无序</td>
+<td>相当于是Relaxed Ordering和ID-based Ordering的并集，允许接收者在当前请求没有完成的时候，同时处理任何的请求</td>
+</tr>
+</tbody>
+</table>
+<h6 id="No-Snoop">2.2.2.2.2. No Snoop</h6>
+<p>NoSnoop（Attr[0]）使用来控制缓存一致性的。默认的情况下（值为0），PCIe会对请求进行缓存一致性的处理，比如一个内存的读请求，它会保证先去读Cache，如果没有读到再去读主内存。但是如果这个值为1，PCIe就会直接跳过Cache，去操作主内存。这样就有可能导致一致性的问题，因为有可能Cache中的内容还没有被写入主内存中，这样就读到了错误的值。</p>
+<p>但是，这并不代表这个flag没有用，如果我们非常确定我们不需要考虑缓存，那么我们可以启用这个flag，直接去操作主内存，从而提高性能。</p>
+<p>当然，也正因为有一致性的问题，所以这个功能被很多事务禁止使用了：比如配置事务、IO事务、大部分的消息事务和MSI（跳过缓存发起中断会导致DMA等功能出错，读到脏数据）等。</p>
+<h5 id="流量分类（Traffic-Class）">2.2.2.3. 流量分类（Traffic Class）</h5>
+<p>Traffic Class总共有3个bit，用于把所有的事务分成8个不同的类别，用于流控。</p>
+<p>基于TC的流控是通过和VC（Virtual Channel）合作来实现的：</p>
+<ol>
+<li>PCIe中的所有物理链路（Link）都可以创建多个VC（Virtual Channel），而每个VC都独立工作，并有着流量控制机制。</li>
+<li>一个或者多个TC可以被映射到一个VC上，这样就可以通过操作TLP的TC来控制TLP走的VC了。</li>
+<li>VC通过信用机制来控制发包速度，每个VC都有着自己的Credit Pool，如果一个VC的Credit不为0，那么它就可以发送TLP，并且消耗特定的Credit。每个VC的Credit也会在特定的时候补充，保证通信不会中断。</li>
+<li>TC的默认值是0，也是所有设备必须实现的。它被Hardcoded到了VC0上，所以如果没有设置TC，那么所有的TLP都会走VC0。</li>
+<li>最后，如果两个包有了不同的VC，或者不同的TC，那么它们之间将没有顺序的保证。</li>
+</ol>
+<p>这里我们主要了解TC到VC的映射就好，关于VC的具体机制，我们会在后面数据链路层介绍。以下是一个TC和VC相互合作的配置的例子。通过这种方法，我们就可以对PCIe进行流量控制啦！</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tc-vc-config.png" alt></p>
+<h3 id="TLP事务路由">2.3. TLP事务路由</h3>
+<p>有了事务ID，我们可以很容易的了解当前事务的源是谁，然而为了能让通信双方通信，我们还需要知道事务的目的地是哪里，这样我们才能把事务发送到正确的地方。</p>
+<p>在PCIe中，不同类型的事务中会使用不同的字段和方法来指定目的地，但是总结起来只有两种：</p>
+<ol>
+<li>
+<p><strong>通过具体的地址来指定目的地</strong>：这种路由方式叫做<strong>基于地址的路由（Address-Based Routing）</strong>。这种方式主要用于内存事务（Memory Transaction）和IO事务（IO Transaction），通过需要访问的地址，我们就可以通过我们<a href="/posts/pcie-2-config/">上一篇中介绍的路由机制</a>来进行路由了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-address.png" alt></p>
+</li>
+<li>
+<p><strong>通过BDF来指定目的地</strong>：这种路由方式叫做<strong>基于ID的路由（ID Based Routing）</strong>。这种方式主要用于非内存访问型的事务，比如：配置事务（Configuration Transaction），消息事务（Message Transaction）和事务完成的消息通知（Completion）。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-id.png" alt></p>
+<p>另外，我们<a href="/posts/pcie-2-config/">上一篇还提到了一种特殊的ID分配方式ARI（Alternative Routing ID）</a>，它的唯一区别就是把Device Number的5个Bit给了Function Number，用以支持更多的Function，如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-tlp-routing-id-ari.png" alt></p>
+</li>
+</ol>
+<h3 id="TLP小结">2.4. TLP小结</h3>
+<p>好了，到此我们已经把最核心的TLP的公用字段都介绍完毕了，包括TLP主题格式，事务如何分类，如何路由，如何进行流控等等。这里，为了再来整体的来看一下事务层的处理，我们可以参照Intel Cyclone 10的总体框图，如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-transaction-layer-arch.png" alt></p>
+<p>当然在TLP的头中，我们仍然有很多字段没有涉足，这些字段都和具体的事务类型相关，所以我们在这一篇中就不会过多的深入了。毕竟，我们这一篇主要是想聚焦在PCIe的通信协议本身上，来展示PCIe是如何进行通信的，关于每个具体的事务及其格式，我们会放在后面单独的说。</p>
+<h2 id="数据链路层（Transaction-Layer）">3. 数据链路层（Transaction Layer）</h2>
+<p>当事务层将事务消息准备好之后，就会向下传递给数据链路层（Data Link Layer）。对于我们发送的事务消息来说，数据链路层主要负责一件事情：<strong>保证事务消息能正确的传输到目的地</strong>。</p>
+<p>数据链路层传输的包主要包括两种，一种用于传输TLP事务消息，一种用于传输数据链路层的控制消息，比如功能（Feature）控制，流量控制，电源管理等等。这两种类型的包通过物理层的Token来进行区分：STP（Start of TLP）表示TLP消息，SDP（Start of DLLP）表示控制消息（DLLP，Data Link Layer Packet）。我们这里一个一个来看。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-layout.png" alt></p>
+<h3 id="TLP事务消息的传输">3.1. TLP事务消息的传输</h3>
+<h4 id="数据包格式和数据发送">3.1.1. 数据包格式和数据发送</h4>
+<p>为了达到这个目的，数据链路层会对数据包再进行一层封装：</p>
+<ol>
+<li>在包的前方添加一个序列号（Sequence Number），占用2个字节，用于保证包发送的顺序。这个序列号是每个Link独立的，只有上下游两端保存的序列号（<code>NEXT_RCV_SEQ</code>）一致，才会被对端接收。</li>
+<li>在包的后方添加一个CRC校验码，叫做LCRC（Link CRC），占用4个字节，用于保证包中数据的正确性。注意，计算CRC的时候，刚刚添加的序列号也会被纳入计算范围中。</li>
+</ol>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-tlp-packet.png" alt></p>
+<p>封装完成后，为了保证成功的发送，数据链路层会先将包保存在Retry Buffer中，再转交给物理层（Physical Layer）进行发送。在每条消息发送完毕之后，发送方会等待接收方发送ACK消息，如果接收到的返回消息是失败消息，比如Seq错误，CRC校验错误，或者任何物理层的错误，发送方就会把Retry Buffer中的消息拿出来重新发送。<a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]（3.6 Data Integrity Mechansisms）</a> 。</p>
+<h4 id="数据接收">3.1.2. 数据接收</h4>
+<p>对于数据的接收方，操作流程则相反。接收方会检查接收到的数据包的序列号和CRC是否正确，如果不正确，就会发送一个Nak消息，要求发送方进行重传。如果正确，就会回发一个Ack消息，表示接收成功，而此时发送方在收到了ACK消息后也可以将其从Retry Buffer中移除。这样，数据链路层就保证了TLP的正确传输。 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]（3.6 Data Integrity Mechansisms）</a> 。</p>
+<p>更加具体的数据接收处理流程如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-tlp-receive.png" alt></p>
+<h3 id="控制消息：DLLP（Data-Link-Layer-Packet）">3.2. 控制消息：DLLP（Data Link Layer Packet）</h3>
+<p>除了传输TLP数据包之外，数据链路层还需要很多专门用于控制的数据包，比如上面提到的Ack和Nak，这些数据包叫做DLLP（Data Link Layer Packet）。其格式如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-dllp.png" alt></p>
+<p>DLLP中DLLP Type用来指定包的类型，而最后16位的CRC用来做校验，其主要分为以下几种类型：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>Type</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ack</td>
+<td>00000000b</td>
+<td>用于确认接收到的TLP数据包</td>
+</tr>
+<tr>
+<td>Nak</td>
+<td>00010000</td>
+<td>用于拒绝接收到的TLP数据包</td>
+</tr>
+<tr>
+<td>&lt;InitFC1/InitFC2/UpdateFC&gt;-&lt;P/NP/Cpl&gt;</td>
+<td>（Type较多，后面来说）</td>
+<td>用于流量控制，P/NP/Cpl表示流控类型</td>
+</tr>
+<tr>
+<td>MRInitFC1/MRInitFC2/MRUpdateFC</td>
+<td>&lt;0111/1111/1011&gt;0xxxb</td>
+<td>用于流量控制，P/NP/Cpl表示流控类型</td>
+</tr>
+<tr>
+<td>PM_*</td>
+<td>00100xxxb</td>
+<td>用于电源管理，告知对端当前的电源状态</td>
+</tr>
+<tr>
+<td>NOP</td>
+<td>00110001b</td>
+<td>用于保持链路活跃，防止链路被关闭</td>
+</tr>
+<tr>
+<td>Data_Link_Feature</td>
+<td>00000010b</td>
+<td>用于告知对端当前链路的特性，如支持Scaled Flow Control</td>
+</tr>
+<tr>
+<td>Vendor-specific</td>
+<td>00110000b</td>
+<td>用于支持厂商自定义的DLLP，实现厂商特有功能</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Ack-Nak">3.2.1. Ack/Nak</h4>
+<p>我们在TLP事务消息传输的里就提到过Ack和Nak消息，它们可以说是DLLP中最常用的消息了。功能顾名思义，Ack表示接收成功，Nak表示接收失败，需要重传。这两个包的格式如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-ack-nak.png" alt></p>
+<p>其中，AckNak_Seq_Num表示当前已经收到的最新的消息序号，所以和TCP类似，PCIe的Ack和Nak可以进行批量操作：无论是Ack还是Nak，当发送方收到这个消息之后，就可以将Retry Buffer中比这个序号老的消息全部移除了，所以Ack/Nak时只需要将最新的序号带上即可。Ack/Nak的差别在于：如果是Nak，那么发送方在移除之后，需要对Retry Buffer中这个序号之后的消息全部进行重传。</p>
+<p>最后，DDLP的重传是由次数限制的，默认阈值是4次。如果超过四次，就出触发物理层开始重建（retrain）链路。如果依然失败，就会将该链路关闭。</p>
+<h4 id="VC（Virtual-Channel）与流量控制">3.2.2. VC（Virtual Channel）与流量控制</h4>
+<p>在说TLP的时候，我们提到了PCIe的流量控制是通过将TC（Traffic Class）映射到VC（Virtual Channel），并且利用VC的信用机制来实现的。这里我们就一起来看看这个信用机制吧！</p>
+<p>数据链路层中的信用额度管理有两个重要的特点：</p>
+<ol>
+<li>不同处理方式是的TLP消息有着单独的信用额度管理：Posted（P），Non-Posted（NP）和Completion（Cpl）。这三种消息的信用额度是独立的，互不影响。</li>
+<li>每个VC都有着自己的独立的信用额度管理，而不是Link。也就是说，如果一个Link上有多个VC，那么每个VC都需要单独的初始化和更新。</li>
+</ol>
+<p>参与流量控制的消息有很多，主要有三类，每一类有三个变种（N/NP/Cpl），我们的流量控制也主要分三步，其细节和统一的消息格式如下：</p>
+<ul>
+<li><strong>InitFC1-P/NP/Cpl</strong>：接收端设备使用此消息向发送端发起初始化流量控制的流程，并初始化信用额度，这是第一步。这个消息有接收端发起的原因是因为，不同的接收端能力不同，所以应该由接收端根据自己的能力，比如缓存的大小，来决定信用额度的大小。</li>
+<li><strong>InitFC2-P/NP/Cpl</strong>：用于发送端向接收端确认InitFC1的消息，这是第二步。这个消息中会带有从第一步接收到的信用信息，但是它会被接收端忽略，并没有什么用。另外，这个消息发送之后，发送端将不会再理会任何后续的InitFC1消息了。</li>
+<li><strong>UpdateFC-P/NP/Cpl</strong>：用于在信用额度初始化完成之后，接收端向发送端对信用额度进行更新。</li>
+</ul>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-fc.png" alt></p>
+<p>这个消息中各个字段含义如下：</p>
+<ul>
+<li>
+<p><strong>Type</strong>：消息ID，映射如下：</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>InitFC1-P</td>
+<td>0100b</td>
+</tr>
+<tr>
+<td>InitFC1-NP</td>
+<td>0101b</td>
+</tr>
+<tr>
+<td>InitFC1-Cpl</td>
+<td>0110b</td>
+</tr>
+<tr>
+<td>InitFC2-P</td>
+<td>1100b</td>
+</tr>
+<tr>
+<td>InitFC2-NP</td>
+<td>1101b</td>
+</tr>
+<tr>
+<td>InitFC2-Cpl</td>
+<td>1110b</td>
+</tr>
+<tr>
+<td>UpdateFC-P</td>
+<td>1000b</td>
+</tr>
+<tr>
+<td>UpdateFC-NP</td>
+<td>1001b</td>
+</tr>
+<tr>
+<td>UpdateFC-Cpl</td>
+<td>1010b</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>VC ID（v[2:0]）</strong>：Virtual Channel的Id，Id一共有3位，代表8个VC。</p>
+</li>
+<li>
+<p><strong>HdrFC</strong>：TLP头部的Credit数量。在发送时，一个TLP头对应着一个Header Credit，不论该TLP的大小如何。</p>
+</li>
+<li>
+<p><strong>DataFC</strong>：TLP数据部分的Credit数量。一个 DW（Double Word，双字，即4字节）对应着一个Data Credit。</p>
+</li>
+</ul>
+<p>举个例子，我们假设有一个64位地址的内存的写请求，数据长度为128字节，那么我们会需要发送一个4 DW的TLP头，加上128字节的Payload，和一个1 DW可选的TLP Digest，所以我们一共最多消耗1个Header Credit，和 (128 + 4) / 4 = 33个Data Credit。</p>
+<p>然后，为了保证发送方正常的消息发送，当接收方处理完部分消息后（或者一些特殊情况后），就会根据其当前缓存的大小，向发送方发送UpdateFC消息，告诉发送方，接收方的信用额度还剩下多少。另外，除了这种情况，接收方还会定时的向发送方上报自己的信用额度（最长间隔30us），这么做的原因是为了避免意外情况，如CRC校验出错，导致信用额度上报丢失，从而导致发送方停止发送消息的问题。</p>
+<p>最后，数据链路层还支持Scaled Flow Control，即信用额度的数量可以是2的幂次方，这样就可以管理更大的信用额度了：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-sfc.png" alt></p>
+<p>为了帮助理解，我们举一个例子：</p>
+<blockquote>
+<p>注意：如果查看原始的包，在计算时需要注意，HdrFC和DataFC都没有对其到字节上，所以记得做好位运算。</p>
+</blockquote>
+<ol>
+<li>
+<p>首先，PCIe的Endpoint会向Switch发送如下三条消息来进行流控初始化：</p>
+<div class="wavedrom"><script type="WaveDrom">
+{ signal: [
+  { name: "InitFC1-P: VC:0, HdrFC:32, DataFC:1008, CRC:0x35bc", wave: "x34444445", data: "SDP 40 08 03 f0 35 bc END" },
+  { name: "InitFC1-NP: VC:0, HdrFC:32, DataFC:1, CRC:0xb1f6", wave: "34444445", data: "SDP 50 08 00 01 b1 f6 END" },
+  { name: "InitFC1-Cpl: VC:0, HdrFC:0, DataFC:0, CRC:0xd892", wave: "34444445x", data: "SDP 60 00 00 00 d8 92 END" },
+], config: { hscale: 2 }}
+</script></div>
+</li>
+<li>
+<p>当Switch收到这个消息后，也会向Endpoint发送三条类似的消息，进行反向的初始化。因为流程类似，从这里开始，之后Switch向Endpoint发送的反向流程我们就忽略了。</p>
+</li>
+<li>
+<p>Switch收到了InitFC1 DLLP后，会使用InitFC2 DLLP进行确认：</p>
+<div class="wavedrom"><script type="WaveDrom">
+{ signal: [
+  { name: "InitFC2-P: VC:0, HdrFC:32, DataFC:1008, CRC:0x4fc3", wave: "x34444445", data: "SDP c0 08 03 f0 4f c3 END" },
+  { name: "InitFC2-NP: VC:0, HdrFC:32, DataFC:1, CRC:0xcb89", wave: "34444445", data: "SDP d0 08 00 01 cb 89 END" },
+  { name: "InitFC2-Cpl: VC:0, HdrFC:0, DataFC:0, CRC:0xa2ed", wave: "34444445x", data: "SDP e0 00 00 00 a2 ed END" },
+], config: { hscale: 2 }}
+</script></div>
+</li>
+</ol>
+<p>到此，等两边InitFC2的消息交换完毕之后，初始化就完成了！</p>
+<h3 id="数据链路层小结">3.3. 数据链路层小结</h3>
+<p>最后为了帮助理解，我们再来看一下数据链路层的整体架构：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-27-pcie-3-tl-dll/pcie-data-link-layer-arch.png" alt></p>
+<p>到这里，数据链路层上和数据传输相关的核心内容就都介绍完了！数据链路层中其实还有很多其他的内容，比如Link的初始化，状态机，电源管理，和Vendor-specific DLLP等等，这些内容我们这里就不详细介绍了，有兴趣的读者可以自行查阅PCIe Spec <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>。</p>
+<h2 id="小结">4. 小结</h2>
+<p>好了，由于篇幅原因，我们这一篇就先到这里。这一篇中我们介绍了PCIe的协议栈，并且详细的介绍了事务层（Transaction Layer）和数据链路层（Data Link Layer）是如何工作的，包括事务的分类，各种消息的格式，数据链路层的作用和封装，以及PCIe基于TC和VC的流控机制。</p>
+<p>在下一篇中，我们会继续介绍PCIe协议栈中遗留的部分 —— 物理层（Physical Layer）。</p>
+<h2 id="参考资料">5. 参考资料</h2>
+<ul>
+<li>[1]: <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">PCI Express Base Specification</a></li>
+<li>[2]: <a target="_blank" rel="noopener" href="https://wiki.osdev.org/PCI">OSDev WIKI - PCI</a></li>
+<li>[3]: <a target="_blank" rel="noopener" href="https://www.mindshare.com/files/resources/MindShare_Intro_to_PCIe.pdf">Mindshare - An Introduction to PCI Express</a></li>
+<li>[4]: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/PCI_Express">Wikipedia - PCI Express</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-4-phy/">PCIe（四）—— 物理层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-3-tl-dll/">PCIe（三）—— PCIe协议栈，事务层和数据链路层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-2-config/">PCIe（二） —— 配置空间</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-1-basics/">PCIe（一） —— 基础概念与设备树</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pcie-3-tl-dll/" target="_blank">PCIe（三）—— PCIe协议栈，事务层和数据链路层</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pcie/" rel="tag"># pcie</a>
+              <a href="/tags/hardware/" rel="tag"># hardware</a>
+              <a href="/tags/bus/" rel="tag"># bus</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/pcie-2-config/" rel="prev" title="PCIe（二） —— 配置空间">
+                  <i class="fa fa-chevron-left"></i> PCIe（二） —— 配置空间
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/pcie-4-phy/" rel="next" title="PCIe（四）—— 物理层">
+                  PCIe（四）—— 物理层 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

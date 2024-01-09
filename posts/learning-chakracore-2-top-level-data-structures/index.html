@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在上一篇里我们已经大概了解了如何编译和使用ChakraCore，现在我们来仔细看一看ChakraCore的Hello World，以此出发来了解一下ChakraCore的主体结构大概长的什么样子吧。 1. 代码结构 在看代码之前，先让我们来大概看一眼ChakraCore的代码结构： 1234567891011121314151617181920212223242526272829303132333">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构">
+<meta property="og:url" content="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在上一篇里我们已经大概了解了如何编译和使用ChakraCore，现在我们来仔细看一看ChakraCore的Hello World，以此出发来了解一下ChakraCore的主体结构大概长的什么样子吧。 1. 代码结构 在看代码之前，先让我们来大概看一眼ChakraCore的代码结构： 1234567891011121314151617181920212223242526272829303132333">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrt-top-level-data-structures-quick-overview.svg">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrtruntime-fields.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/threadcontext-tls.svg">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrtcontext-fields.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrt-top-level-data-structures-overview.svg">
+<meta property="article:published_time" content="2017-02-25T22:28:53.000Z">
+<meta property="article:modified_time" content="2017-02-26T06:28:53.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="Chakra">
+<meta property="article:tag" content="ChakreCore">
+<meta property="article:tag" content="JavaScript">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrt-top-level-data-structures-quick-overview.svg">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/","path":"posts/learning-chakracore-2-top-level-data-structures/","title":"ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="nav-text">1. 代码结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Runtime%E5%92%8C%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%88Execution-context%EF%BC%89"><span class="nav-text">2. Runtime和执行上下文（Execution context）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Runtime%EF%BC%9AJsrtRuntime"><span class="nav-text">2.1. Runtime：JsrtRuntime</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%9AJsrtContext"><span class="nav-text">2.2. 执行上下文：JsrtContext</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E5%A7%8B%E5%85%B3%E7%B3%BB%E5%9B%BE"><span class="nav-text">2.3. 原始关系图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ThreadContext%E5%92%8CScriptContext"><span class="nav-text">3. ThreadContext和ScriptContext</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JsrtRuntime%E5%92%8CThreadContext"><span class="nav-text">3.1. JsrtRuntime和ThreadContext</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ThreadContext"><span class="nav-text">3.1.1. ThreadContext</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ThreadContextScope"><span class="nav-text">3.1.2. ThreadContextScope</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E7%9A%84%E7%B1%BB"><span class="nav-text">3.1.3. 其他的类</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JsrtContext%EF%BC%8CJavascriptLibrary%E5%92%8CScriptContext"><span class="nav-text">3.2. JsrtContext，JavascriptLibrary和ScriptContext</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ScriptContext"><span class="nav-text">3.2.1. ScriptContext</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JavascriptLibrary"><span class="nav-text">3.2.2. JavascriptLibrary</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B6%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%BB%E8%A6%81%E5%85%B3%E7%B3%BB%E5%9B%BE"><span class="nav-text">3.3. 顶层数据结构主要关系图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-text">4. 结语</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2017-02-25 14:28:53 / Modified: 22:28:53" itemprop="dateCreated datePublished" datetime="2017-02-25T14:28:53-08:00">2017-02-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-chakracore-2-top-level-data-structures/" class="post-meta-item leancloud_visitors" data-flag-title="ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-chakracore-2-top-level-data-structures/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-chakracore-2-top-level-data-structures/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在<a href="http://r12f.com/posts/learning-chakracore-1-building-chakracore-on-windows/">上一篇</a>里我们已经大概了解了如何编译和使用ChakraCore，现在我们来仔细看一看ChakraCore的Hello World，以此出发来了解一下ChakraCore的主体结构大概长的什么样子吧。</p>
+<h2 id="代码结构">1. 代码结构</h2>
+<p>在看代码之前，先让我们来大概看一眼ChakraCore的代码结构：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├─bin                               :: 生成可执行文件的工程，比如ChakraCore.dll</span><br><span class="line">├─Build                             :: 各个平台下的makefile或项目工程</span><br><span class="line">├─jenkins                           :: 给jenkins使用的检查和编译的脚本</span><br><span class="line">├─lib                               :: ChakraCore主要实现</span><br><span class="line">│  ├─Backend                        :: JIT的实现</span><br><span class="line">│  ├─Common                         :: ChakraCore的基础库</span><br><span class="line">│  │  ├─Codex                       :: 编码转换，比如UTF-<span class="number">8</span></span><br><span class="line">│  │  ├─Common                      :: 基础类，比较杂，比如一些和整型相关的数学计算，时间处理之类的</span><br><span class="line">│  │  ├─Core                        :: 也比较杂，和Common的区别在于这里面一般和ChakraCore的功能相关，比如配置文件等等</span><br><span class="line">│  │  ├─DataStructures              :: 基础数据结构，比如数组，链表，HashMap等等</span><br><span class="line">│  │  ├─Exceptions                  :: 常用异常</span><br><span class="line">│  │  ├─Memory                      :: 内存管理，GC</span><br><span class="line">│  │  ├─PlaceHolder                 :: 啊……EXO ME？</span><br><span class="line">│  │  ├─PlatformAgnostic            :: 和平台相关的信息的封装，但是这里面只有定义，实现不在这</span><br><span class="line">│  │  └─Util                        :: 啊……EXO ME？</span><br><span class="line">│  ├─JITClient                      :: 进程外JIT的客户端</span><br><span class="line">│  ├─JITIDL                         :: 进程外JIT的协议，IDL定义</span><br><span class="line">│  ├─JITServer                      :: 进程外JIT的服务端</span><br><span class="line">│  ├─Jsrt                           :: Jsrt API，其本身都比较简单，主要是用来将ChakraCore内部结构合理的暴露出来</span><br><span class="line">│  ├─Parser                         :: JavaScript Parser</span><br><span class="line">│  ├─Runtime                        :: Runtime，ChakraCore最关键的部分之一</span><br><span class="line">│  │  ├─Base                        :: Runtime中的顶层数据结构，比如我们马上会提到的ThreadContext和ScriptContext</span><br><span class="line">│  │  ├─ByteCode                    :: ByteCode相关的实现</span><br><span class="line">│  │  ├─Debug                       :: 用于支持调试的类</span><br><span class="line">│  │  ├─Language                    :: 比较杂，和JavaScript语言相关但又不太好归类的部分</span><br><span class="line">│  │  ├─Library                     :: JavaScript对象模型的实现，从基本的bool，int，map到高级的regex和promise</span><br><span class="line">│  │  ├─Math                        :: 计算相关，加减乘除等等</span><br><span class="line">│  │  ├─PlatformAgnostic            :: 平台相关的实现</span><br><span class="line">│  │  └─Types                       :: 用来实现对象模型的基础类型，比如抽象的<span class="built_in">Type</span>和RecylableObject</span><br><span class="line">│  └─WasmReader                     :: WebAssembly加载器</span><br><span class="line">├─manifests                         :: 用于定义ETW Events的manifest</span><br><span class="line">├─pal                               :: 一个C标准库的实现，可以使用USING_PAL_STDLIB宏来启用</span><br><span class="line">├─test                              :: 测试</span><br><span class="line">└─tools                             :: 一些小工具</span><br></pre></td></tr></table></figure>
+<h2 id="Runtime和执行上下文（Execution-context）">2. Runtime和执行上下文（Execution context）</h2>
+<p>从Hello World中我们可以看到，如果我们需要ChakraCore来运行一段JS脚本，我们至少需要创建两样东西：<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsRuntimeHandle">JsRuntimeHandle</a>（Runtime）和<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsContextRef">JsContextRef</a>（执行上下文，execution context），这也是ChakraCore一开始最重要的两个概念。</p>
+<h3 id="Runtime：JsrtRuntime">2.1. Runtime：JsrtRuntime</h3>
+<p>Runtime这个词一听就知道非常重要，在这里也一样，它表示一个完整的用来支持JavaScript运行的环境，它具有自己独立的堆，编译器，JIT的线程和垃圾回收的线程。</p>
+<p>在ChakraCore里，Runtime和线程是紧密相关的，但是他们并不是一对一的，一个线程上可以存在多个Runtime，但在任意时刻都只允许存在一个活动的Runtime，而一个Runtime在任意时刻也只能运行在一个线程上，不过如果一个Runtime没有被任何地方使用，比如正在执行一段JS，那么你可以安全地在另一个没有被占用的线程上调用它。</p>
+<p>在JSRT API里，<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsRuntimeHandle">JsRuntimeHandle</a>用于表示一个Runtime，如果我们进入JsCreateRuntime这个API，我们就会发现它其实就是其真正Runtime的实现——<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=jsrtruntime">JsrtRuntime</a>的内存地址。</p>
+<span id="more"></span>
+<h3 id="执行上下文：JsrtContext">2.2. 执行上下文：JsrtContext</h3>
+<p>执行上下文和Runtime不同，它用来隔离JavaScript脚本的执行环境，换句话说，一个Runtime里面可以有多个执行上下文，每个执行上下文里面都有自己的GlobalObject，执行上下文互相之间默认看不到对方定义的变量。就比如浏览器中，一个页面可能会有很多个iframe一样。</p>
+<p>创建执行上下文的时候我们需要指定一个Runtime，新的执行上下文会被绑定到这个Runtime中，并且不能更改。另外多个执行上下文之间其实是共享了一个堆的，因为ChakraCore的堆是跟着Runtime走的，而且这样执行上下文之间才能互相访问对方的变量，而不用担心多线程的问题。</p>
+<p>在JSRT API里，<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsContextRef">JsContextRef</a>用于表示一个执行上下文，同样，如果我们进入JsCreateContext这个API，我们会发现它其实也是其真正的实现<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=jsrtcontext">JsrtContext</a>的内存地址。</p>
+<h3 id="原始关系图">2.3. 原始关系图</h3>
+<p>现在来看，Runtime和执行上下文的关系主要如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrt-top-level-data-structures-quick-overview.svg" alt="jsrt-top-level-data-structures-quick-overview"><br>
+[//]: &lt;&gt; (class JsrtRuntime)<br>
+[//]: &lt;&gt; (class JsrtContext)<br>
+[//]: &lt;&gt; (class Recycler)<br>
+[//]: &lt;&gt; (class GlobalObject)<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (JsrtRuntime “1”<em>–“n” JsrtContext)<br>
+[//]: &lt;&gt; (JsrtRuntime “1”</em>–“1” Recycler)<br>
+[//]: &lt;&gt; (JsrtContext “1”*–“1” GlobalObject)</p>
+<h2 id="ThreadContext和ScriptContext">3. ThreadContext和ScriptContext</h2>
+<p>在了解了JSRT API里看到的顶层结构之后，让我们来看看他们的具体实现吧。</p>
+<h3 id="JsrtRuntime和ThreadContext">3.1. JsrtRuntime和ThreadContext</h3>
+<p>我们先来看看JsrtRuntime。在Debugger下我们可以看见，这个类里面直接包含的信息其实非常的少，而且也没有看到我们期望的Recycler，和我们刚刚在介绍代码结构里提到的一样，它更像是一个最外层的封装，但是里面的另外一个类却很有意思——ThreadContext。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrtruntime-fields.png" alt="jsrtruntime-fields"></p>
+<h4 id="ThreadContext">3.1.1. ThreadContext</h4>
+<p>在<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=CreateRuntimeCore+filename%3AJsrt.cpp+&amp;type=Code">CreateRuntimeCore</a>里，我们可以看到，在创建JsrtRuntime之前我们需要创建一个ThreadContext，而主要的初始化都是在ThreadContext上进行的。在ThreadContext里面，我们还可以看到比JsrtRuntime多得多的成员变量，并且有很多我们都非常感兴趣，比如：</p>
+<ul>
+<li>和内存管理相关的Recycler，各种Page Allocator</li>
+<li>和控制流相关的异常信息</li>
+<li>各种统计信息</li>
+<li>我们马上会提到的JsrtContext的主要实现——ScriptContext的列表</li>
+<li>…等等</li>
+</ul>
+<p>可以看出，上面我们提到的Runtime提供的主要功能基本都在ThreadContext里面，可以说它是JsrtRuntime的主要实现。而通过代码我们可以看得到，JsrtRuntime和ThreadContext是一对一的，所以在读ChakraCore的代码时，我们基本可以把他们认为是一个东西。</p>
+<h4 id="ThreadContextScope">3.1.2. ThreadContextScope</h4>
+<p>在<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=CreateRuntimeCore+filename%3AJsrt.cpp+&amp;type=Code">CreateRuntimeCore</a>的最后，我们可以看到一些只有在开启调试之类状态下才会有的初始化，而在初始化之前ChakraCore会创建一个叫做ThreadContextScope的类，这个类是干什么的呢？</p>
+<p>还记得前面提到一个线程上虽然可以有多个Runtime，但是只能有一个活动的Runtime么，这个类就是用来将Runtime注册为活动并放入TLS中的。而在此之后就可以使用<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=ThreadContext%3A%3AGetContextForCurrentThread+filename%3AThreadContext.cpp+&amp;type=Code">ThreadContext::GetContextForCurrentThread</a>来获取当前活动的Runtime了，不过这个函数调用的地方非常的少，基本一些异常处理和Sanity Check在用，主要还是需要传入或者通过ScriptContext去拿。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/threadcontext-tls.svg" alt="threadcontext-tls"><br>
+[//]: &lt;&gt; (class ThreadContextTLSEntry)<br>
+[//]: &lt;&gt; (class ThreadContext)<br>
+[//]: &lt;&gt; (ThreadContextTLSEntry -down-&gt; ThreadContext : Only when thread context scope is created.)</p>
+<h4 id="其他的类">3.1.3. 其他的类</h4>
+<p>除了ThreadContext以外，JsrtRuntime里还有一些别的类：</p>
+<ul>
+<li>和ChakraCore内存管理相关的：比如AllocationPolicyManager和JsrtThreadService，我们在后面写内存管理的时候再来看这几个类，</li>
+<li>JSRT API Callback：比如<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsBeforeCollectCallback">beforeCollectCallback</a>等等。</li>
+</ul>
+<h3 id="JsrtContext，JavascriptLibrary和ScriptContext">3.2. JsrtContext，JavascriptLibrary和ScriptContext</h3>
+<p>JsrtContext和JsrtRuntime类似，它也只是一个Jsrt API里最外层的一个封装，其主要的实现实在两个类之中：JavascriptLibrary和ScriptContext。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrtcontext-fields.png" alt="jsrtcontext-fields"></p>
+<h4 id="ScriptContext">3.2.1. ScriptContext</h4>
+<p>虽然在上图中ScriptContext并没有直接被JsrtContext所持有，而是放在了JavascriptLibrary之中，但是我们还是先来看看这个类，因为这个类其实更加重要也更加的靠上层。</p>
+<p>在JsrtContext的构造函数里面，我们可以看到第一步就是<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=EnsureScriptContext+filename%3AJsrtContextCore.cpp+&amp;type=Code">创建ScriptContext</a>，而在<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=JsrtContextCore%3A%3ADispose+filename%3AJsrtContextCore.cpp+&amp;type=Code">销毁JsrtContext时</a>，其主要做的事情也是由ScriptContext来完成的，可见ScriptContext其实就是JsrtContext的真实实现。（其实看名字我们也看的出来……）</p>
+<p>还记得JsrtContext提供的功能么？在ScriptContext中，我们都可以在其成员变量中找到踪迹：</p>
+<ul>
+<li>globalObject：这个就是浏览器里JavaScript中的window变量。</li>
+<li>url：当前ScriptContext的创建者的URL。</li>
+<li>sourceList：用于储存每个ScriptContext中加载的代码。</li>
+</ul>
+<h4 id="JavascriptLibrary">3.2.2. JavascriptLibrary</h4>
+<p>现在让我们看回JavascriptLibrary，这个类的作用非常的大，它保存着所有类型的Prototype对象和类型对象，并且是所有Javascript对象的工厂，虽然名字有点让人无力吐槽，因为每次一说JavascriptLibrary，别人总以为是啥开源库……</p>
+<p>在<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=ScriptContext%3A%3AInitialize+filename%3AScriptContext.cpp&amp;type=Code">ScriptContext初始化时</a>，它会创建并初始化GlobalObject，而<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=GlobalObject%3A%3AInitialize+filename%3AGlobalObject.cpp+&amp;type=Code">GlobalObject初始化的时候</a>，它会创建并<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=JavascriptLibrary%3A%3AInitialize+filename%3AJavascriptLibrary.cpp&amp;type=Code">初始化JavascriptLibrary</a>，在它初始化的函数里面我们可以看到JavascriptLibrary会做如下几样事情：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">JavascriptLibrary::Initialize</span><span class="params">(ScriptContext* scriptContext, GlobalObject * globalObject)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ......</span><br><span class="line">    <span class="comment">// Note: InitializePrototypes and InitializeTypes must be called first.</span></span><br><span class="line">    <span class="built_in">InitializePrototypes</span>();             <span class="comment">// 创建所有对象类型的Prototype。</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">InitializeTypes</span>();                  <span class="comment">// 使用创建好的Prototype对象来创建所有的类型对象（Type）。</span></span><br><span class="line">                                        <span class="comment">// Prototype和Type的关系是：所有的对象都有对应的Type对象，而Type对象里</span></span><br><span class="line">                                        <span class="comment">// 保存着它的Prototype对象。</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">InitializeGlobal</span>(globalObject);     <span class="comment">// 初始化GlobalObject，创建全局变量和方法，并使用创建好的Type对象在</span></span><br><span class="line">                                        <span class="comment">// GlobalObject上创建工厂方法，这些工厂方法的实现都在JavascriptLibrary上。</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">InitializeComplexThings</span>();          <span class="comment">// 创建Regex的Prototype和Type，因为它需要创建一个空的Regex。</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">InitializeStaticValues</span>();           <span class="comment">// 获取Javascript对象的虚表地址，并保存在一个列表之中，之后会传递给进程</span></span><br><span class="line">                                        <span class="comment">// 外的JIT服务端来使用。</span></span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为了了解JavascriptLibrary的生命周期，最后再来看看<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/search?q=javascriptLibrary-%3EUninitialize+filename%3AScriptContext.cpp&amp;type=Code">它什么时候被销毁</a>，这个函数是在ScriptContext被关闭的时候被调用的，所以它的生命周期基本就是跟着ScriptContext走的。</p>
+<h3 id="顶层数据结构主要关系图">3.3. 顶层数据结构主要关系图</h3>
+<p>好了，现在我们已经基本对ChakraCore的顶层数据结构有所了解了，让我们来再次梳理一下他们之前的关系吧：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-25-learning-chakracore-2-top-level-data-structures/jsrt-top-level-data-structures-overview.svg" alt="jsrt-top-level-data-structures-overview"><br>
+[//]: &lt;&gt; (class JsrtRuntime {)<br>
+[//]: &lt;&gt; (    JsrtContext* contextList)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class JsrtContext {)<br>
+[//]: &lt;&gt; (    Js::JavascriptLibrary* javascriptLibrary)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class ThreadContextGlobalList)<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class ThreadContext {)<br>
+[//]: &lt;&gt; (    Js::ScriptContext* scriptContextList)<br>
+[//]: &lt;&gt; (    Recycler* recycler)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class ThreadContextTLSEntry)<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class Js::ScriptContext {)<br>
+[//]: &lt;&gt; (    Js::JavascriptLibrary* javascriptLibrary)<br>
+[//]: &lt;&gt; (    Js::GlobalObject* globalObject)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class Recycler)<br>
+[//]: &lt;&gt; (class Js::JavascriptLibrary {)<br>
+[//]: &lt;&gt; (    Js::ScriptContext* scriptContext)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (class Js::GlobalObject {)<br>
+[//]: &lt;&gt; (    Js::JavascriptLibrary* library)<br>
+[//]: &lt;&gt; (})<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (JsrtRuntime “1”<em>-down-“n” JsrtContext)<br>
+[//]: &lt;&gt; (JsrtContext “1”</em>-right-“1” Js::ScriptContext)<br>
+[//]: &lt;&gt; (Js::ScriptContext -down-&gt; Js::JavascriptLibrary)<br>
+[//]: &lt;&gt; (Js::ScriptContext “1”<em>-down-“1” Js::GlobalObject)<br>
+[//]: &lt;&gt; (Js::GlobalObject “1”</em>-down-“1” Js::JavascriptLibrary)<br>
+[//]: &lt;&gt; (Js::JavascriptLibrary -up-&gt; Js::ScriptContext)<br>
+[//]: &lt;&gt; (JsrtContext <em>-down-&gt; Js::JavascriptLibrary)<br>
+[//]: &lt;&gt; ()<br>
+[//]: &lt;&gt; (JsrtRuntime “1”</em>-right-“1” ThreadContext)<br>
+[//]: &lt;&gt; (ThreadContextGlobalList “1”-down-&gt;“n” ThreadContext)<br>
+[//]: &lt;&gt; (ThreadContextTLSEntry -down-&gt; ThreadContext : Only when thread context scope is created.)<br>
+[//]: &lt;&gt; (ThreadContext “1”-down-&gt;“n” Js::ScriptContext)<br>
+[//]: &lt;&gt; (ThreadContext “1”*-down-“1” Recycler)<br>
+[//]: &lt;&gt; (Js::ScriptContext *-[hidde#right-&gt; Recycler)</p>
+<h2 id="结语">4. 结语</h2>
+<p>希望这篇文章能帮助大家了解ChakraCore顶层数据结构，从而让使用JSRT API或者阅读ChakraCore的代码都变得更加容易。当然，我也是现学现写点笔记，所以难免有出错的地方，还请大家能多多指教，谢谢。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/">ChakraCore学习笔记（四）：使用JSRT API （二）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-3-using-jsrt-api-1/">ChakraCore学习笔记（三）：使用JSRT API （一）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/">ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-1-building-chakracore-on-windows/">ChakraCore学习笔记（一）：在Windows上编译ChakraCore</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/" target="_blank">ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Chakra/" rel="tag"># Chakra</a>
+              <a href="/tags/ChakreCore/" rel="tag"># ChakreCore</a>
+              <a href="/tags/JavaScript/" rel="tag"># JavaScript</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-chakracore-1-building-chakracore-on-windows/" rel="prev" title="ChakraCore学习笔记（一）：在Windows上编译ChakraCore">
+                  <i class="fa fa-chevron-left"></i> ChakraCore学习笔记（一）：在Windows上编译ChakraCore
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-chakracore-3-using-jsrt-api-1/" rel="next" title="ChakraCore学习笔记（三）：使用JSRT API （一）">
+                  ChakraCore学习笔记（三）：使用JSRT API （一） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

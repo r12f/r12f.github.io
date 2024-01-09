@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Azure Pipeline是一个非常强大而且部分免费的编译和发布工具，我们可以用它来连接GitHub或者Azure DevOps上的项目进行CI和CD的实践。我们经常需要的一个功能就是在CI Build中自动升级版本号，而在Azure Pipeline中，这个功能的实现却不是那么的直接，在尝试了多种方法之后，我终于找到了一种简单而且有效的方法，于是记录一下。 为了解决这个问题，我们需要用到Azu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Azure Pipeline在每次编译时自动升级版本号">
+<meta property="og:url" content="http://r12f.com/posts/automatically-increase-version-number-in-azure-pipeline/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="Azure Pipeline是一个非常强大而且部分免费的编译和发布工具，我们可以用它来连接GitHub或者Azure DevOps上的项目进行CI和CD的实践。我们经常需要的一个功能就是在CI Build中自动升级版本号，而在Azure Pipeline中，这个功能的实现却不是那么的直接，在尝试了多种方法之后，我终于找到了一种简单而且有效的方法，于是记录一下。 为了解决这个问题，我们需要用到Azu">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-01-01T05:36:08.000Z">
+<meta property="article:modified_time" content="2020-01-01T05:36:08.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="azure pipeline">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/automatically-increase-version-number-in-azure-pipeline/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/automatically-increase-version-number-in-azure-pipeline/","path":"posts/automatically-increase-version-number-in-azure-pipeline/","title":"使用Azure Pipeline在每次编译时自动升级版本号"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用Azure Pipeline在每次编译时自动升级版本号 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%EF%BC%88Variable%EF%BC%89%E5%92%8C%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%88Counter%EF%BC%89"><span class="nav-text">1. 变量（Variable）和计数器（Counter）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%EF%BC%88Variable%EF%BC%89"><span class="nav-text">1.1. 变量（Variable）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%88Counter%EF%BC%89"><span class="nav-text">1.2. 计数器（Counter）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E8%AE%A1%E6%95%B0%E5%99%A8%E5%AE%9E%E7%8E%B0%E7%89%88%E6%9C%AC%E5%8F%B7%E8%87%AA%E5%A2%9E%E9%95%BF"><span class="nav-text">2. 利用计数器实现版本号自增长</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/automatically-increase-version-number-in-azure-pipeline/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用Azure Pipeline在每次编译时自动升级版本号 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用Azure Pipeline在每次编译时自动升级版本号
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-12-31 21:36:08" itemprop="dateCreated datePublished" datetime="2019-12-31T21:36:08-08:00">2019-12-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/automatically-increase-version-number-in-azure-pipeline/" class="post-meta-item leancloud_visitors" data-flag-title="使用Azure Pipeline在每次编译时自动升级版本号" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/automatically-increase-version-number-in-azure-pipeline/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/automatically-increase-version-number-in-azure-pipeline/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Azure Pipeline是一个非常强大而且部分免费的编译和发布工具，我们可以用它来连接GitHub或者Azure DevOps上的项目进行CI和CD的实践。我们经常需要的一个功能就是在CI Build中自动升级版本号，而在Azure Pipeline中，这个功能的实现却不是那么的直接，在尝试了多种方法之后，我终于找到了一种简单而且有效的方法，于是记录一下。</p>
+<p>为了解决这个问题，我们需要用到Azure Pipeline的变量（<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;tabs=yaml%2Cbatch">Variable</a>）和计数器（<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/expressions?view=azure-devops#counter">Counter</a>）。</p>
+<span id="more"></span>
+<h2 id="变量（Variable）和计数器（Counter）">1. 变量（Variable）和计数器（Counter）</h2>
+<h3 id="变量（Variable）">1.1. 变量（Variable）</h3>
+<p>变量顾名思义就是变量了，更多有关变量的详情可以在<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;tabs=yaml%2Cbatch">这里的文档</a>中找到，在这里我们只粗略的介绍一下：</p>
+<ul>
+<li>变量可以是数字（常用的比如版本号1, 2, 3），文本（比如编译类型，debug或release）</li>
+<li>变量可以由外界传递进流水线（Pipeline），也可以在yml中的variable区直接定义
+<ul>
+<li>比如发布网站的时候需要一个密码，这个密码就可以通过变量传递进来，或者保存在一个<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&amp;tabs=yaml%2Cbatch#secret-variables">Secret变量</a>之中，而不用写在yml中，避免安全问题</li>
+</ul>
+</li>
+</ul>
+<p>举个简单的例子：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">variables:</span></span><br><span class="line">  <span class="attr">configuration:</span> <span class="string">debug</span></span><br><span class="line">  <span class="attr">platform:</span> <span class="string">x64</span></span><br><span class="line">  <span class="attr">major_version:</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<h3 id="计数器（Counter）">1.2. 计数器（Counter）</h3>
+<p>计数器是Azure Pipeline提供的一个函数，他提供两个参数，一个字符串一个起始值，作用是记录以这个特定字符串作为参数的调用次数，并将这个次数加上这个起始值返回，所以我们可以把它理解成为一个简单的针对一个Pipeline的map。需要注意的是：Counter只能在定义Variable的时候使用。</p>
+<p>打个比方，我们可以定义一个由’abc’作为key，起始值是100的计数器：<code>$[counter('abc', 100)]</code></p>
+<ul>
+<li>第一次调用的时候（这个pipeline第一次执行的时候），这个计数器会返回100</li>
+<li>第二次调用的时候就会返回101了，以此类推</li>
+</ul>
+<h2 id="利用计数器实现版本号自增长">2. 利用计数器实现版本号自增长</h2>
+<p>现在有了计数器实现版本号自增长就简单了，比如我们的版本号的格式是：&lt;主版本号&gt;.&lt;副版本号&gt;.&lt;编译版本号&gt;，那么我们就可以定义好主版本号和副版本号，然后通过把主副版本号做key，利用计数器来生成编译版本号，如下：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">variables:</span></span><br><span class="line">  <span class="attr">buildVersionMajor:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">buildVersionMinor:</span> <span class="number">0</span></span><br><span class="line">  <span class="attr">buildVersionRevision:</span> <span class="string">$[counter(format(&#x27;&#123;0&#125;.&#123;1&#125;&#x27;,</span> <span class="string">variables[&#x27;buildVersionMajor&#x27;],</span> <span class="string">variables[&#x27;buildVersionMinor&#x27;]),</span> <span class="number">0</span><span class="string">)]</span></span><br></pre></td></tr></table></figure>
+<p>现在我们已经有了版本号了，接下来我们就可以将其传递给编译环境了，我们可以使用参数，或者使用一个脚本来更新一个存储版本的特定的文件来达到版本号的更新。</p>
+<p>拿hexo-asset-path项目举例，这里我们就自己写了一个脚本来更新一个存储了版本的特定文件————package.json：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">task:</span> <span class="string">PowerShell@2</span></span><br><span class="line">  <span class="attr">displayName:</span> <span class="string">&#x27;Increase version number&#x27;</span></span><br><span class="line">  <span class="attr">inputs:</span></span><br><span class="line">    <span class="attr">targetType:</span> <span class="string">&#x27;filePath&#x27;</span></span><br><span class="line">    <span class="attr">filePath:</span> <span class="string">&#x27;$(Build.SourcesDirectory)/Build/Update-BuildRevisionVersion.ps1&#x27;</span></span><br><span class="line">    <span class="attr">arguments:</span> <span class="string">&#x27;$(buildVersionMajor).$(buildVersionMinor).$(buildVersionRevision)&#x27;</span></span><br><span class="line">  <span class="attr">condition:</span> <span class="string">and(succeeded(),</span> <span class="string">ne(variables[&#x27;Build.Reason&#x27;],</span> <span class="string">&#x27;PullRequest&#x27;</span><span class="string">))</span></span><br></pre></td></tr></table></figure>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/automatically-increase-version-number-in-azure-pipeline/" target="_blank">使用Azure Pipeline在每次编译时自动升级版本号</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/azure-pipeline/" rel="tag"># azure pipeline</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-technical-leadership/" rel="prev" title="《技术领导力：程序员如何才能带团队》知识总结">
+                  <i class="fa fa-chevron-left"></i> 《技术领导力：程序员如何才能带团队》知识总结
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/use-azure-pipeline-to-build-npm-package/" rel="next" title="使用Azure Pipeline来编译和发布npm包">
+                  使用Azure Pipeline来编译和发布npm包 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

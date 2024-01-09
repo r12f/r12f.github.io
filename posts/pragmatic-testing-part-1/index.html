@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="“Please write a UT for this change.” is one of the most frequent comments I leave in the code review. And I am seeing people tend to write minimum tests just for having something to pass the review. W">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pragmatic testing (P1: Problems, principles and test-friendly code)">
+<meta property="og:url" content="http://r12f.com/posts/pragmatic-testing-part-1/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="“Please write a UT for this change.” is one of the most frequent comments I leave in the code review. And I am seeing people tend to write minimum tests just for having something to pass the review. W">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-02-04T02:55:02.000Z">
+<meta property="article:modified_time" content="2021-02-04T02:55:02.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="Testing">
+<meta property="article:tag" content="Coding">
+<meta property="article:tag" content="Software Engineering">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pragmatic-testing-part-1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pragmatic-testing-part-1/","path":"posts/pragmatic-testing-part-1/","title":"Pragmatic testing (P1: Problems, principles and test-friendly code)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Pragmatic testing (P1: Problems, principles and test-friendly code) | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9CWriting-test-is-so-annoying%E2%80%9D"><span class="nav-text">1. “Writing test is so annoying”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#So-why-testing"><span class="nav-text">2. So, why testing?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ensures-no-regression-in-the-future"><span class="nav-text">2.1. Ensures no regression in the future</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reveals-behavior-changes"><span class="nav-text">2.2. Reveals behavior changes</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tests-are-enforced-docs"><span class="nav-text">2.3. Tests are enforced docs</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Principles-of-testing"><span class="nav-text">3. Principles of testing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Good-code-tests-itself"><span class="nav-text">4. Good code tests itself</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Contract-programming-Design-by-contract"><span class="nav-text">4.1. Contract programming (Design by contract)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Be-disciplined-not-permissive"><span class="nav-text">4.2. Be disciplined, not permissive</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Run-time-constraints"><span class="nav-text">4.2.1. Run-time constraints</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Error-codes"><span class="nav-text">4.2.1.1. Error codes</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Assertions-and-exceptions"><span class="nav-text">4.2.1.2. Assertions and exceptions</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Compile-time-constraints"><span class="nav-text">4.2.2. Compile-time constraints</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Static-code-analysis"><span class="nav-text">4.2.2.1. Static code analysis</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Assert-not-just-in-run-time"><span class="nav-text">4.2.2.2. Assert, not just in run-time</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Syntax-level-constraints-and-immutability"><span class="nav-text">4.2.2.3. Syntax-level constraints and immutability</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dead-programs-tell-no-lies"><span class="nav-text">4.3. Dead programs tell no lies</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Assertions-or-error-codes"><span class="nav-text">4.3.1. Assertions or error codes?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Suicide-point"><span class="nav-text">4.3.2. Suicide point</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Good-code-makes-good-tests"><span class="nav-text">5. Good code makes good tests</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Pragmatic-testing-code-boundary-and-code-refactor"><span class="nav-text">5.1. Pragmatic testing: code boundary and code refactor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Increase-testable-surface-high-cohesion-low-coupling"><span class="nav-text">5.2. Increase testable surface: high cohesion, low coupling</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Avoid-unstable-code"><span class="nav-text">5.3. Avoid unstable code</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Be-friendly-to-tests-test-stub"><span class="nav-text">5.4. Be friendly to tests: test stub</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Take-a-break"><span class="nav-text">6. Take a break</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pragmatic-testing-part-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Pragmatic testing (P1: Problems, principles and test-friendly code) | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Pragmatic testing (P1: Problems, principles and test-friendly code)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-02-03 18:55:02" itemprop="dateCreated datePublished" datetime="2021-02-03T18:55:02-08:00">2021-02-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pragmatic-testing-part-1/" class="post-meta-item leancloud_visitors" data-flag-title="Pragmatic testing (P1: Problems, principles and test-friendly code)" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pragmatic-testing-part-1/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pragmatic-testing-part-1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><strong>“Please write a UT for this change.”</strong> is one of the most frequent comments I leave in the code review. And I am seeing people tend to write minimum tests just for having something to pass the review.</p>
+<p>Well, I kind of understand writing tests is annoying sometimes, but tests are extremely helpful and there are things could help us writing them too. So let’s talk about test!</p>
+<hr>
+<h2 id="“Writing-test-is-so-annoying”">1. “Writing test is so annoying”</h2>
+<blockquote>
+<p>“Hey! It compiles! Ship it!”</p>
+</blockquote>
+<p>When talking about writing tests, many people find it annoying for simliar reasons:</p>
+<ul>
+<li>Extra work. Most of time, writing tests is very time consuming. And sometimes, it will take even longer time than development itself.</li>
+<li>The thrill of developing a new feature is usually over after the core logic is done.</li>
+<li>Writing test is a tedious work. And you might not even be able to find a single bug after writing tons of tests.</li>
+<li>We have added a lot of tests for a feature. Then the feature changed, and all the tests have to be rewritten, which greatly slows down the development.</li>
+</ul>
+<p>All these questions and complaints are basically because we don’t understand the real intention of testing, and finally fall into the misunderstanding of writing test for the sake of writing tests. And when we are forced to do something, we are never going to feel it will benefit us, even if it really does.</p>
+<span id="more"></span>
+<hr>
+<h2 id="So-why-testing">2. So, why testing?</h2>
+<p>This is the ultimate question indeed. So, what are these tests for?</p>
+<h3 id="Ensures-no-regression-in-the-future">2.1. Ensures no regression in the future</h3>
+<p>Many people feel tests are like disposable items. We only use them once during code review to show the code is working as expected. On the contrary, there is nothing more cost-effective than tests: a once-investment, a lifetime warranty! <strong>Once the tests are done, they will guarantee our code always works in the way we expect</strong>. This is the one of the biggest reasons for us to write tests.</p>
+<p>Furthermore, if it is done right, the marginal cost will be almost 0!</p>
+<p>Don’t underestimate this property. it’s what allows us to make changes to our code with confidence. It is the cornerstone of any code refactoring (see “Refactor: Improving the Design of Existing Code” Ch. 2), and it is also the prerequisite of any automation (see “Continuous Delivery”). And <strong>safe code refactoring and automation is what we are really trying to achieve</strong>.</p>
+<h3 id="Reveals-behavior-changes">2.2. Reveals behavior changes</h3>
+<p>Of course, we can also apply this property above reversely, that is, when we change the behavior of the code, the test should be able to fully reflect all the changes brought to the system. And these changes should be as clear as possible to help us in self-reviewing and code review.</p>
+<p>We’ll leave the specific methodology here and discuss it in next post.</p>
+<h3 id="Tests-are-enforced-docs">2.3. Tests are enforced docs</h3>
+<blockquote>
+<p>“Programs must be written for people to read, and only incidentally for machines to execute.”<br>
+– Harold Abelson and Gerald Jay Sussman, from “The Structure and Interpretation of Computer Programs”</p>
+</blockquote>
+<p>The biggest problem with documentation is that it’s not enforced, so it starts to become obsolete from the very first second it’s written. This is why the code itself should act as its own documentation. That’s how we can be sure that the documentation will never become obsolete. Tests are code too. And comparing to other code, they are a even better knowledge base.</p>
+<ol>
+<li>First, tests demonstrate how to use the module that is being tested. If you are familiar with Test Driven Development (TDD), you will know that one of the purposes of writing tests is to help us design and improve the interfaces from the user’s perspective. Although we don’t necessarily have to use TDD, the idea is the same. Languages like golang do a even better job by directly <a target="_blank" rel="noopener" href="https://blog.golang.org/examples">distinguishing and supporting such example tests separately at the language level</a>.</li>
+<li>Second, the assertion in the test guarantees that everything it says will always be true! This gives us a shortcut to understand the code. We don’t have to struggle figuring out what does the code do and understand all the details, we can just read the conclusions that are absolutely true. How good is this! It is the best documentation you can ever imagine!</li>
+</ol>
+<p>For this reason, whenever I need to understand a module, after a brief reading of the design doc, I will usually spend more time reading the relevant tests.</p>
+<hr>
+<h2 id="Principles-of-testing">3. Principles of testing</h2>
+<p>Now that we understand the purpose of testing, you may have a little interest in writing tests. But reality is always stark and the problems we mentioned above are still in front of us, so the methodology of writing tests becomes especially important. Remember: we should never write tests for the sake of writing tests! Instead, we should <strong>test reasonably in reasonable places</strong>. Do not let testing becomes a burden to us, or making us slaves. Make it become our helper!</p>
+<p>To help us test better, we should follow several principles below, no matter if we are writing features or writing tests:</p>
+<ul>
+<li><strong>Shortest distance</strong>: The distance between the error check and the action should be the shortest. In other words, an error should be reported immediately if something goes wrong.</li>
+<li><strong>Observable</strong>: The behavior and state of the program can be easily and clearly observed. For example, logs, error contexts, and other information.</li>
+<li><strong>Repeatable</strong>: The program’s behavior and errors can be stably reproduced. Unstable tests are really annoying.</li>
+</ul>
+<p>We’ll discuss the specific methodology below and explain how to apply these principles.</p>
+<hr>
+<h2 id="Good-code-tests-itself">4. Good code tests itself</h2>
+<p>When many people hear about writing tests, they think of writing test cases one by one in unit tests. In fact, tests don’t necessarily need to be implemented in this way. We know that the earlier we find a problem, the cheaper it is to fix it, so wouldn’t it be more convenient if the code itself could help us find the error?</p>
+<p>So, don’t forget: good code tests itself. This is an application of the shortest distance principle.</p>
+<h3 id="Contract-programming-Design-by-contract">4.1. Contract programming (Design by contract)</h3>
+<p>Although many projects are very complex, they are nothing compared to human society. So what is it that makes our society possible to move forward with such complexity? This is the power of contract! From a small verbal agreement, to a larger contract signed to work, to the ubiquitous rules and regulations, to the laws that guide our lives. They are all contracts. And if we break them, we will be punished in certain way.</p>
+<p>Same can be applied in coding. Each function has its own contract: what are its preconditions (e.g. parameters are not null, usually checked by <code>Requires</code>), what are the postconditions (e.g. a file must be created, usually checked by <code>Ensures</code>), and what are the invariants during execution (for example, in binary search, left must never be greater than right, usually checked by <code>Assert</code> or <code>Invariant</code>). Once the contract is broken, it needs to be punished (return an error or exception). This is <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Design_by_contract">Design by contract</a>.</p>
+<p>Essentially contract programming is a kind of in-code testing. It is so famous not only because it helps us find the problem, but more importantly it also helps us determine where the problem is. It works as the contracts in real life - you’re late is you’re late. If the preconditions of a function are not met thus causing an error, then we don’t need to check this function at all; if an invariant is violated, then the problem must be in this function or its related functions (e.g., other functions of the same class), and we don’t need to check its caller. This greatly helps us debugging problems!</p>
+<p>In fact, many programming languages already provide support for contract programming. For examples: <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/understanding-sal">SAL</a> (a type of code annotation) and <a target="_blank" rel="noopener" href="https://github.com/microsoft/GSL">GSL</a> (for supporting <a target="_blank" rel="noopener" href="https://github.com/isocpp/CppCoreGuidelines">C++ Core Guidelines</a>) in C/C++, <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">CodeContract</a> in C#. And the impact of this idea is so large that if the language doesn’t provide it or the inbox one is slightly inconvenient, the community will help provide third-party packages to implement it, such as <a target="_blank" rel="noopener" href="https://github.com/safakgur/guard#introduction">Dawn.Guard</a> for C# and <a target="_blank" rel="noopener" href="https://github.com/go-ozzo/ozzo-validation">ozzo-validation</a> for Go.</p>
+<h3 id="Be-disciplined-not-permissive">4.2. Be disciplined, not permissive</h3>
+<blockquote>
+<p>“Don’t assume it, prove it.” – David Thomas, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>According to the shortest distance principle, we want to report errors as early as possible, so a very intuitive conclusion is that - <strong>If there is a more enforceable way to constrain code, always do so</strong>.</p>
+<p>The common constraints, in descending order of strength, are listed as follows:</p>
+<ol>
+<li>Syntax-level compilation errors</li>
+<li>Compile-time assertions</li>
+<li>Static code analysis</li>
+<li>Run-time errors, assertions or exceptions</li>
+<li>Checks in run-time and return error codes, then asserts in tests.</li>
+<li>Checks in run-time, without returning any error codes. But internal state can be accessed later, then asserts in tests.</li>
+<li>No error handling of any kind</li>
+</ol>
+<p>Level 1-3 constraints are compile-time constraints, while level 4-6 constraints are run-time constraints, and they each have their own characteristics. To show how they works, here is an example, which I believe we all have seen a lot:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Data</span> &#123;</span><br><span class="line">  <span class="type">int</span> FieldA;</span><br><span class="line">  <span class="type">char</span> FieldB[<span class="number">6</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (p == <span class="literal">nullptr</span>) &#123; <span class="keyword">return</span> <span class="literal">false</span>; &#125;</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Run-time-constraints">4.2.1. Run-time constraints</h4>
+<h5 id="Error-codes">4.2.1.1. Error codes</h5>
+<p>Based on the definitions above, we can tell this function is using level 5 constraint. Since this constraint mainly uses error codes to determine the type of error, it is better to use more expressive error codes. For example, <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/error/error_code">std::error_code</a>, a strong-typed, extendable, descriptive error code in C++, or integer based error codes likes <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values">HRESULT</a> or <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes">System Error Code</a> in Windows programming.</p>
+<p>In the example above, using bool is bad, because returning false cannot tell us what might have gone wrong at all. Hence, to improve it, we can replace it with HRESULT:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">HRESULT <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (p == <span class="literal">nullptr</span>) &#123; <span class="keyword">return</span> E_INVALIDARG; &#125;</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">  <span class="keyword">return</span> S_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>As we can see here, the problem with the return code is very obvious. If no test case tests it, this kind of error will not be found by us quickly, until it goes wrong somewhere else and maybe after days of debugging (missing logs again? :P). So in order to find the problem sooner, we can try raising the constraint level of this code.</p>
+<h5 id="Assertions-and-exceptions">4.2.1.2. Assertions and exceptions</h5>
+<p>We are all familar with assertions and exceptions. They are all very straightforward, no matter if we are using exceptions like <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.argumentnullexception">ArgumentNullException</a> or <a target="_blank" rel="noopener" href="http://www.cplusplus.com/reference/cassert/assert/">Assert</a>. But there is a better way to apply assertions and exceptions. That is the contract programming we have already mentioned above.</p>
+<p>If we don’t use any third-party libraries, we can define some macros ourselves to start with. For example, the following code implements the Requires keyword in contract programming to help us constrain our code.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">define</span> REQUIRES(cond) assert(cond)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">REQUIRES</span>(p != <span class="literal">nullptr</span>);</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>A few things to note here are:</p>
+<ul>
+<li>If the argument here is a user input, we must be careful with assertions. A user input can be anything, there is no contractual restriction on it, so we have to handle it properly. Assertions should only be used when something impossible happens, e.g. internal calls. Otherwise, they can lead to unexpected crashes and affect the user experience. (Classic joke: <a target="_blank" rel="noopener" href="https://twitter.com/brenankeller/status/1068615953989087232">A QA engineer walks into a bar</a>).</li>
+<li>If this null pointer is the only thing that can go wrong in this function, we don’t need to return any error anymore, because it’s already asserted, hence changing the return value type to void.</li>
+</ul>
+<p>And as mentioned above, there are already many mature libraries for contract programming. Applying them wisely can make us much more efficient at writing code and debugging issues.</p>
+<h4 id="Compile-time-constraints">4.2.2. Compile-time constraints</h4>
+<p>The benefit of run-time constraints is that it can handle any data. But its problem is that it requires us to execute this code. Therefore, we must write and run specific tests to trigger them, and it also takes time to debug these errors. These are all overhead for us. So, is there a stronger and more convenient constraint? Gladly, yes, that is compile-time constraint.</p>
+<p>The compile-time constraints, which are all executed during compile and generate compile errors if something goes wrong. The advantage of it is very obvious:</p>
+<ul>
+<li>If the compilation fails, we don’t have any software to release. And this prevent us from releasing bad versions for good.</li>
+<li>Compile errors usually come with very detailed information about the error, like which file and which line of code. So comparing to run-time errors, compile errors require almost no debugging (ahem, except for C++ template deduction errors…).</li>
+</ul>
+<p>But the biggest problem with compile-time constraints is that if the state cannot be determined during compilation, we cannot use them (e.g., user input).</p>
+<p>And here, let’s see how to apply the compile-time constraints.</p>
+<h5 id="Static-code-analysis">4.2.2.1. Static code analysis</h5>
+<p>Static code analysis is a useful tool to help us analyze our code and identify possible problems in it, such as memory being allocated but not released, variables being used before initialized, and so on. The reason it is listed only as level 3 here is that static code analysis is usually optional and people often forget to turn it on. In addition, code analysis takes time, which can make compilation speed significantly slower, so many people also disable it during development and only enable it when merging code, so it is not that mandatory, which causes the problems being found late.</p>
+<p>There are many static code analysis tools, such as <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/using-the-cpp-core-guidelines-checkers">CppCoreCheck</a>, <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview">NetAnalyzer</a> and so on. Many of these tools also require us to modify the code accordingly, telling it what we expect, for example, <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/understanding-sal">SAL</a>.</p>
+<p>Now, let’s apply the level 3 constraint by adding SAL to the same code:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// REQUIRES(p != nullptr); // This line can be removed, if p is not a third-party input, e.g. user input.</span></span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>As we can see here, the SAL <code>_In_</code> keyword added before the parameter did not just provide the expectation for code analysis, it is also a contract that tells the caller this function does not accept null pointers. So, based on the contract programming, we can assume that the caller abides by the contract and remove null pointer check. This makes the code simplier and more clear, and also more efficient! (Imagine passing a pointer through a call stack, and the beginning of every function on the stack starts with the null pointer check…)</p>
+<h5 id="Assert-not-just-in-run-time">4.2.2.2. Assert, not just in run-time</h5>
+<p>Many languages also provide compile-time assertions, such as <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/static_assert"><code>static_assert</code></a> in C++. This assertion can be used as long as the condition can be evaluated at compile time.</p>
+<p>For example, we can make the following assertion on the above code: (Will both assertions succeed? :D)</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Data</span> &#123;</span><br><span class="line">  <span class="type">int</span> FieldA;</span><br><span class="line">  <span class="type">char</span> FieldB[<span class="number">6</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Making sure structure and fields are aligned when dealing with binary buffers.</span></span><br><span class="line"><span class="built_in">static_assert</span>(<span class="built_in">sizeof</span>(Data) == <span class="number">10</span>);</span><br><span class="line"><span class="built_in">static_assert</span>(<span class="built_in">FIELD_OFFSET</span>(Data, FieldB) == <span class="number">4</span>);</span><br></pre></td></tr></table></figure>
+<p>In addition to this, there are some other common usage patterns, such as:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Making sure every enum value will have its name.</span></span><br><span class="line"><span class="built_in">static_assert</span>(_countof(enum_names) == enum_value_max));</span><br></pre></td></tr></table></figure>
+<h5 id="Syntax-level-constraints-and-immutability">4.2.2.3. Syntax-level constraints and immutability</h5>
+<p>At last, the highest level of constraint - syntax errors. By using the keywords provided by the language wisely, we can make the language itself help us avoid bugs.</p>
+<p>For example, for fixing the code above, we can simply use reference instead of pointer to avoid the null pointer problem for good. Then, we don’t need any null pointer check at all. Also since it is an <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/understanding-sal?#sal-basics"><code>_In_</code></a> parameter, we can add a <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/cv"><code>const</code> qualifier</a> to ensure it will not be modified by the function.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ <span class="type">const</span> Data &amp;p)</span> </span>&#123; <span class="comment">/* Do something here */</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>There are many other keywords/syntaxes like these to help us with constraints, such as the frequently used <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/final"><code>final</code> keyword</a>, the <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/override"><code>override</code> keyword</a> in c++, and so on. And my favorite one - <code>const</code>.</p>
+<p>In C++, <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/cv"><code>const</code> qualifier</a> can appear in many places - decorate variables, function parameters, member functions. Whenever I see <code>const</code>, I feel especially relieved, because I know whatever it decorates won’t be changed by anything (or won’t change anything), so it’s safe in multi-threaded programming (there are still exceptions, of course, but they’re much less likely). And this is one of the most important cornerstones of functional programming (or implementing thread-safe programs): <a target="_blank" rel="noopener" href="https://en.m.wikipedia.org/wiki/Immutable_object">Immutability</a>.</p>
+<p>Immutability, for an object, means that the state of the object is immutable after its constructor is done, i.e., the constructor is the only place where the state of the object can be changed. Such an object is also called an immutable object. The affinity of immutable objects for multi-threaded programming is very obvious - it cannot be changed by anyone, so you can access it in parallel or in any way you want.</p>
+<p>Here again, taking the same function as an example. If, say, ProcessData is a callback function and the parameter p will be accessed by multiple threads, then we can implement this function in the following way, so that we can avoid many errors that caused by multi-threaded access, like race conditions.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ std::shared_ptr&lt;<span class="type">const</span> Data&gt; p)</span> </span>&#123; <span class="comment">/* Do something here */</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>Now, immutable objects are not exclusive to functional languages anymore, for example, C# provided <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.immutable">Immutable Collection</a> to help us do better in multi-threaded programming.</p>
+<h3 id="Dead-programs-tell-no-lies">4.3. Dead programs tell no lies</h3>
+<h4 id="Assertions-or-error-codes">4.3.1. Assertions or error codes?</h4>
+<blockquote>
+<p>“Defensive programming is a waste of time. Let it crash!” – Joe Armstrong, the inventor of Erlang<br>
+“Crash, don’t trash.” – David Thomas, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>After the section above, you may be wondering, is it better to use assertions than error codes? If an assertion fails, the program will crash. Shouldn’t this be avoided?</p>
+<p>On the contrary, because crashes are ruthless, we should use them more often. Especially when a major problem is encountered, we should crash as soon as possible instead of remain silent and continuing execution.</p>
+<p>First, crashes never lie! And they also generate a crash dump file (i.e. core dump), which provides the call stack when crash happens, or even complete memory data to tell us why. This is far more informative than one or two lines of error logs, which can greatly increase the observability of a program when something goes wrong.</p>
+<p>Second, when a program is in an uncertain state, it is usually better to just crash than to continue execution, because we cannot predict what the program is going to do next. It may modify user data indiscriminately, it may execute some logic that should not be executed at all, or call another module or service. And the effects of these errors are usually very difficult to recover (Good luck if a user’s data in his file or database is corrupted, due to a bug in our service sending valid request…)</p>
+<p>Finally, crashes just simply can’t be ignored, whether it’s in testing, pre-release, or final release. This gives us two particularly good properties:</p>
+<ul>
+<li>Anything that we asserted is guaranteed to be true. This helps us simplify our code and increases our confidence that our code is executing as expected. Think of a certain assertion in your program that never get triggered when executed on millions of machines.</li>
+<li>Assertion failures are hard to miss. We want any errors to be exposed as early as possible, rather than found by our end user and causing us receiving a bunch of incident tickets.</li>
+</ul>
+<p>Of course, assertions are good, but don’t forget the scenarios, in which we can use them, as already mentioned above. In simple words: <strong>if something is code-wise impossible, it should be asserted, otherwise it should be gracefully handled, such as user input</strong>.</p>
+<h4 id="Suicide-point">4.3.2. Suicide point</h4>
+<blockquote>
+<p>“Let there be light!”</p>
+</blockquote>
+<p>Because crashes have such good properties, we can also use them to better examine the behavior in our program when needed.</p>
+<p>Suicide point is different from assertions. If a program hits them, it dies. But usually, they are not enabled at all. We only turn it on, when we have to.</p>
+<p>I have worked on a service once, which is really old and buggy. In order to understand what the service was really doing, I added a lot of trace points on all key functions in all modules (trace points won’t trigger crashes but only report hit counts), such as whenever core system API call fails. Then after releasing the trace points, I was so surprised to find that the error rate of the core system API calls was so high that all instances combined could reach millions of errors per minute (yes, you are reading it right, millions, no kidding). Some errors are so hard to debug, even with very detailed error logs, because the amount of information was still too limited. So I added suicide support to all the trace points. With this, I could control any instance at will and trigger crash whenever the specific trace point was hit. The crash dumps collected from these suicide points gave me really deep insight on these hard issues with very limited impact, like what does certain memory buffer, that we pass into the system call, looks like. Then, by slowly gathering information and iterating the fixes, the amount of errors in the core system API has now dropped to single digits per hour or even per day. Finally, we also added alerts to these trace points to help us guard any future regressions.</p>
+<hr>
+<h2 id="Good-code-makes-good-tests">5. Good code makes good tests</h2>
+<p>Before writing tests, we should never ignore the quality of the code itself. If the code itself stinks, the tests will be a mess too.</p>
+<p>Please don’t hope how much testing can help us improve the our code quality. No matter how bad the code is, we can still write some test for it, but these tests will suck as well!</p>
+<h3 id="Pragmatic-testing-code-boundary-and-code-refactor">5.1. Pragmatic testing: code boundary and code refactor</h3>
+<p>Many companies or projects enforces all classes and functions must have test without even thinking about it, in order to achieve “absolute 100%” code coverage. Personally, I hate this, because it conflicts with one of the major goal we want to achieve with tests – helps us refactor the code. Writing code is like planning a city. As long as our project is evolving, refactoring is inevitable. And refactoring inevitably involves changing the code structure within certain boundaries. So this kind of brute force testing will only waste us a lot of time and slow down the development progress, while provides almost zero benefit.</p>
+<p>Therefore, while we want make sure every case is tested, we also need to leave the code certain space to move. A better way to write test is to first observe where the code boundary is, such as submodules or code layers, and then add tests at these boundaries. Most of the code refactors that we do are within these boundaries or rarely cross them, so the tests, that is added this way, will require very little or even no modification at all during refactoring!</p>
+<p>And this brings a change in the code refactoring process, which is the practice I recommend to everyone in our current project:</p>
+<ol>
+<li>Before refactoring any code, add tests and submit them to harden the behavior of the code we want to refactor. If any bugs are found, fix the bugs first.</li>
+<li>Start refactoring the code, with small commits (see “Refactor: Improving the Design of Existing Code” for how to refactor the code in small step). And the principle is: <strong>The code refactor commit should not show any behavior changes to existing tests</strong>. If a test needs to be added, return to the step 1 to add the test first. Then continue refactoring in the step 2.</li>
+</ol>
+<p>The benefits of this are, first, the current behavior of the system will be thoroughly understood before any changes are made; second, when reviewing the code change, it is crystal clear even with just a glance, that I changed the code, but <strong>there is no behavior change at all</strong> to the system, hence it is a safe commit.</p>
+<h3 id="Increase-testable-surface-high-cohesion-low-coupling">5.2. Increase testable surface: high cohesion, low coupling</h3>
+<p>“High cohesion, low coupling”, you may have heard this countless of times. But I still like to mention it here, because it is really helpful for writing tests.</p>
+<p>Highly cohesive and low-coupling code has some characteristics: good modularity, single functionality (<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%8D%95%E4%B8%80%E5%8A%9F%E8%83%BD%E5%8E%9F%E5%88%99">Single Responsibility Principle (SRP)</a>) and orthogonal for each part. Such code is very test-friendly. So, if the code you are maintaining is messy, you could consider refactoring it first to improve cohesion and reduce coupling. This can lead to better and more fine-grained module partitioning or code layering, thus providing us with more testable surface (refer to the previous item: “Pragmatic testing: code boundary and code refactor”).</p>
+<p>Another service I worked on was a typical victim of violation of the single responsibility principle. What this module do was actually simple: it is a multi-threaded, multi-protocol probe service. It sends request to other services and see if they are alive or not. The problem with this services is that, the underlying API usage, multi-protocol implementation, probe result handling and concurrency management were all implemented in the same place (well, with a few class inheritance, which is still bad for testing). It caused 2 major problems in the existing tests:</p>
+<ol>
+<li>First, we have no way to do synchronization in testing. This results in 30 seconds sleeps everywhere in the tests and makes the whole test suite takes more than 20 minutes to run.</li>
+<li>Second, there is no way to simulate each error cases and thoroughly test the probe result handling, especially when underlying api return errors in the multi-threaded context.</li>
+</ol>
+<p>In the end, people gave up the unit test and created a test server to do tricky manual test every time. And even so, it only covers the simplest case. This makes this service almost impossible to maintain, and led to a lot of tickets coming to our team.</p>
+<p>So, in order to improve this service, I had to be patient and this is what I did:</p>
+<ol>
+<li>Harden the code behavior by adding and improving the tests first, even through the results are wrong. This step is critical, because it gives us a solid baseline to make sure no regression will be introduced. So, although it is crazily painful, as the tests took forever to run, this has to be done first.</li>
+<li>Improve the logging and metrics data, which improves the observability, especially in scale.</li>
+<li>Refactor the code in small steps. Change the <a target="_blank" rel="noopener" href="https://en.m.wikipedia.org/wiki/Composition_over_inheritance">inheritance to composition</a> to separate api, multi-protocol implementation and concurrency management, which creates new code boundaries. And of course, no behavior change should show up in existing tests. But for each new layer, I will add more tests for it.</li>
+<li>Improve the tests by using this new boundary, but still no behavior change should show up in tests.</li>
+<li>Fix the issues that I found during this process. Each fix will show up as several test failures, which helps me to confirm the the fix.</li>
+</ol>
+<p>Thus, in two weeks, I found and fixed countless problems - incorrect error handling and multithreading issues all over the place. In the end, besides the code quality improvements and bug fixes, not only the number of tests increase significantly, but the time to run all the tests also dropped from 20 minutes to 3 minutes. And the best part is that all intermediate versions could be released or rolled back at any time without worrying about regressions.</p>
+<p>After this, the ticket for complaining this service has greatly reduced. Except for one known “bug” that was a behavior change and could not be fixed directly, the service has gone from a problem-prone area to almost a problem-free one. The new logs and metrics data have also become one of the most important metrics for evaluating build quality.</p>
+<h3 id="Avoid-unstable-code">5.3. Avoid unstable code</h3>
+<p>As mentioned above, one of the principles of writing tests is repeatable: don’t report errors indiscriminately when nothing goes wrong, but be able to reproduce steadily when something goes wrong. If a test always fails two or three times out of ten runs, soon no one will take the failure seriously, because who knows if the error is “expected” or not, and it will pass after maybe two more tries anyway. This situation is a big no-no in testing.</p>
+<p>Most of instability issues are caused by the code itself, that we are testing, being unstable.</p>
+<ul>
+<li>Time sensitive logic or tests. E.g.: timer, sleep, multi-threaded contention, etc.</li>
+<li>Usage of random APIs, e.g.: jitter, random numbers, etc.</li>
+<li>Program internal states that could affect logics, e.g.: configurations.</li>
+</ul>
+<p>For timer or random related cases, we can first separate out the unstable part, abstract it into a trigger, and then test the trigger and handling logic separately. This way we can easily use various synchronization mechanisms to stabilize our code and tests, such as event or lock. For internal state, we can try to convert them into function parameters, or use test stub (discussed below) to convert them into part of our input metadata and make it stable.</p>
+<h3 id="Be-friendly-to-tests-test-stub">5.4. Be friendly to tests: test stub</h3>
+<p>I believe we all have encountered more or less the following awkward situations when writing tests.</p>
+<ul>
+<li>Our code needs to call a system API, but this API does not work in the test environment.</li>
+<li>The state of a member variable is really important, and we want to test it to make sure it works, but we don’t want to expose it to our users.</li>
+<li>We need to test the behavior of a class under certain condition or state, but this state or condition is not easy to achieve</li>
+<li>and so on…</li>
+</ul>
+<p>This is where test stub can help.</p>
+<ul>
+<li>A thin layer of wrapping around the system API, allowing us to easily simulate success and failure situations</li>
+<li>If it is our own code, then check if we can create more layers in the code. Once more layers are created, they can be abstracted stably and used as our test stub to help us mock their state.</li>
+<li>The much-maligned friend class in C++ can be a good solution to the problem of checking private member variables: <code>friend class FooTests;</code></li>
+</ul>
+<hr>
+<h2 id="Take-a-break">6. Take a break</h2>
+<p>All right! That’s the end of part 1. If you’ve read this far, you’ll notice that we haven’t even started talking about how to write tests! Yes, and to restate my point here: <strong>Writing tests is not just about writing tests, it’s not our purpose. Test is not a silver bullet, and adding a few tests won’t help us improve the quality of our code much. And good code quality is our actual goal</strong>.</p>
+<p>Ok! Let’s summarize all the things we discussed so far:</p>
+<p>First, we summarized the reason of testing: to ensure the code does not regress; to help us identify changes to the code; and to act as an enforced document and knowledge base.</p>
+<p>Then, we discussed the principles of testing: shortest distance, observable, repeatable.</p>
+<p>Finally, we discussed part of the methodology. In this post, we focused on the code being tested itself:</p>
+<ol>
+<li>Good code tests itself: use contract programming (design by contract); constrain the code behavior as much as possible; use crashes wisely to increase the observability of our program.</li>
+<li>Good code makes good tests: use code boundary to make tests better support refactoring; reduce coupling and improve cohesion to create more testable surfaces; avoid unstable code; use test stub to help us test more deeply.</li>
+</ol>
+<p>In the next post, we’ll discuss how to write good tests.</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/pragmatic-testing-part-2/">Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pragmatic-testing-part-1/">Pragmatic testing (P1: Problems, principles and test-friendly code)</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pragmatic-testing-part-1/" target="_blank">Pragmatic testing (P1: Problems, principles and test-friendly code)</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Testing/" rel="tag"># Testing</a>
+              <a href="/tags/Coding/" rel="tag"># Coding</a>
+              <a href="/tags/Software-Engineering/" rel="tag"># Software Engineering</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/make-tests-your-friends-continue/" rel="prev" title="测试，你写代码时最好的朋友（中篇）">
+                  <i class="fa fa-chevron-left"></i> 测试，你写代码时最好的朋友（中篇）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/pragmatic-testing-part-2/" rel="next" title="Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)">
+                  Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests) <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

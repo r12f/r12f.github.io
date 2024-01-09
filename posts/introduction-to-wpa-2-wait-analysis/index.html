@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="上回我们说道记事本怒开大文件，WPA奋勇显神威。通过CPU Sampling Graph和Disk IO Graph，我们很快的定位到了记事本打开大文件缓慢的真正原因。但是就和硬盘里和生活中的女神们一样，现实往往都是残酷的。很多时候不是程序本身消耗了很多的CPU和磁盘资源，最后导致了程序运行的缓慢，甚至我们通过任务管理器查看，会发现CPU，硬盘的使用其实都不高，似乎整个系统是空闲的，但是却就是不干">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WPA入门（二） —— 分析线程上的等待">
+<meta property="og:url" content="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="上回我们说道记事本怒开大文件，WPA奋勇显神威。通过CPU Sampling Graph和Disk IO Graph，我们很快的定位到了记事本打开大文件缓慢的真正原因。但是就和硬盘里和生活中的女神们一样，现实往往都是残酷的。很多时候不是程序本身消耗了很多的CPU和磁盘资源，最后导致了程序运行的缓慢，甚至我们通过任务管理器查看，会发现CPU，硬盘的使用其实都不高，似乎整个系统是空闲的，但是却就是不干">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/thread-state.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/context-switch.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/critical-path.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/notepad-breakpoint.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/get-notepad-window-info.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ui-delay-notepad.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-cpu-usage.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-wait-on-spyxx.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ready.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ready-on-notepad.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-notepad-rootcause.png">
+<meta property="article:published_time" content="2013-12-07T20:55:08.000Z">
+<meta property="article:modified_time" content="2013-12-08T04:55:08.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="wpa">
+<meta property="article:tag" content="wpr">
+<meta property="article:tag" content="wpt">
+<meta property="article:tag" content="性能分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/thread-state.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/","path":"posts/introduction-to-wpa-2-wait-analysis/","title":"WPA入门（二） —— 分析线程上的等待"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>WPA入门（二） —— 分析线程上的等待 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E7%8A%B6%E6%80%81"><span class="nav-text">1. 线程状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8WPA%E5%88%86%E6%9E%90%E7%BA%BF%E7%A8%8B%E4%B8%8A%E7%9A%84%E7%AD%89%E5%BE%85"><span class="nav-text">2. 使用WPA分析线程上的等待</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CPU-Usage-Precise-graph"><span class="nav-text">2.1. CPU Usage (Precise) graph</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E8%B7%AF%E5%BE%84%EF%BC%88Critical-Path%EF%BC%89%E5%92%8C%E7%AD%89%E5%BE%85%E5%88%86%E6%9E%90%EF%BC%88Wait-Analysis%EF%BC%89"><span class="nav-text">2.2. 关键路径（Critical Path）和等待分析（Wait Analysis）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%81%E7%83%AD%E5%86%8D%E6%9D%A5%E4%B8%AA%E6%A0%97%E5%AD%90"><span class="nav-text">3. 趁热再来个栗子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%84%E9%80%A0%E7%8E%B0%E5%9C%BA"><span class="nav-text">3.1. 构造现场</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90"><span class="nav-text">3.2. 初步分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AD%89%E5%BE%85%E5%88%86%E6%9E%90"><span class="nav-text">3.3. 等待分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E2%80%A6%E2%80%A6%E5%9C%A8%E8%AF%B4%E4%BA%9B%E5%95%A5%EF%BC%9F"><span class="nav-text">4. 你……在说些啥？</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="WPA入门（二） —— 分析线程上的等待 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          WPA入门（二） —— 分析线程上的等待
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2013-12-07 12:55:08 / Modified: 20:55:08" itemprop="dateCreated datePublished" datetime="2013-12-07T12:55:08-08:00">2013-12-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/introduction-to-wpa-2-wait-analysis/" class="post-meta-item leancloud_visitors" data-flag-title="WPA入门（二） —— 分析线程上的等待" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/introduction-to-wpa-2-wait-analysis/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/introduction-to-wpa-2-wait-analysis/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>上回我们说道<a target="_blank" rel="noopener" href="http://bigasp.com/archives/606">记事本怒开大文件，WPA奋勇显神威</a>。通过CPU Sampling Graph和Disk IO Graph，我们很快的定位到了记事本打开大文件缓慢的真正原因。但是就和硬盘里和生活中的女神们一样，现实往往都是残酷的。很多时候不是程序本身消耗了很多的CPU和磁盘资源，最后导致了程序运行的缓慢，甚至我们通过任务管理器查看，会发现CPU，硬盘的使用其实都不高，似乎整个系统是空闲的，但是却就是不干活，这又是为什么呢？这一次，让我们来看一个稍稍复杂一点点的问题吧。</p>
+<h2 id="线程状态">1. 线程状态</h2>
+<p>为了让我们更加好的理解接下来的内容，首先，我们需要先补充一点和Windows下线程调度相关的背景知识，当然如果你已经知道了，可以跳过这一节。</p>
+<p>Windows下线程在被调度的过程中，如性能相关的状态主要有三个：</p>
+<ul>
+<li>运行中（Running）：该线程正在运行中。</li>
+<li>就绪中（Ready）：该线程已经可以运行了，但是暂时还没有得到CPU。</li>
+<li>等待中（Waiting）：该线程正在等待某个资源，暂时还无法运行。</li>
+</ul>
+<p>他们之间可以相互转化，其状态转化图和转化原因如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/thread-state.png" alt="thread-state"></p>
+<span id="more"></span>
+<ul>
+<li>
+<p>运行中 -&gt; 就绪中：<br>
+正在运行的线程还可以继续运行，但是却放弃了CPU。这种情况主要有三种原因：</p>
+<ul>
+<li>被更高优先级的线程抢占了CPU</li>
+<li>主动放弃了CPU，比如调用了Sleep(0)</li>
+<li>时间片结束</li>
+</ul>
+</li>
+<li>
+<p>就绪中 -&gt; 运行中：<br>
+由于现在正在运行的线程放弃了CPU，线程调度器会将该CPU分配给正在就绪队列中等待的线程中的另外一个线程，使其开始运行。</p>
+</li>
+<li>
+<p>运行中 -&gt; 等待中：<br>
+正在运行的线程由于需要等待某一个资源而无法继续运行，这时其会进入等待状态，比如调用了WaitForSingleObject，或者Sleep函数。</p>
+</li>
+<li>
+<p>等待中 -&gt; 就绪中 / 运行中：<br>
+一个在等待中的线程，由于其等待的资源被激活，从而变成了可以运行的状态，比如一个事件被SetEvent激活了，这个时候该线程会被线程调度器根据当前是否有可以让其使用的CPU而变更为就绪中或者运行中。</p>
+</li>
+</ul>
+<p>通过这三个关键的线程状态，我们就可以开始尝试着通过Trace来理解这一段时间内系统里都发生了什么，并且为什么会发生这些事情了。</p>
+<h2 id="使用WPA分析线程上的等待">2. 使用WPA分析线程上的等待</h2>
+<p>现在我们来看看怎么通过WPA来分析这些线程的运行状态吧。</p>
+<h3 id="CPU-Usage-Precise-graph">2.1. CPU Usage (Precise) graph</h3>
+<p>在WPA中，有一个叫做CPU Usage (Precise) graph的图，所有的线程调度的信息都被记录了在这个图里面。为了理解这个图，我们需要先知道几个非常重要的概念，并且为了统一，后面出现这几种概念，我们就都用英文原文来表示了，因为这样似乎更方便理解这个图中的字段：</p>
+<ul>
+<li>New Thread：切换至CPU上进行工作的线程。</li>
+<li>Readying Thread：唤醒New Thread的线程，也就是导致New Thread从其他状态转换到运行中的线程。</li>
+<li>Old Thread：本来在当前CPU上执行的，而在New Thread切入之后被换出的线程。</li>
+<li>New Process / Readying Process / Old Process：New Thread / Readying Thread / Old Thread所属的进程。</li>
+</ul>
+<p>现在我们再来看CPU Usage (Precise) graph中的字段，应该就很好理解了。</p>
+<ul>
+<li>NewProcessName / ReadyingProcessName：New Process / Readying Process的进程名。</li>
+<li>NewThreadId / ReadyingThreadId：New Thread / Readying Thread的进程名。</li>
+<li>NewThreadStack：New Thread被切入时的堆栈。</li>
+<li>ReadyThreadStack：Readying Thread唤醒New Thread的堆栈。</li>
+<li>LastSwitchOutTime (s)：New Thread上次从运行中切换出去的时间。</li>
+<li>ReadyTime (s)：New Thread被Readying Thread唤醒，从等待中变为就绪中的时间。</li>
+<li>SwitchInTime (s)：New Thread被切入CPU上执行的时间。</li>
+<li>NextSwitchOutTime (s)：New Thread下一次被切换出CPU的时间。</li>
+<li>Waits (s)：该线程在“等待中”状态下停留的时间，= ReadyTime (s) – LastSwitchOutTime (s)。</li>
+<li>Ready (s)：该线程在“就绪中”状态下停留的时间，= SwitchInTime (s) – ReadyTime (s)。</li>
+</ul>
+<p>下图来自MSDN，用来解释这几个字段，表述非常的清楚。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/context-switch.png" alt="context-switch"></p>
+<h3 id="关键路径（Critical-Path）和等待分析（Wait-Analysis）">2.2. 关键路径（Critical Path）和等待分析（Wait Analysis）</h3>
+<p>在使用上述知识开始分析之前，我们还需要了解另外一个概念：关键路径。比如，你为了完成事情A，你需要顺序完成B，C，D和E四件事情，而且只有C和D可以并行，但是D要花更长的时间。那么对于A来说，完成A需要的时间就取决于：完成B、E的时间和完成C和D中更慢的那一件的时间，也就是完成B，D和E的时间，那么B+D+E就是A的关键路径。所以我们只要分析一件事情的关键路径，就能分析出瓶颈在哪里了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/critical-path.png" alt="critical-path"></p>
+<p>为了分析关键路径，我们可以通过分析线程上的等待，来将关键路径还原，主要的步骤分为这么几步：</p>
+<ol>
+<li>找到当前线程上的等待，记录下开始和结束的时间。</li>
+<li>通过当前等待的信息找到其ReadyThread。</li>
+<li>分析这一段时间内ReadyThread上在做什么，如果发现等待，就重复第2步，直到没有更多的线程可以分析。</li>
+</ol>
+<p>这样，我们就通过分析等待将关键路径建立出来了，所有在关键路径上发生的事情，也就是我们最关注的事情了。</p>
+<h2 id="趁热再来个栗子">3. 趁热再来个栗子</h2>
+<p>经常使用Spy++的人应该都遇到过这个问题：如果一个窗口失去了响应，那么使用Spy++查看这个窗口的属性就会变得非常的慢。这是为什么呢？我们使用WPA结合上面提到的知识来找到这个问题的原因所在吧。</p>
+<h3 id="构造现场">3.1. 构造现场</h3>
+<p>首先，我们需要构造一个现场，让我们打开记事本，然后使用windbg把记事本断下来。现在我们就拥有了一个失去响应的窗口了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/notepad-breakpoint.png" alt="notepad-breakpoint"></p>
+<p>然后，让我们打开Spy++，查看一下这个窗口的属性，大家会明显感觉到打开属性窗口和点Refresh按钮刷新窗口属性的时候特别的慢。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/get-notepad-window-info.png" alt="get-notepad-window-info"></p>
+<h3 id="初步分析">3.2. 初步分析</h3>
+<p>好了，既然我们已经有了必现的现场，那就让我们来抓个Trace分析一下吧。上一篇中我们已经介绍了<a target="_blank" rel="noopener" href="http://bigasp.com/archives/606">使用WPR抓Trace的方法</a>，这里就不再赘述了，过程是一样的。</p>
+<p>得到Trace之后，我们用WPA来打开它。我们已经知道spy++的UI卡了一段时间，那么我们就可以先打开UI Delays Graph来查看这段时间内发生的所有卡顿。果不其然在里面我们看到notepad.exe和spyxx_amd64.exe上都有长时间的卡顿，Notepad.exe卡的原因就不用说了，而选中spy++上的卡顿后，我们发现当前系统里面CPU和磁盘都基本处于空闲的状态。看来这个卡顿的原因很有可能是在等待一个资源，比如锁或者事件，所以我们只有祭出上面提到的分析线程等待的方法来分析这个卡顿了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ui-delay-notepad.png" alt="wpa-ui-delay-notepad"></p>
+<h3 id="等待分析">3.3. 等待分析</h3>
+<p>我们在UI Delay Graph里面可以看到，这个spy++的2992这个线程上卡了1.1s的，为什么呢？为了弄明白这个问题，让我们双击打开左侧Graph Explorer中的CPU Usage (Precise)图，并使用Zoom功能只看这1.1s内spy++上发生的事情。</p>
+<p>其实这个默认图表对我们的分析来说并没有那么的有用，因为其中我们并看不到线程状态转换时的堆栈，也就是NewThreadStack和ReadyThreadStack。这个时候，我们可以通过点击图表上方的齿轮按钮来打开View Editor，从而按照我们的意愿来任意调整当前的图表。这里，我们打开了NewThreadStack和ReadyThreadStack，把LastSwitchOutTime (s)，ReadyTime (s)和SwitchInTime (s)三个字段移动到了ReadyingProcess的前面，并且按照线程等待时间Wait (us)降序排序。如下图所示。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-cpu-usage.png" alt="wpa-cpu-usage"></p>
+<p>接下来，让我们来展开spyxx_amd64.exe中2992线程下的所有记录。通过NewThreadStack，我们可以推测出当我们点击刷新按钮时，Spy++会重新获取窗口信息，而其中函数GetOtherProcessData造成了一个1s的等待，另外GetFullWindowText造成了一个100ms的等待，这应该就是造成其界面延迟的主要原因了，继续展开堆栈，我们便可以通过ReadyingThread的信息推断出到底是什么唤醒了该线程，结束了这两个的等待。以GetOtherProcessData为例，通过下图，可以看到ReadyThreadStack上是一个Timer，也就是说，Spy++在获取其他进程的数据时，等待某个资源一直没有返回，直到1s后超时结束（堆栈太长，屏幕太小，所以只截了一半…… =.=|||）。当然如果大家对另外一个也感兴趣，可以自己动手试一试。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-wait-on-spyxx.png" alt="wpa-wait-on-spyxx"></p>
+<p>超时，嗯。。。。。。这不和没说一样么？它到底在等什么其他进程的数据呢？不了解最终的原因，我们是很难想明白解决这个问题的方法的，只是可惜这个信息在这个Trace里面并没有记录下来，有什么办法可以解决么？其实超时这个问题还是很常见的，解决方法也很简单，再抓一个Trace看看正常情况下是什么唤醒这个线程就好了。这里，我们Detach Windbg让记事本正常运行起来，然后用WPR再抓一个相同的Trace，就可以了。</p>
+<p>打开新抓的Trace，我们在UI Delay Graph里面已经看不到spy++在这段时间内卡过了。那我们怎么找到刚刚我们发现的等待呢？搜索一下NewThreadStack。我们先打开CPU Usage (Precise) Graph，调整成同样的图表，然后选中NewThreadStack，按Ctrl+F打开查找对话框，输入GetOtherProcessData，点Search，很快我们便可以找到对应的堆栈了。展开堆栈，我们可以看到在记事本的3784线程上，spy++的模块spyxxhk_amd64.dll通过消息钩子接管了一个窗口消息，并且通过SetEvent在37.543915610s唤醒了spy++，使其被切回CPU上执行，如下图所示。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ready.png" alt="wpa-ready"></p>
+<p>那么这个消息又是谁发送给记事本的呢？我们知道记事本是在37.543915610s时将spy++唤醒的，那么肯定有另外的线程在这个时间点之前将记事本唤醒使其执行这个窗口消息，而且如果有多个消息将记事本唤醒，当前处理的消息的来源肯定发生在离当前时间点更近的位置，所以我们可以通过从后向前遍历线程3784上该时间点前所有的将该线程唤醒的堆栈，来找到这个消息的来源。这里，我们找到了一个非常可疑的堆栈，如下图所示。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-ready-on-notepad.png" alt="wpa-ready-on-notepad"></p>
+<p>原来，这个消息是Spy++自己发送的，并且就是由GetOtherProcessData来发送的，看上去应该就是我们要找的原因了。而且现在我们还得到了两个时间点：记事本得到消息的时间37.543715224s，和spy++得到返回的时间：37.543915610s。我们来看看这段时间内记事本3784线程都在做些什么？</p>
+<p>继续使用Zoom功能，并观察线程3784上的NewThreadStack，如下图。原来spy++会hook这个消息，并且在其中调用GetClassNameW来获取窗口类名。到此为止，分析应该算是结束了，当然如果这个线程上还有其他可疑的等待，我们可以用同样的方法对其递归的进行分析，直到找到最后的原因。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-12-07-introduction-to-wpa-2-wait-analysis/wpa-notepad-rootcause.png" alt="wpa-notepad-rootcause"></p>
+<p>这样通过分析Spy++和记事本中各个线程的等待，我们终于还原了GetOtherProcessData的整个工作流程，也就是其关键路径：</p>
+<ol>
+<li>用户点击Spy++上的刷新窗口信息按钮，触发Spy++调用GetOtherProcessData来在目标窗口所在进程内获取窗口的相关数据。</li>
+<li>GetOtherProcessData使用PostMessage给记事本中的目标窗口所在线程发送特定的窗口消息，并开始等待相关数据返回。</li>
+<li>Spy++全局钩子模块在记事本中截获消息，并在其中调用GetClassNameW来获取窗口类名。</li>
+<li>Spy++全局钩子模块调用SetEvent唤醒Spy++，结束。</li>
+</ol>
+<p>那怎么来解决这个问题呢？可能大家已经想到了，如果目标窗口所在的线程卡住了，那么我们还可以尝试使用CreateRemoteThread来在目标进程中创建一个新的线程来获取对应的数据，这样也能避免一些数据获取不到的问题。</p>
+<h2 id="你……在说些啥？">4. 你……在说些啥？</h2>
+<p>好的，这次的文章比上次稍稍难一点，希望我把这个分析方法说明白了。现在我们了解了Windows中一个线程可能处在的几种状态，知道了如何通过这些状态去解释一个线程的行为，并且还知道了使用WPA来进行等待分析并建立起某个特定问题的关键路径。如果大家发现其中有什么错误，还请大家多多指正，感谢不已。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-3-graphs/">WPA入门 （三） —— 千变万化的图表</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/">WPA入门（二） —— 分析线程上的等待</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/">WPA入门（一） —— 到底为什么这么慢？</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/" target="_blank">WPA入门（二） —— 分析线程上的等待</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/wpa/" rel="tag"># wpa</a>
+              <a href="/tags/wpr/" rel="tag"># wpr</a>
+              <a href="/tags/wpt/" rel="tag"># wpt</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag"># 性能分析</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/introduction-to-wpa-1-why-it-is-slow/" rel="prev" title="WPA入门（一） —— 到底为什么这么慢？">
+                  <i class="fa fa-chevron-left"></i> WPA入门（一） —— 到底为什么这么慢？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/introduction-to-wpa-3-graphs/" rel="next" title="WPA入门 （三） —— 千变万化的图表">
+                  WPA入门 （三） —— 千变万化的图表 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

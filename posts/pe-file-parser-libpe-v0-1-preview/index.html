@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近突然想学习一下PE文件的结构，所以就写了一个PE文件的解析库，纯属好玩。于是经过了1个月的业余时间的折腾，LibPE v0.1 Preview终于诞生了。 项目名称：LibPE 项目地址：https:&#x2F;&#x2F;github.com&#x2F;r1f&#x2F;libpe License：The BSD 2-Clause License 欢迎大家去围观，如果有人参与那就更加的Happy鸟~Licese是BSD的，所以基本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PE文件解析库 – LibPE v0.1 Preview">
+<meta property="og:url" content="http://r12f.com/posts/pe-file-parser-libpe-v0-1-preview/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="最近突然想学习一下PE文件的结构，所以就写了一个PE文件的解析库，纯属好玩。于是经过了1个月的业余时间的折腾，LibPE v0.1 Preview终于诞生了。 项目名称：LibPE 项目地址：https:&#x2F;&#x2F;github.com&#x2F;r1f&#x2F;libpe License：The BSD 2-Clause License 欢迎大家去围观，如果有人参与那就更加的Happy鸟~Licese是BSD的，所以基本">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2013-01-03T07:31:33.000Z">
+<meta property="article:modified_time" content="2013-01-03T07:31:33.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="LibPE">
+<meta property="article:tag" content="PE">
+<meta property="article:tag" content="开源">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pe-file-parser-libpe-v0-1-preview/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pe-file-parser-libpe-v0-1-preview/","path":"posts/pe-file-parser-libpe-v0-1-preview/","title":"PE文件解析库 – LibPE v0.1 Preview"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PE文件解析库 – LibPE v0.1 Preview | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD"><span class="nav-text">1. 功能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E5%92%8C%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99"><span class="nav-text">2. 目标和设计原则</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E6%98%93%E4%BD%BF%E7%94%A8"><span class="nav-text">2.1. 容易使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%BC%E5%AE%B932%E4%BD%8D%E5%92%8C64%E4%BD%8D%E7%9A%84PE%E6%A0%BC%E5%BC%8F"><span class="nav-text">2.2. 兼容32位和64位的PE格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E9%94%99%E4%BD%86%E4%B8%8D%E6%98%AF%E6%9E%81%E8%87%B4%E7%9A%84%E6%80%A7%E8%83%BD"><span class="nav-text">2.3. 不错但不是极致的性能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%A8%E5%B9%B3%E5%8F%B0"><span class="nav-text">2.4. 跨平台</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E5%B0%8F%E5%A4%96%E9%83%A8%E4%BE%9D%E8%B5%96"><span class="nav-text">2.5. 最小外部依赖</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-text">3. 使用</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pe-file-parser-libpe-v0-1-preview/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PE文件解析库 – LibPE v0.1 Preview | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PE文件解析库 – LibPE v0.1 Preview
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2013-01-02 23:31:33" itemprop="dateCreated datePublished" datetime="2013-01-02T23:31:33-08:00">2013-01-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pe-file-parser-libpe-v0-1-preview/" class="post-meta-item leancloud_visitors" data-flag-title="PE文件解析库 – LibPE v0.1 Preview" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pe-file-parser-libpe-v0-1-preview/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pe-file-parser-libpe-v0-1-preview/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近突然想学习一下PE文件的结构，所以就写了一个PE文件的解析库，纯属好玩。于是经过了<a target="_blank" rel="noopener" href="https://github.com/r1f/libpe/commit/d37c440a90c93c06bf7bee024d5ca1d564d254df">1个月的业余时间的折腾</a>，LibPE v0.1 Preview终于诞生了。</p>
+<p>项目名称：LibPE<br>
+项目地址：<a target="_blank" rel="noopener" href="https://github.com/r1f/libpe">https://github.com/r1f/libpe</a><br>
+License：<a target="_blank" rel="noopener" href="http://opensource.org/licenses/BSD-2-Clause">The BSD 2-Clause License</a></p>
+<p>欢迎大家去围观，如果有人参与那就更加的Happy鸟~Licese是BSD的，所以基本上大家可以拿来随便用了。</p>
+<h2 id="功能">1. 功能</h2>
+<p>现在这个库到底能做什么呢？说出来真的是太简单了，所以才把这个版本定位v0.1 Preview，供围观之用。</p>
+<ul>
+<li>解析磁盘上的PE文件，暂时不支持解析映射好的PE。</li>
+<li>支持解析32位（PE32）和64位（PE32+）的PE文件。</li>
+<li>RVA，VA，FOA转换</li>
+<li>解析PE基本头部信息，段表，导出表，导入表，资源表，重定向表和导入函数地址表</li>
+<li>支持获取PE文件的原始数据结构，并且对结构中的字段提供想对应的getter，如IPEOptionalHeader::GetFieldDllCharacteristics<br>
+（注意：这里拿到的是原始数据，在文件中和在映射好后的映像中可能会不一样）</li>
+</ul>
+<p>好了，围观完了之后，我们现在再大概描述一下LibPE想做什么吧~</p>
+<span id="more"></span>
+<h2 id="目标和设计原则">2. 目标和设计原则</h2>
+<p>LibPE想成为一个容易使用，32位64位兼容，性能不错并且可以跨越平台的PE解析库。虽然里面有一部分内容还没有完成，比如跨平台的迁移，IMAGE相关的结构还真的是多到不行啊，迁移起来还真是需要一些时间。</p>
+<h3 id="容易使用">2.1. 容易使用</h3>
+<ul>
+<li>尽量避免让使用者通过RVA和FOA去操作PE结构，而是直接提供获取PE元素的函数。</li>
+<li>获取到的每个PE结构都具备有获取RVA，FOA和大小的函数。</li>
+<li>能编译成lib和dll，方便使用</li>
+<li>使用引用技术来管理对象的生命周期，接口中只使用基本的数据类型，避免跨dll的问题。</li>
+<li>能够解析不同状态的PE文件结构，比如在磁盘上的，已经被映射进来之后的。当然这个现在还没有完成。。。。嗯。。。</li>
+</ul>
+<h3 id="兼容32位和64位的PE格式">2.2. 兼容32位和64位的PE格式</h3>
+<ul>
+<li>
+<p>这个功能简直就是必备的</p>
+</li>
+<li>
+<p>统一32位和64位的接口！！</p>
+<p>这个特性个人觉得很有用，网上大部分的PE库，为了支持64位都是使用模版来完成的，这样我们想实现一个批量的PE文件处理的话就会出现很多问题，而LibPE就是想解决这些问题：</p><p></p>
+<ul>
+<li>冗余的代码：除非使用模版，要不然处理的逻辑得32位和64位都写一遍，但是使用模版，又会让代码看起来更加晦涩，这些都是LibPE想避免的问题</li>
+<li>冗余的IO：由于处理的时候需要先判断文件是32位还是64位，所以就会出现需要一次IO去判断文件类型，再一次IO去解析文件，这样会导致处理大量文件时性能下降，因为这个时候磁盘IO是整个系统的瓶颈。</li>
+</ul>
+</li>
+</ul>
+<h3 id="不错但不是极致的性能">2.3. 不错但不是极致的性能</h3>
+<p>LibPE并不追求极致的性能，相对极致的性能，LibPE更加注重是否对程序员友好，整个库是否好用。但是性能也是很重要的！</p>
+<p>为了达到不错的性能，我们主要做了两个方便的工作：</p>
+<ul>
+<li>即用即解析：如果不需要看导入表，那我解析个毛啊！</li>
+<li>最小化磁盘IO：在现在手机CPU都可以处理登月数据的年代，CPU其实已经非常的强。而大量的文件处理时，磁盘IO才是真正的瓶颈，减少磁盘IO才是真正对整个系统最有帮助的优化。</li>
+</ul>
+<h3 id="跨平台">2.4. 跨平台</h3>
+<p>跨平台啊，跨平台，相当蛋疼的体力活也相当重要。客户端的代码一般都不会出现大量处理PE文件的情况，而后台一般都是linux，所以支持跨平台很重要。</p>
+<h3 id="最小外部依赖">2.5. 最小外部依赖</h3>
+<p>为什么不用boost或者其他跨平台的基础库？作出这个蛋疼决定的出发点只有一条：让大家能少checkout一点代码，改libpe时能少学一点东西。</p>
+<h2 id="使用">3. 使用</h2>
+<p>好了，扯了这么多七里八里的东西，看看到底要怎么用这玩意吧~</p>
+<ol>
+<li>编译LibPE，把生成的LibPE.lib（lib方式编译），LibPEDll.lib，LibPE.dll（Dll方式编译）拷贝到你自己的工程目录中去。</li>
+<li>开始开心的写代码吧，先来个导入表玩玩：</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&lt;tchar.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">define</span> LIBPE_DLL</span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;LibPE.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> LibPE;</span><br><span class="line">#<span class="meta">#<span class="keyword">pragma</span> comment(lib, <span class="string">&quot;LibPEDll.lib&quot;</span>)</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> _tmain(<span class="type">int</span> argc, _TCHAR* argv[])</span><br><span class="line">&#123;</span><br><span class="line">    LibPEPtr&lt;IPEFile&gt; pFile;</span><br><span class="line">    <span class="built_in">ParsePEFromDiskFile</span>(<span class="string">L&quot;C:\\Windows\\system32\\kernel32.dll&quot;</span>, &amp;pFile);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Import Table</span></span><br><span class="line">    LibPEPtr&lt;IPEImportTable&gt; pImportTable;</span><br><span class="line">    pFile-&gt;<span class="built_in">GetImportTable</span>(&amp;pImportTable);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Import Table:\n&quot;</span>);</span><br><span class="line">    UINT32 nImportModuleCount = pImportTable-&gt;<span class="built_in">GetModuleCount</span>();</span><br><span class="line">    <span class="keyword">for</span>(UINT32 nImportModuleIndex = <span class="number">0</span>; nImportModuleIndex &lt; nImportModuleCount; ++nImportModuleIndex) &#123;</span><br><span class="line">        LibPEPtr&lt;IPEImportModule&gt; pImportModule;</span><br><span class="line">        pImportTable-&gt;<span class="built_in">GetModuleByIndex</span>(nImportModuleIndex, &amp;pImportModule);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Import Module: %s (Bound: %s)\n&quot;</span>, pImportModule-&gt;<span class="built_in">GetName</span>(), pImportModule-&gt;<span class="built_in">IsBound</span>() ? <span class="string">&quot;true&quot;</span> : <span class="string">&quot;false&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(UINT32 nImportFunctionIndex = <span class="number">0</span>; nImportFunctionIndex &lt; pImportModule-&gt;<span class="built_in">GetFunctionCount</span>(); ++nImportFunctionIndex) &#123;</span><br><span class="line">            LibPEPtr&lt;IPEImportFunction&gt; pImportFunction;</span><br><span class="line">            pImportModule-&gt;<span class="built_in">GetFunctionByIndex</span>(nImportFunctionIndex, &amp;pImportFunction);</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Import Function: %s\n&quot;</span>, pImportFunction-&gt;<span class="built_in">GetName</span>());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>更多的使用方法，大家可以看看工程中的LibPETest，其实这也不是一个Test工程，就是用来大概试一下新的写的东西。</p>
+<p>当然，现在LibPE还有很多问题，还有很多需要做的内容没有做。日后再慢慢完善吧~</p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pe-file-parser-libpe-v0-1-preview/" target="_blank">PE文件解析库 – LibPE v0.1 Preview</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LibPE/" rel="tag"># LibPE</a>
+              <a href="/tags/PE/" rel="tag"># PE</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90/" rel="tag"># 开源</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/duilib/" rel="prev" title="duilib学习笔记">
+                  <i class="fa fa-chevron-left"></i> duilib学习笔记
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-1-building-dev-environment-on-windows/" rel="next" title="Go语言学习笔记：搭建Windows下的Go开发环境">
+                  Go语言学习笔记：搭建Windows下的Go开发环境 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

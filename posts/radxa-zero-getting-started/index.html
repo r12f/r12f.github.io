@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="更新时间：2024&#x2F;01  一年前，心血来潮买了几块Radxa Zero，觉得很有意思，可惜最近想升级到新的系统之后就出了问题，刷机挣扎了好几天，官方文档也已经各种过时了，于是决定记录一下踩坑的过程。 1. 系统安装 Radxa Zero有自带eMMC和不带eMMC两个版本，两个版本使用sd卡运行系统都是ok的，但是如果想将系统刷入eMMC并用eMMC进行引导，就很容易遇到u-boot无法引导的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Radxa Zero踩坑记录">
+<meta property="og:url" content="http://r12f.com/posts/radxa-zero-getting-started/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="更新时间：2024&#x2F;01  一年前，心血来潮买了几块Radxa Zero，觉得很有意思，可惜最近想升级到新的系统之后就出了问题，刷机挣扎了好几天，官方文档也已经各种过时了，于是决定记录一下踩坑的过程。 1. 系统安装 Radxa Zero有自带eMMC和不带eMMC两个版本，两个版本使用sd卡运行系统都是ok的，但是如果想将系统刷入eMMC并用eMMC进行引导，就很容易遇到u-boot无法引导的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-boot-official-image.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-armbian-install-uboot.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-armbian-install-uboot-done.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-wifi-setup.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-wifi-setup-done.png">
+<meta property="article:published_time" content="2024-01-08T23:43:44.000Z">
+<meta property="article:modified_time" content="2024-01-09T07:43:44.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="radxa">
+<meta property="article:tag" content="zero">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="iot">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-boot-official-image.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/radxa-zero-getting-started/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/radxa-zero-getting-started/","path":"posts/radxa-zero-getting-started/","title":"Radxa Zero踩坑记录"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Radxa Zero踩坑记录 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E8%A3%85"><span class="nav-text">1. 系统安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E9%95%9C%E5%83%8F"><span class="nav-text">1.1. 官方镜像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Armbian"><span class="nav-text">1.2. Armbian</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E7%B3%BB%E7%BB%9F"><span class="nav-text">2. 设置系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E5%88%B0WiFi"><span class="nav-text">2.1. 连接到WiFi</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%94%A8%E6%88%B7"><span class="nav-text">2.2. 创建用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%90%AF%E7%B3%BB%E7%BB%9F"><span class="nav-text">2.3. 重启系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%99%BB%E5%BD%95%E5%B9%B6%E5%88%A0%E9%99%A4%E9%BB%98%E8%AE%A4%E8%B4%A6%E6%88%B7"><span class="nav-text">2.4. 登录并删除默认账户</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85"><span class="nav-text">3. 软件安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%B0%8F%E5%B7%A5%E5%85%B7%E7%B3%BB%E5%88%97"><span class="nav-text">3.1. 常用小工具系列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%9A%84%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7"><span class="nav-text">3.2. 基本的开发工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Rust"><span class="nav-text">3.3. Rust</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/radxa-zero-getting-started/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Radxa Zero踩坑记录 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Radxa Zero踩坑记录
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2024-01-08 15:43:44 / Modified: 23:43:44" itemprop="dateCreated datePublished" datetime="2024-01-08T15:43:44-08:00">2024-01-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/radxa-zero-getting-started/" class="post-meta-item leancloud_visitors" data-flag-title="Radxa Zero踩坑记录" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/radxa-zero-getting-started/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/radxa-zero-getting-started/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><blockquote>
+<p>更新时间：2024/01</p>
+</blockquote>
+<p>一年前，心血来潮买了几块Radxa Zero，觉得很有意思，可惜最近想升级到新的系统之后就出了问题，刷机挣扎了好几天，官方文档也已经各种过时了，于是决定记录一下踩坑的过程。</p>
+<h2 id="系统安装">1. 系统安装</h2>
+<p>Radxa Zero有自带eMMC和不带eMMC两个版本，两个版本使用sd卡运行系统都是ok的，但是如果想将系统刷入eMMC并用eMMC进行引导，就很容易遇到u-boot无法引导的问题。网上有很多讨论，但是大多都已经过时了，官方提供的<a target="_blank" rel="noopener" href="https://wiki.radxa.com/Zero/install/Boot_Troubleshooting">troubleshooting guide</a>也非常的模糊，提供的u-boot更新依然有问题，即便是成功更新了u-boot，也有可能重启之后u-boot的patch就又失效了。在经过了一周的挣扎之后，以下是我找到的能用的方法。</p>
+<span id="more"></span>
+<h3 id="官方镜像">1.1. 官方镜像</h3>
+<p>首先是Radxa Zero的官方镜像，最新的发布可以在这里找到：<a target="_blank" rel="noopener" href="https://github.com/radxa-build/radxa-zero/releases/latest">Github</a>。但是在本文写成的时候，最新的版本已经很久都没有更新了，还是2022/08/01发布的，想尝试新系统的话，就无法使用了。</p>
+<p>想要使用官方镜像的话，可以尝试使用最新的测试版本：<a target="_blank" rel="noopener" href="https://github.com/radxa-build/radxa-zero/releases">Github</a>（当前是test-build-4）。这些镜像都自带了修正之后的u-boot，所以可以直接使用最直接的方法刷机，不需要再额外的刷其他版本的u-boot了。我目前使用的就是这个版本的debian系统，暂时再也没有遇到任何和u-boot相关的问题了。</p>
+<ol>
+<li>首先，我们先<a target="_blank" rel="noopener" href="https://wiki.radxa.com/Zero/dev/serial-console">使用UART连接到zero的串口</a>，并在电脑上使用Console打开它的串口，<a target="_blank" rel="noopener" href="https://www.putty.org/">PuTTY</a>，<a target="_blank" rel="noopener" href="https://mobaxterm.mobatek.net/">MobaXterm</a>，<a target="_blank" rel="noopener" href="https://github.com/tio/tio">tio</a>都可以。</li>
+<li>然后，<a target="_blank" rel="noopener" href="https://docs.radxa.com/en/zero/zero/maskrom">进入Radxa Zero的maskrom模式</a>。</li>
+<li>然后，<a target="_blank" rel="noopener" href="https://docs.radxa.com/en/zero/zero/erase-emmc">将eMMC擦除</a>。擦除完成后，zero的eMMC会被当成一个USB磁盘加载起来。</li>
+<li>最后，<a target="_blank" rel="noopener" href="https://docs.radxa.com/en/zero/zero/install-image">使用Etcher刷入镜像</a>。方法和刷microSD卡一样，只是选择的磁盘是zero的eMMC。</li>
+</ol>
+<p>重启之后就完成了！我们就可以在Console里面使用默认的账号（<code>rock</code>）和密码（<code>rock</code>）登录啦！</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-boot-official-image.png" alt="Radxa Zero Boot Official Image"></p>
+<blockquote>
+<p>感谢<a target="_blank" rel="noopener" href="https://github.com/RadxaYuntian">Yuntian</a>给予的帮助！</p>
+</blockquote>
+<h3 id="Armbian">1.2. Armbian</h3>
+<p>Armbian最新的版本可以在armbian的官网找到：<a target="_blank" rel="noopener" href="https://www.armbian.com/radxa-zero/">armbian</a>。但是很不幸，直接刷机的方法是不行的，因为最新Armbian的u-boot依然有问题，会导致无法引导，刷入官方提供的u-boot也无法完全解决这个问题，只能保证一次引导成功，重启后就又会出现问题。需要使用下面的方法才能解决：</p>
+<ol>
+<li>首先，将armbian的镜像刷入一张sd卡中。</li>
+<li>然后，我们使用上面刷官方镜像的方法，连接UART，并将eMMC擦除。</li>
+<li>擦除完成后，我们不要直接去刷armbian的镜像，而是将刷好的sd卡插入zero，然后重启，利用sd卡进行引导，并进入armbian。</li>
+</ol>
+<p>如果你能使用sd卡进行引导，进入armbian，那么恭喜你，你已经成功一大半了！接下来，我们需要连接Wifi（请参考“<a href="#%E8%BF%9E%E6%8E%A5%E5%88%B0wifi">设置系统-&gt;连接到Wifi</a>”一节），然后使用armbian-config来将u-boot和系统都刷入eMMC中：</p>
+<blockquote>
+<p>注意：armbian初始设置时也会提示你连接wifi，但是这个连接成功可能会是一个虚假的成功，有IP但是除了本地127.0.0.1什么都连不上，所以最好使用nmcli重新连接一次。</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo armbian-config</span><br></pre></td></tr></table></figure>
+<ol>
+<li>然后在界面里面选择：
+<ol>
+<li>System -&gt; Install -&gt; Boot from eMMC - system on eMMC。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-armbian-install-uboot.png" alt="armbian-config Install u-boot"></li>
+<li>文件系统选择默认：ext4。</li>
+</ol>
+</li>
+<li>然后等待u-boot和rootfs传输完成，直到显示关机。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-armbian-install-uboot-done.png" alt="armbian-config Install u-boot done"></li>
+</ol>
+<p>关机之后，我们就可以将sd卡取出了。重启zero，就可以看到zero已经可以正常引导了！</p>
+<blockquote>
+<p>如果依然出错，那么可以尝试在u-boot里面运行以下命令：</p>
+<ul>
+<li><code>mmc dev 2</code></li>
+<li><code>mmc part</code></li>
+</ul>
+<p>之后再运行<code>mmc info</code>，如果发现可以正常返回mmc的信息，那么就可以运行<code>boot</code>命令，正常引导了。成功之后，再次重启貌似就不会再出现问题了。（我重启了5次，但是不知道有没有意外，如果还是不行，那么现在就只能暂时使用官方镜像了）。</p>
+</blockquote>
+<blockquote>
+<p>感谢<a target="_blank" rel="noopener" href="https://youtube.com/@microlinux">MicroLinux</a>提供的解决方法！大家有兴趣也可以去给他的频道和<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=oOBcPIOYzqY">原视频</a>点赞加鸡腿！</p>
+</blockquote>
+<h2 id="设置系统">2. 设置系统</h2>
+<h3 id="连接到WiFi">2.1. 连接到WiFi</h3>
+<p>为了方便使用，首先，我们最好通过串口将zero连接到WiFi。这里，我们可以使用<code>nmtui</code>。</p>
+<p>有时候<code>nmtui</code>会卡住，不响应键盘输入，这个时候也可以使用<code>nmcli</code>。复制粘贴如下命令运行，然后跟着提示选择就可以了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Enable WIFI</span></span><br><span class="line">sudo nmcli radio wifi on</span><br><span class="line">nmcli dev status</span><br><span class="line"></span><br><span class="line"><span class="comment"># Connect to WIFI</span></span><br><span class="line">nmcli dev wifi list</span><br><span class="line">sudo nmcli --ask dev wifi connect</span><br><span class="line"></span><br><span class="line"><span class="comment"># Show WIFI connection</span></span><br><span class="line">nmcli con show</span><br><span class="line"></span><br><span class="line"><span class="comment"># Wait for WIFI connection to be ready</span></span><br><span class="line"><span class="built_in">echo</span> <span class="string">&quot;Sleep 3 seconds for WIFI connection to be ready ...&quot;</span></span><br><span class="line"><span class="built_in">sleep</span> 3</span><br><span class="line"></span><br><span class="line"><span class="comment"># Test</span></span><br><span class="line">ping -c 1 8.8.8.8</span><br><span class="line"></span><br><span class="line"><span class="comment"># Show IP address</span></span><br><span class="line">ip a</span><br></pre></td></tr></table></figure>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-wifi-setup.png" alt="Radxa Zero WiFi setup"></p>
+<p>如果成功了，就可以看到<code>ping 8.8.8.8</code>可以正常工作，并且最后可以看到自己的IP地址了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2024-01-08-radxa-zero-getting-started/radxa-zero-wifi-setup-done.png" alt="Radxa Zero WiFi setup done"></p>
+<h3 id="创建用户">2.2. 创建用户</h3>
+<p>连接上wifi之后，我们就可以使用ssh登录上去，或者继续在串口终端中创建用户和设置机器名了，这里我写了一个小脚本来完成这个枯燥的工作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash &lt;(curl -sSf https://raw.githubusercontent.com/r12f/config/master/bootstrap/linux/bootstrap.sh)</span><br></pre></td></tr></table></figure>
+<h3 id="重启系统">2.3. 重启系统</h3>
+<p>这个时候，基本设置就已经完成了，可以重启系统了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo reboot now</span><br></pre></td></tr></table></figure>
+<h3 id="登录并删除默认账户">2.4. 登录并删除默认账户</h3>
+<p>为了安全，不要忘记删除默认账户：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo userdel -r rock</span><br></pre></td></tr></table></figure>
+<p>这样基本的设置就完成啦！</p>
+<h2 id="软件安装">3. 软件安装</h2>
+<p>现在，无论是官方镜像还是Armbian，我们可以运行<code>apt upgrade</code>了，所以安装和升级软件就相对简单了。先把系统和源都升级到最新：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt upgrade</span><br></pre></td></tr></table></figure>
+<h3 id="常用小工具系列">3.1. 常用小工具系列</h3>
+<p>不喜欢的可以自行删除：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y iptables \</span><br><span class="line">    iotop \</span><br><span class="line">    bash-completion \</span><br><span class="line">    ca-certificates \</span><br><span class="line">    wget \</span><br><span class="line">    curl \</span><br><span class="line">    vim \</span><br><span class="line">    htop \</span><br><span class="line">    zip \</span><br><span class="line">    lsof \</span><br><span class="line">    net-tools \</span><br><span class="line">    bridge-utils \</span><br><span class="line">    traceroute \</span><br><span class="line">    iperf \</span><br><span class="line">    tcpdump \</span><br><span class="line">    minicom \</span><br><span class="line">    fio \</span><br><span class="line">    stress-ng \</span><br><span class="line">    tshark \</span><br><span class="line">    uuid \</span><br><span class="line">    setserial \</span><br><span class="line">    tio \</span><br></pre></td></tr></table></figure>
+<h3 id="基本的开发工具">3.2. 基本的开发工具</h3>
+<p>git，c++，python，protobuf，cmake，等等：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y build-essential \</span><br><span class="line">    g++ \</span><br><span class="line">    git \</span><br><span class="line">    cmake \</span><br><span class="line">    libboost-all-dev \</span><br><span class="line">    libpcap-dev \</span><br><span class="line">    python3 \</span><br><span class="line">    python3-dev \</span><br><span class="line">    python3-pip \</span><br><span class="line">    python3-setuptools \</span><br><span class="line">    pkg-config \</span><br><span class="line">    protobuf-compiler \</span><br></pre></td></tr></table></figure>
+<h3 id="Rust">3.3. Rust</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl --proto <span class="string">&#x27;=https&#x27;</span> --tlsv1.2 -sSf https://sh.rustup.rs | sh</span><br></pre></td></tr></table></figure>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/radxa-zero-getting-started/" target="_blank">Radxa Zero踩坑记录</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/radxa/" rel="tag"># radxa</a>
+              <a href="/tags/zero/" rel="tag"># zero</a>
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/iot/" rel="tag"># iot</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/sonic-7-bgp-workflow-part-2/" rel="prev" title="SONiC学习笔记（七）：BGP工作流（下）—— BGP路由变更下发">
+                  <i class="fa fa-chevron-left"></i> SONiC学习笔记（七）：BGP工作流（下）—— BGP路由变更下发
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

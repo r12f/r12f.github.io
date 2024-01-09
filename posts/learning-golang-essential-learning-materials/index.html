@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近难得放假，想好好学习一下Go，毕竟C++用的我欲仙欲死，而平时比较常用的.NetCore也不是编译语言（Compiled Language），经常遇到一些神奇的限制…… 学一门新语言说容易也容易，毕竟语法也就那么一些，而且Go非常精简，只有仅仅25个保留字，但是说难也难，要真正理解一门语言真的需要花费不少的心思，特别我属于那种不了解到一定程度连用都不敢用的人（在工作中经常因为需要使用一些库，就">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言学习笔记：学习资料汇总">
+<meta property="og:url" content="http://r12f.com/posts/learning-golang-essential-learning-materials/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="最近难得放假，想好好学习一下Go，毕竟C++用的我欲仙欲死，而平时比较常用的.NetCore也不是编译语言（Compiled Language），经常遇到一些神奇的限制…… 学一门新语言说容易也容易，毕竟语法也就那么一些，而且Go非常精简，只有仅仅25个保留字，但是说难也难，要真正理解一门语言真的需要花费不少的心思，特别我属于那种不了解到一定程度连用都不敢用的人（在工作中经常因为需要使用一些库，就">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-01-learning-golang-essential-learning-materials/gopher-300.png">
+<meta property="article:published_time" content="2021-01-01T18:09:35.000Z">
+<meta property="article:modified_time" content="2021-01-02T02:09:35.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-01-learning-golang-essential-learning-materials/gopher-300.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-golang-essential-learning-materials/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-golang-essential-learning-materials/","path":"posts/learning-golang-essential-learning-materials/","title":"Go语言学习笔记：学习资料汇总"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Go语言学习笔记：学习资料汇总 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%85%A5%E9%97%A8"><span class="nav-text">1. 基础入门</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Go%E8%AF%AD%E8%A8%80%E4%B9%8B%E7%A6%85"><span class="nav-text">2. Go语言之禅</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E7%BC%96%E7%A8%8B%E4%B8%8E%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F"><span class="nav-text">3. 异步编程与并发模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC"><span class="nav-text">4. 代码风格</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="nav-text">5. 错误处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E8%A8%80%E5%92%8C%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F"><span class="nav-text">6. 语言和设计模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E8%AF%95%E7%9B%B8%E5%85%B3"><span class="nav-text">7. 调试相关</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%92%8CRuntime"><span class="nav-text">8. 编译和Runtime</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-text">9. 最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-golang-essential-learning-materials/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Go语言学习笔记：学习资料汇总 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go语言学习笔记：学习资料汇总
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-01-01 10:09:35 / Modified: 18:09:35" itemprop="dateCreated datePublished" datetime="2021-01-01T10:09:35-08:00">2021-01-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-golang-essential-learning-materials/" class="post-meta-item leancloud_visitors" data-flag-title="Go语言学习笔记：学习资料汇总" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-golang-essential-learning-materials/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-golang-essential-learning-materials/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近难得放假，想好好学习一下Go，毕竟C++用的我欲仙欲死，而平时比较常用的.NetCore也不是编译语言（Compiled Language），经常遇到一些神奇的限制……</p>
+<p>学一门新语言说容易也容易，毕竟语法也就那么一些，而且Go非常精简，只有仅仅<a target="_blank" rel="noopener" href="https://golang.org/ref/spec#Keywords">25个保留字</a>，但是说难也难，要真正理解一门语言真的需要花费不少的心思，特别我属于那种不了解到一定程度连用都不敢用的人（在工作中经常因为需要使用一些库，就把这些库的实现通读一遍……），于是查找了不少的学习资料。我觉得这些资料对于新手上路真的非常有用，所以把他们都记录在这，希望也会对其他对Go感兴趣的朋友有所帮助。</p>
+<p>那就让我们开始吧！<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-01-learning-golang-essential-learning-materials/gopher-300.png" alt="Gopher"></p>
+<h2 id="基础入门">1. 基础入门</h2>
+<p>首先，我们先从最基础的开始：</p>
+<ul>
+<li>弄明白怎么使用是第一步，官方的示例讲解必不可少：<a target="_blank" rel="noopener" href="https://tour.golang.org/">A Tour of Go</a></li>
+<li>接下来，可以系统的看看Go语言的方方面面，Go语言圣经gopl当仁不让：<a target="_blank" rel="noopener" href="http://www.gopl.io/">gopl.io</a>，而且还有<a target="_blank" rel="noopener" href="https://github.com/gopl-zh/gopl-zh.github.com">中文版</a>！</li>
+<li>在了解了Go语言本身之后，我们还可以看看语言的一些最佳实践，官方的Effective Go绝对值得一读：<a target="_blank" rel="noopener" href="https://golang.org/doc/effective_go.html">https://golang.org/doc/effective_go.html</a></li>
+</ul>
+<p>至此，基础入门肯定是没有问题了，但是如果你是从C/C++这种比较传统的编译语言转过来的，估计到这里会一头雾水 —— 语法我都懂了，但是为什么呢？比如，为什么Go的struct成员变量和函数不提供const修饰？为什么没有信号量？使用嵌入代替继承看着很好，但是多态用起来经常却经常踩坑？这些问题我们就需要更多的资料来帮忙了。</p>
+<span id="more"></span>
+<h2 id="Go语言之禅">2. Go语言之禅</h2>
+<p>和<a target="_blank" rel="noopener" href="https://www.python.org/dev/peps/pep-0020/">Python一样</a>，Go在设计的时候也有自己的哲学思想。但是与Python不同，Python的哲学在语言设计非常早期就提了出来，并尝试着围绕它来建立语言，Go虽然有很多贯彻始终的思想，但是却很少有非常好的总结，而偏偏理解语言的设计理念是真正理解一门语言的关键。这里有一些零散的资料和文章，都是宝藏，可以参考学习：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://go-proverbs.github.io/">Go Proverbs</a>：(<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=PAAkCSZUG1c&amp;ab_channel=TheGoProgrammingLanguage">YouTube: Go Proverbs - Rob Pike - Gopherfest - November 18, 2015</a>)</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2020/02/23/the-zen-of-go">The Zen of Go</a>：这篇文章非常有意思，作者觉得Go Proverbs总结的其实不是非常到位，并提出了自己的总结，句句直击要害，非常的赞。</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/08/20/solid-go-design">SOLID Go Design</a>：读过<a target="_blank" rel="noopener" href="https://www.amazon.com/Software-Development-Principles-Patterns-Practices/dp/0135974445">《敏捷软件开发》</a>，这本书的人肯定不会对SOLID陌生，这篇文章主要描述了SOLID原则在Go语言设计时的应用和如何利用SOLID原则设计我们的Go程序代码。</li>
+</ul>
+<p>这里还有一些语言设计思想相关的扩展阅读：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/codelab-share">Share Memory By Communicating</a>：Go Proverbs的延展阅读，能帮助理解上面提到的为什么Go中没有提供const修饰。这里需要从语言开发者的角度来看这个问题，理解Go在设计异步模型时的初衷。在读这篇文章的时候，也推荐大家阅读和Actor模型相关的文章，比如这里强烈推荐Actor模型创造者对Actor模型的解释：<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=7erJ1DV_Tlo&amp;ab_channel=jasonofthel33t">Hewitt, Meijer and Szyperski: The Actor Model (everything you wanted to know…)</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/waza-talk">Concurrency is not parallelism</a>：老问题常谈，并发（Concurrency）和并行（Parallelism）的区别。</li>
+</ul>
+<h2 id="异步编程与并发模式">3. 异步编程与并发模式</h2>
+<p>Go里面大家最关心的功能之一（或许没有之一），就是异步和并发了，所以这里我们先来看看他们：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://golang.org/ref/mem">The Go Memory Model</a>：介绍了Go的并发同步相关的各种API（Memory model指的不是GC，而是内存访问控制）</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/12/22/never-start-a-goroutine-without-knowing-how-it-will-stop">Never start a goroutine without knowing how it will stop</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/concurrency-timeouts">Go Concurrency Patterns: Timing out, moving on</a>：最简单的Timeout实现（<a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/Timeouts">Timeouts and Deadlines</a>）</li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/pipelines">Go Concurrency Patterns: Pipelines and cancellation</a>：
+<ul>
+<li>Channel真的是一个非常好的东西，在这篇文章里面可以学到非常多的Channel的应用，比如Pipe，生成器，文章还对错误处理给出了Go风格解决方案。</li>
+<li><a target="_blank" rel="noopener" href="https://twitter.com/haoel">耗子哥</a>写了一篇中文的，虽然内容没有原版多，但都是精华：<a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21228.html">GO编程模式：Pipeline</a></li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/context">Go Concurrency Patterns: Context</a>：请求管理进阶，context包的使用和context tree的解释。</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2017/08/20/context-isnt-for-cancellation">Context isn’t for cancellation</a>：Context这个包虽然好用，但是它并不正交，于是引起了很多异议，比如这一篇。</li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/io2013-talk-concurrency">Advanced Go Concurrency Patterns</a>：通过一个实例来介绍如何使用Go进行并发编程，Go提供了怎样的调试工具来帮助我们找到问题。</li>
+<li><a target="_blank" rel="noopener" href="https://drive.google.com/file/d/1nPdvhB0PutEJzdCq5ms6UI58dp50fcAN/view">Rethinking Classical Concurrency Patterns</a>：这是一个很长的Slides，里面有很多关于Go并发编程的思考。</li>
+</ul>
+<h2 id="代码风格">4. 代码风格</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2019/07/09/clear-is-better-than-clever">Clear is better than clever</a></li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/03/19/should-methods-be-declared-on-t-or-t">Should methods be declared on T or *T</a>：初学Go的时候，在实现成员函数时会经常弄不清楚什么时候用T，什么时候用*T，这篇文章给出了非常好的而且非常简单的答案。</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2017/06/11/go-without-package-scoped-variables">Go, without package scoped variables</a>：因为全局变量是不好的，所以文章尝试实验没有全局变量的语言实现，文章还提出了很多对于公开和私有的包全局变量的建议。</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2015/03/08/simplicity-and-collaboration">Simplicity and collaboration</a></li>
+</ul>
+<p>还有一些和包管理相关的内容：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/package-names">Package names</a></li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2019/01/08/avoid-package-names-like-base-util-or-common">Avoid package names like base, util, or common</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/using-go-modules">Using Go Modules</a></li>
+</ul>
+<h2 id="错误处理">5. 错误处理</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://golang.org/pkg/errors/">Go package: errors</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/errors-are-values">Errors are values</a>：文章介绍了一些错误处理的方案，从而帮助简化代码流程，并让错误处理变得更加的清晰。</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully">Don’t just check errors, handle them gracefully</a>：这篇文章堪称精彩，解决了我对错误处理很多的困惑，而且不仅仅限于Go语言，而更多的是如何进行错误处理的思想。</li>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21140.html">Go编程模式：错误处理</a></li>
+<li><a target="_blank" rel="noopener" href="https://go.googlesource.com/proposal/+/master/design/go2draft.md">Go 2 Draft Designs</a></li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2015/11/05/lets-talk-about-logging">Let’s talk about logging</a>：这篇文章的观点非常的有意思，需要对Go的错误处理有一些理解之后再阅读比较好，建议再读完上面和错误处理相关的所有内容之后再读。</li>
+</ul>
+<h2 id="语言和设计模式">6. 语言和设计模式</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21128.html">Go编程模式：切片，接口，时间和性能</a></li>
+<li>Immutability
+<ul>
+<li><a target="_blank" rel="noopener" href="https://levelup.gitconnected.com/building-immutable-data-structures-in-go-56a1068c76b2">Building Immutable Data Structures In Go</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/27975">Proposal: Go 2: immutable type qualifier</a></li>
+</ul>
+</li>
+<li>泛型：
+<ul>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21179.html">Go编程模式：Go Generation</a>：由于Go不支持泛型，而反射（Reflect）会带来很多问题，比如运行时错误和性能问题，Go为此提供了暂时的解决方案：Generation。</li>
+<li>这里可以看到更多关于Go泛型支持的进展：
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/generics-next-step">The Next Step for Generics</a></li>
+<li><a target="_blank" rel="noopener" href="https://go.googlesource.com/proposal/+/refs/heads/master/design/go2draft-contracts.md">Contracts — Draft Design</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>函数对象和高阶函数：
+<ul>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/11/13/do-not-fear-first-class-functions">Do not fear first class functions</a></li>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21146.html">Go编程模式：Functional Options</a>：非常好用的高阶对象的应用！强烈推荐一读。</li>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21164.html">Go编程模式：Map-Reduce</a>：缺乏泛型和通用遍历接口的MapReduce，真的……很尴尬。</li>
+</ul>
+</li>
+<li>常见的编程模式
+<ul>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21214.html">Go编程模式：委托和反转控制</a>：依赖反转原则的应用，耗子哥写的真的很好，顺便推荐另一篇耗子哥写的文章：<a target="_blank" rel="noopener" href="https://coolshell.cn/articles/9949.html">IOC/DIP其实是一种管理思想</a>。</li>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/17929.html">Go编程模式：修饰器</a></li>
+<li><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/21263.html">Go编程模式：k8s Visitor 模式</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.calhoun.io/moving-towards-domain-driven-design-in-go/">Moving Towards Domain Driven Design in Go</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="调试相关">7. 调试相关</h2>
+<ul>
+<li>pprof：Go自带的Profiler，功能还是非常强大的，不过是侵入式的，使用的时候需要注意。
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/pprof">Profiling Go Programs</a></li>
+<li><a target="_blank" rel="noopener" href="https://golang.org/doc/diagnostics.html">Go Diagnostics Doc</a></li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://dave.cheney.net/tag/godebug">A whirlwind tour of Go’s runtime environment variables</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/race-detector">Introducing the Go Race Detector</a></li>
+</ul>
+<h2 id="编译和Runtime">8. 编译和Runtime</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://studygolang.com/articles/26046">深度探索Go对象模型</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.ardanlabs.com/blog/2015/01/stack-traces-in-go.html">Stack Trace In Go</a></li>
+<li><a target="_blank" rel="noopener" href="https://golang.org/doc/asm">A Quick Guide to Go’s Assembler</a>：想真正了解Go内部都在做什么，了解Assembler是必须的
+<ul>
+<li>在看Go的Assembler之前推荐花几分钟先读一下<a target="_blank" rel="noopener" href="https://9p.io/sys/doc/asm.html">Plan9的汇编spec</a>，因为很多语法和我们现在常见的x86和amd64汇编差别很大。</li>
+<li><a target="_blank" rel="noopener" href="https://cmc.gitbook.io/go-internals/chapter-i-go-assembly">Go Internals</a>也是一个不错的阅读材料，把所有东西总结到了一起，比较容易读懂。</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://getstream.io/blog/how-a-go-program-compiles-down-to-machine-code/">How a Go Program Compiles Down to Machine Code</a>：简单的介绍了Go编译的Pipeline，也提供了一些很有用的调试编译器的方法，比如如何查看<a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/tools/go/ssa">Static Single Assignment (SSA)</a>。</li>
+<li><a target="_blank" rel="noopener" href="https://draveness.me/golang/docs">Go语言设计与实现</a>：神书一本，放在最后，因为非常的艰深，对语言底层实现感兴趣的童鞋绝对不容错过！</li>
+</ul>
+<h2 id="最后">9. 最后</h2>
+<p>目前大概就看了这些资料，毕竟是一个新手，只是利用业余时间学习学习，可能不会涉及太多非常深入的内容。如果大家有更多的推荐，欢迎多多交流，共同学习进步～</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-struct/">Go语言学习笔记：深入对象模型之结构体</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/">Go语言学习笔记：深入对象模型之内置类型</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-essential-learning-materials/">Go语言学习笔记：学习资料汇总</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/">Go语言学习笔记：搭建Windows下的Go开发环境</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-golang-essential-learning-materials/" target="_blank">Go语言学习笔记：学习资料汇总</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go/" rel="tag"># go</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/backend-service-scale-1-principle/" rel="prev" title="后台服务扩展入门 —— 原则篇">
+                  <i class="fa fa-chevron-left"></i> 后台服务扩展入门 —— 原则篇
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-object-model-inbox-data-type/" rel="next" title="Go语言学习笔记：深入对象模型之内置类型">
+                  Go语言学习笔记：深入对象模型之内置类型 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

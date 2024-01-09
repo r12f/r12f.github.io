@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近在做一个多团队合作的项目，需要将我们的服务的配置管理和自动化部署流水线从一个平台迁移到另外一个平台，但是这个项目很要命的是，另外一个团队的成员一心只想赶快完成任务，代码的改动从来就不加测试，每次做了两行修改就开始在自己的分支上创建Official build，然后上运营环境测试。劝了好几次也无动于衷，总觉得测试是一件麻烦的事情，拖了他们的后腿。其实这个项目本来并不复杂，偏偏他们做了两年都没做出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="测试，你写代码时最好的朋友（上篇）">
+<meta property="og:url" content="http://r12f.com/posts/make-tests-your-friends/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="最近在做一个多团队合作的项目，需要将我们的服务的配置管理和自动化部署流水线从一个平台迁移到另外一个平台，但是这个项目很要命的是，另外一个团队的成员一心只想赶快完成任务，代码的改动从来就不加测试，每次做了两行修改就开始在自己的分支上创建Official build，然后上运营环境测试。劝了好几次也无动于衷，总觉得测试是一件麻烦的事情，拖了他们的后腿。其实这个项目本来并不复杂，偏偏他们做了两年都没做出">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-01-25T00:51:38.000Z">
+<meta property="article:modified_time" content="2021-01-25T00:51:38.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="测试">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/make-tests-your-friends/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/make-tests-your-friends/","path":"posts/make-tests-your-friends/","title":"测试，你写代码时最好的朋友（上篇）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>测试，你写代码时最好的朋友（上篇） | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9C%E5%86%99%E6%B5%8B%E8%AF%95%E7%9C%9F%E7%9A%84%E5%A5%BD%E7%83%A6%E2%80%9D"><span class="nav-text">1. “写测试真的好烦”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%86%99%E6%B5%8B%E8%AF%95"><span class="nav-text">2. 为什么要写测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E8%AF%81%E4%BB%A3%E7%A0%81%E4%B8%8D%E4%BC%9A%E5%87%BA%E7%8E%B0%E5%9B%9E%E5%BD%92%EF%BC%88Regression%EF%BC%89"><span class="nav-text">2.1. 保证代码不会出现回归（Regression）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AE%E8%AE%A4%E5%8A%9F%E8%83%BD%E6%94%B9%E5%8A%A8"><span class="nav-text">2.2. 确认功能改动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%98%AF%E5%BC%BA%E5%88%B6%E7%9A%84%E6%96%87%E6%A1%A3"><span class="nav-text">2.3. 测试是强制的文档</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%9A%84%E5%8E%9F%E5%88%99"><span class="nav-text">3. 测试的原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%BD%E7%9A%84%E4%BB%A3%E7%A0%81%E6%9C%AC%E8%BA%AB%E5%B0%B1%E6%98%AF%E5%A5%BD%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-text">4. 好的代码本身就是好的测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E7%BA%A6%E7%BC%96%E7%A8%8B%EF%BC%88Design-by-contract%EF%BC%89"><span class="nav-text">4.1. 合约编程（Design by contract）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A6%81%E7%BA%A6%E6%9D%9F%EF%BC%8C%E4%B8%8D%E8%A6%81%E6%94%BE%E4%BB%BB"><span class="nav-text">4.2. 要约束，不要放任</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%9C%9F%E7%BA%A6%E6%9D%9F"><span class="nav-text">4.2.1. 运行期约束</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%BF%94%E5%9B%9E%E9%94%99%E8%AF%AF%E7%A0%81"><span class="nav-text">4.2.1.1. 返回错误码</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%96%AD%E8%A8%80%E5%92%8C%E5%BC%82%E5%B8%B8"><span class="nav-text">4.2.1.2. 断言和异常</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%9C%9F%E7%BA%A6%E6%9D%9F"><span class="nav-text">4.2.2. 编译期约束</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E4%BB%A3%E7%A0%81%E6%A3%80%E6%9F%A5"><span class="nav-text">4.2.2.1. 静态代码检查</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%96%AD%E8%A8%80%EF%BC%8C%E4%B8%8D%E6%98%AF%E5%8F%AA%E6%9C%89%E8%BF%90%E8%A1%8C%E6%9C%9F%E6%89%8D%E6%9C%89"><span class="nav-text">4.2.2.2. 断言，不是只有运行期才有</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95%E7%BA%A7%E7%BA%A6%E6%9D%9F%E5%92%8C%E4%B8%8D%E5%8F%98%E6%80%A7"><span class="nav-text">4.2.2.3. 语法级约束和不变性</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%BB%E7%A8%8B%E5%BA%8F%EF%BC%8C%E4%B8%8D%E8%AF%B4%E8%B0%8E"><span class="nav-text">4.3. 死程序，不说谎</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%AD%E8%A8%80%E8%BF%98%E6%98%AF%E9%94%99%E8%AF%AF%E7%A0%81%EF%BC%9F"><span class="nav-text">4.3.1. 断言还是错误码？</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%87%AA%E6%9D%80%E7%82%B9%EF%BC%88Suicide-Point%EF%BC%89"><span class="nav-text">4.3.2. 自杀点（Suicide Point）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%BD%E4%BB%A3%E7%A0%81%E6%98%AF%E5%86%99%E5%A5%BD%E6%B5%8B%E8%AF%95%E7%9A%84%E5%9F%BA%E7%9F%B3"><span class="nav-text">5. 好代码是写好测试的基石</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A9%E6%B5%8B%E8%AF%95%E6%94%AF%E6%8C%81%E9%87%8D%E6%9E%84%EF%BC%9A%E6%89%BE%E5%88%B0%E5%88%86%E7%95%8C%E7%82%B9"><span class="nav-text">5.1. 让测试支持重构：找到分界点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A2%9E%E5%8A%A0%E5%8F%AF%E6%B5%8B%E8%AF%95%E9%9D%A2%EF%BC%9A%E9%AB%98%E5%86%85%E8%81%9A%EF%BC%8C%E4%BD%8E%E8%80%A6%E5%90%88"><span class="nav-text">5.2. 增加可测试面：高内聚，低耦合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%81%BF%E5%85%8D%E4%B8%8D%E7%A8%B3%E5%AE%9A%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="nav-text">5.3. 避免不稳定的代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%B0%8F%E5%B8%AE%E6%89%8B%EF%BC%9A%E6%B5%8B%E8%AF%95%E6%A1%A9"><span class="nav-text">5.4. 测试小帮手：测试桩</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%91%E6%81%AF%E4%B8%80%E4%B8%8B"><span class="nav-text">6. 休息一下</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/make-tests-your-friends/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="测试，你写代码时最好的朋友（上篇） | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          测试，你写代码时最好的朋友（上篇）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-01-24 16:51:38" itemprop="dateCreated datePublished" datetime="2021-01-24T16:51:38-08:00">2021-01-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/make-tests-your-friends/" class="post-meta-item leancloud_visitors" data-flag-title="测试，你写代码时最好的朋友（上篇）" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/make-tests-your-friends/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/make-tests-your-friends/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近在做一个多团队合作的项目，需要将我们的服务的配置管理和自动化部署流水线从一个平台迁移到另外一个平台，但是这个项目很要命的是，另外一个团队的成员一心只想赶快完成任务，代码的改动从来就不加测试，每次做了两行修改就开始在自己的分支上创建Official build，然后上运营环境测试。劝了好几次也无动于衷，总觉得测试是一件麻烦的事情，拖了他们的后腿。其实这个项目本来并不复杂，偏偏他们做了两年都没做出来，还弄出不少线上事故，真的是事百倍功半，所以这次就想单独写一点关于测试的事情。</p>
+<hr>
+<h2 id="“写测试真的好烦”">1. “写测试真的好烦”</h2>
+<blockquote>
+<p>“Hey! It compiles! Ship it!”</p>
+</blockquote>
+<p>每次提到写测试，很多人会觉得很烦，原因都大同小异：</p>
+<ul>
+<li>额外的工作，而且大部分时候极度耗时，甚至比开发的时间还多</li>
+<li>开发新功能带来的快感很多时候在功能相关的代码写完之后就结束了</li>
+<li>写测试总感觉是个体力活，写了一堆也不一定能发现一个问题</li>
+<li>为某个功能写了一堆测试，然后功能变了，所有的测试都要重新写，拖慢开发速度</li>
+</ul>
+<p>有上面这些疑问和抱怨，基本上都是因为没弄明白测试的真实意图，最后陷入了为了测试而测试的误区。而当我们被迫做一个事情的时候，我们是永远都不会觉得做这个事情有什么好处的，即便它真的有。</p>
+<span id="more"></span>
+<hr>
+<h2 id="为什么要写测试">2. 为什么要写测试</h2>
+<p>那么这么多种类型的测试，到底是用来干什么的呢？</p>
+<h3 id="保证代码不会出现回归（Regression）">2.1. 保证代码不会出现回归（Regression）</h3>
+<p>很多人觉得测试当成一个一次性用品，和一次性筷子一样，除了为了应付代码审查，其他并没有什么意义。其实恰恰相反，没有什么比测试更划算的了：一次投资，终身保固！只要测试写完，它就能保证我们的代码一直都按照我们预想的方式来执行。这也是测试最重要的作用之一，而如果实现合理，它的边际成本几乎为0！</p>
+<p>千万不要小看了这一条性质，正是因为它，我们才能安心的对代码进行改动。它是我们<a href="/posts/backend-service-scale-1-principle/#%E6%B5%8B%E8%AF%95%E6%98%AF%E9%87%8D%E6%9E%84%E7%9A%84%E5%89%8D%E6%8F%90">代码重构的基石</a>（参见《重构》一书），也是一切自动化的前提（参见《持续交付》一书），而<strong>可安全重构和自动化才是我们真正要达到的目的</strong>！</p>
+<h3 id="确认功能改动">2.2. 确认功能改动</h3>
+<p>当然，我们还可以反向的利用上面这条性质，那就是当我们改变了代码行为之后，测试应该能如实并且完整的反应这个改变对系统带来的所有变化，而且这些变化应该越清晰越好，这样才方便自查和代码审查。</p>
+<p>这里我们先不说具体的方法论，在后面一节我们再来讨论。</p>
+<h3 id="测试是强制的文档">2.3. 测试是强制的文档</h3>
+<blockquote>
+<p>“Programs must be written for people to read, and only incidentally for machines to execute.”<br>
+— Harold Abelson and Gerald Jay Sussman, from “The Structure and Interpretation of Computer Programs”</p>
+</blockquote>
+<p>文档最大的问题就是没有约束力，所以文档从写完后的第一秒开始，就开始过时。这也是为什么代码本身应该就能充当自己的文档，因为这样才能保证文档才能永远不会过时。测试也是代码，而且比起其他代码而言，测试是更好的知识库。</p>
+<ol>
+<li>首先，测试演示了被测试的模块的使用方法。熟悉测试驱动开发（TDD）的朋友肯定知道，编写测试的其中一个目的就是帮助我们站在使用者的角度设计并改善接口。虽然我们不一定必须使用测试驱动开发，但是它却侧面反映了这一条作用。而像golang等语言则做的更好，直接<a target="_blank" rel="noopener" href="https://blog.golang.org/examples">在语言层面上对这种测试进行了单独的区分和支持</a>。</li>
+<li>其次，测试中的断言保证了它说的所有结论永远为真！这相当于给了我们读代码的捷径，我们不用费力的去整理代码的逻辑，了解所有的细节，就能直接看到绝对为真的结论，没有什么比这种文档更好的了。</li>
+</ol>
+<p>正因如此，每当我想了解一个模块时，在简单的阅读设计文档之后，我更多的时间会花在阅读相关的测试上。</p>
+<hr>
+<h2 id="测试的原则">3. 测试的原则</h2>
+<p>现在我们了解了测试的目的，也许你已经燃起一点写测试的兴趣，但是现实总是骨感的，上面我们提到的问题依旧摆在我们的面前，所以写测试的方法论就变得格外重要了。要记住，千万不要为了测试而测试，而是应该<strong>在合理的地方进行合理的测试</strong>，不要让测试成为我们的累赘，或者成为测试的奴隶，而应该让它变成我们的帮手。</p>
+<p>为了帮助我们更好的进行测试，无论是写功能还是写测试都应该遵守以下几条原则：</p>
+<ul>
+<li>最短距离：错误检查和执行的操作的距离应该最短。换句话说，出了问题就应该立刻报错。</li>
+<li>可观察：程序的行为和状态能被方便和清晰的观察。比如：日志，错误上下文等等信息。</li>
+<li>可重复：程序的行为和错误能被方便的重现。不稳定的测试最让人闹心。</li>
+</ul>
+<p>我们下面就来讨论一下具体的方法论，并说明如何应用这几条原则。</p>
+<hr>
+<h2 id="好的代码本身就是好的测试">4. 好的代码本身就是好的测试</h2>
+<p>很多人听到写测试就会联想到写单元测试里一个一个的测试用例（Test Case），但是其实测试不一定需要通过这样来实现。我们知道越早发现问题，修复代价就越低，所以如果代码本身就能帮我们找到错误，岂不是更加的方便？</p>
+<p>所以，不要忘记：好的代码本身就是好的测试。这也是最短距离原则的应用。</p>
+<h3 id="合约编程（Design-by-contract）">4.1. 合约编程（Design by contract）</h3>
+<p>虽然很多项目非常复杂，但是和我们现实的人类社会相比，可能并不能算什么。那到底是什么能让如此错综复杂依然可以稳步前进呢？这便是合约（Contract）的力量。小到一句口头约定，大一点到上班签的合同，无处不在的规章制度，再大到指导我们生活的法律，这些都是合约，违背了合约就一定会受到惩罚。</p>
+<p>写代码也是一样，每一个函数都有自己的合约，它的前置条件是什么（比如参数不为空，一般用Requires来表示），后置约束是什么（比如某文件一定会被创建，一般用Ensures来表示），执行过程中的不变量又是什么（比如，二分查找中，left一定不会大于right，一般用Assert或者Invariant来表示），合约一旦被打破，就应该受到惩罚（返回错误或者异常）。这就是<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Design_by_contract">合约编程（Design by contract）</a>。</p>
+<p>本质上合约编程就是一种代码内的测试，它之所以这么著名，不仅仅是因为它能帮我们找到问题，更重要的是它还能帮我们确定问题在哪。这就和现实中的合约一样，你迟到了就是你迟到了。如果一个函数执行的前置条件没有达到从而导致了错误，那么这个函数就不用看了；如果一个函数中间的不变量出错了，那么问题就一定在这个函数或者它相关的函数里（比如，同一个类的其他函数），而它的调用方我们就不用查了。这样我们调试问题的速度将大大的提高！</p>
+<p>其实很多编程语言都已经提供了对合约编程的支持，比如C/C++中的<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/understanding-sal">SAL</a>和为了支持<a target="_blank" rel="noopener" href="https://github.com/isocpp/CppCoreGuidelines">C++ Core Guidelines</a>的<a target="_blank" rel="noopener" href="https://github.com/microsoft/GSL">GSL</a>，C#中的<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">CodeContract</a>。而且这个思想影响之大，即便语言没提供或者提供的稍稍不那么方便，社区也会帮忙提供第三方的包来实现，比如C#的<a target="_blank" rel="noopener" href="https://github.com/safakgur/guard#introduction">Dawn.Guard</a>和Go的<a target="_blank" rel="noopener" href="https://github.com/go-ozzo/ozzo-validation">ozzo-validation</a>。</p>
+<h3 id="要约束，不要放任">4.2. 要约束，不要放任</h3>
+<blockquote>
+<p>“Don’t assume it, prove it.” — David Thomas, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>根据最短距离原则，我们要尽早报错，所以一个非常直观的结论便是：如果能用更强制的办法对代码进行约束时，就一定要进行约束。</p>
+<p>常用的约束由强至弱依次如下：</p>
+<ol>
+<li>语法级编译错误</li>
+<li>编译期断言</li>
+<li>静态代码检查</li>
+<li>运行期错误，运行期断言或异常</li>
+<li>运行期检查并返回错误码，再由测试对错误码进行判断</li>
+<li>运行期检查，但不返回错误码，但是可以通过调用其他函数访问内部状态，最后用测试进行检查</li>
+<li>没有任何形式的错误检查</li>
+</ol>
+<p>第1-3级约束都是编译期约束，而4-6级约束都是运行期约束，他们各有特点。这里举个简单的栗子，下面这样的函数相信大家肯定看到过不少，我们现在就来看看怎么样对其进行修改：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Data</span> &#123;</span><br><span class="line">  <span class="type">int</span> FieldA;</span><br><span class="line">  <span class="type">char</span> FieldB[<span class="number">6</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (p == <span class="literal">nullptr</span>) &#123; <span class="keyword">return</span> <span class="literal">false</span>; &#125;</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="运行期约束">4.2.1. 运行期约束</h4>
+<h5 id="返回错误码">4.2.1.1. 返回错误码</h5>
+<p>根据上面的定义，我们知道这个函数是第五级的约束。由于这种约束主要是使用错误码来判断出错类型，所以最好使用表达力更强的错误码。比如C++中的<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/error/error_code">std::error_code</a>，Windows编程中的<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values">HRESULT</a>或者<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes">System Error Code</a>。</p>
+<p>这里使用bool值就是一个不好的例子，因为返回值false完全没有办法告诉我们可能出错的原因，所以我们可以使用HRESULT进行替换：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">HRESULT <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (p == <span class="literal">nullptr</span>) &#123; <span class="keyword">return</span> E_INVALIDARG; &#125;</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">  <span class="keyword">return</span> S_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里大家可以看到，返回码的问题非常明显，那就是如果没有针对的测试用例，这种错误我们不会马上发现，直到其他地方出错了，调试之后，才会被我们发现。所以为了尽快发现问题，我们可以继续提升这段代码的约束等级。</p>
+<h5 id="断言和异常">4.2.1.2. 断言和异常</h5>
+<p>断言和异常大家都应该都不陌生，无论是使用类似<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.argumentnullexception">ArgumentNullException</a>的异常，或者是通过<a target="_blank" rel="noopener" href="http://www.cplusplus.com/reference/cassert/assert/">Assert</a>进行断言，都非常的直接。但是断言和异常其实也能玩出花来，那就是上面我们已经提到过的合约编程。</p>
+<p>如果不用任何第三方的库，最简单的，我们可以自己定义一些宏，比如，如下代码就实现了合约编程中的Requires关键字，帮助我们对代码进行约束：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">define</span> REQUIRES(cond) assert(cond)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">REQUIRES</span>(p != <span class="literal">nullptr</span>);</span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里需要注意的是：</p>
+<ul>
+<li>如果这里的参数是用户输入，我们必须谨慎使用断言。用户的输入可以是任何样子，没有合约限制，这个时候我们必须要将错误处理好。断言只有当问题确实不符合我们预期时，才可以使用，比如，内部代码调用，不然会导致意外的崩溃，影响用户体验。（经典笑话：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/20034686/answer/52063718">测试工程师逛酒吧</a>）。</li>
+<li>如果这个空指针是这个函数里唯一一个出错的地方，那么我们就不需要再返回错误了，因为已经有了断言了。</li>
+</ul>
+<p>就和上面提到的一样，合约编程已经有很多成熟的库了，合理的应用这些库，可以让我们写代码和查错的效率倍增。</p>
+<h4 id="编译期约束">4.2.2. 编译期约束</h4>
+<p>运行期约束的好处是它可以处理变化的数据，但是他们产生的错误也需要运行程序才能发现，所以我们要触发这些约束，就一定需要编写并运行一个特定的测试，而这些测试的错误都是需要一定时间的调试的，这对我们来说都是开销。那有没有更强更方便的约束呢？有，这就是编译期约束。</p>
+<p>编译期约束，都是在代码编译的过程中被执行，并且出现问题就会产生编译错误，这个好处是：</p>
+<ul>
+<li>编译无法通过，我们就不可能发布软件，也就从根本上杜绝了发布bug的可能。</li>
+<li>编译错误通常带有非常详细的信息，哪一个文件哪一行代码出了什么错，所以相比运行期错误，编译错误几乎不用怎么调试（咳，C++的模板推导除外……）。</li>
+</ul>
+<p>但是编译期约束最大的问题就是，如果编译过程中状态无法确定，就无法对其进行约束（比如用户的输入）。下面，我们就来看看如何应用编译期约束。</p>
+<h5 id="静态代码检查">4.2.2.1. 静态代码检查</h5>
+<p>静态代码检查是一个很有用的工具，它能帮我们分析代码并且找出其中可能出现的问题，比如，内存申请了没有释放，变量还没有被初始化就被使用了等等。这里将其列为第三级的原因是因为，静态代码检查通常需要我们在开发环境中加入或启用代码检查工具，所以经常被遗忘。另外代码检查需要花费时间，使得编译速度明显下降，所以很多人在开发过程中也会将其禁用掉，直到合并代码时才会打开跑一次，所以强制性低，发现问题的时候也通常比较晚。</p>
+<p>静态代码检查工具很多，比如<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/using-the-cpp-core-guidelines-checkers">CppCoreCheck</a>，<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview">NetAnalyzer</a>等等。另外这些工具很多时候也需要我们对代码进行相应的修改，告诉他，我们的期望是什么，比如<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/cpp/code-quality/understanding-sal">SAL</a>。</p>
+<p>还是同样的代码，我们来应用第三级约束，加入SAL：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ Data *p)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// REQUIRES(p != nullptr); // This line can be removed, if p is not a third-party input, e.g. user input.</span></span><br><span class="line">  <span class="comment">// Do something here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里可以看到，加入的SAL中的<code>_In_</code>关键字不仅仅为提供代码检查的依据，它还是一个合约，告诉调用方，这个函数不接受空指针。于是根据合约编程，我们可以假定调用方遵守合约，并将空指针检查的代码删除了。这样处理之后，代码就变得更加清晰和精简了，同时效率也变高了！（想一想传递指针时，调用栈上每一层函数都来检查一次的样子吧……）</p>
+<h5 id="断言，不是只有运行期才有">4.2.2.2. 断言，不是只有运行期才有</h5>
+<p>很多语言还提供了编译期的断言，比如C++中的<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/static_assert">static_assert</a>。只要其表达式能在编译期被求值（Evaluate），那么就可以使用此断言。</p>
+<p>比如，我们可以对上面的代码做如下断言：（这两个断言会成功吗？:D）</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Data</span> &#123;</span><br><span class="line">  <span class="type">int</span> FieldA;</span><br><span class="line">  <span class="type">char</span> FieldB[<span class="number">6</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Making sure structure and fields are aligned when dealing with binary buffers.</span></span><br><span class="line"><span class="built_in">static_assert</span>(<span class="built_in">sizeof</span>(Data) == <span class="number">10</span>);</span><br><span class="line"><span class="built_in">static_assert</span>(<span class="built_in">FIELD_OFFSET</span>(Data, FieldB) == <span class="number">4</span>);</span><br></pre></td></tr></table></figure>
+<p>除此以外，还有一些其他的常用法，比如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Making sure every enum value will have its name.</span></span><br><span class="line"><span class="built_in">static_assert</span>(_countof(enum_names) == enum_value_max));</span><br></pre></td></tr></table></figure>
+<h5 id="语法级约束和不变性">4.2.2.3. 语法级约束和不变性</h5>
+<p>最后，也是最高等级的约束便是语法错误了。通过合理的运用语言提供的关键字，我们可以让语言本身来帮助我们避免错误的代码。</p>
+<p>比如上面的代码，我们可以就可以简单的使用引用来完全避免空指针的问题，这样任何形式的检查都不需要了。另外由于其是输入参数，我们还可以加上const的约束，保证其不会被该函数修改。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ <span class="type">const</span> Data &amp;p)</span> </span>&#123; <span class="comment">/* Do something here */</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>类似这样帮助我们进行约束的语法还有很多，比如常见的<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/final"><code>final</code>关键字</a>，c++中的<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/override"><code>override</code>关键字</a>，等等。这里有一个关键字是我最喜欢的，那就是<code>const</code>。</p>
+<p>C++中<code>const</code>可以出现在很多地方，用来修饰变量，修饰函数参数，修饰成员函数。每当<code>const</code>出现，我就变得特别的安心，因为我知道，它修饰的东西不会被任何东西所改变（或者不会改变任何东西），那么在多线程并发的时候，它是安全的（当然也有例外，不过可能性就小了很多）。而这也是函数式编程（或者实现线程安全程序）的最重要的基石之一：<a target="_blank" rel="noopener" href="https://en.m.wikipedia.org/wiki/Immutable_object">不变性（Immutability）</a>。</p>
+<p>对于一个对象来说，不变性指的是对象的状态在其构造完成之后就不可改变，也就是说，构造函数是唯一一个能改变对象状态的地方。这样的对象也叫不可变对象。不可变对象对多线程的亲和非常的好理解，因为它不能被任何人所改变，所以你怎么并行操作它都没有问题。</p>
+<p>这里还是拿同样的函数来举例子，如果说，ProcessData是一个回调函数，而参数p会被多线程访问，那么我们可以采用如下方法实现这个函数，这样我们就能避免很多多线程访问可能导致的错误：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProcessData</span><span class="params">(_In_ std::shared_ptr&lt;<span class="type">const</span> Data&gt; p)</span> </span>&#123; <span class="comment">/* Do something here */</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>现在不可变对象已经不是函数式语言的专利了，比如C#中的<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.immutable">Immutable Collection</a>，这些都能帮助我们更好的进行多线程编程。</p>
+<h3 id="死程序，不说谎">4.3. 死程序，不说谎</h3>
+<h4 id="断言还是错误码？">4.3.1. 断言还是错误码？</h4>
+<blockquote>
+<p>“Defensive programming is a waste of time. Let it crash!” – Joe Armstrong, the inventor of Erlang<br>
+“Crash, don’t trash.” – David Thomas, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>经过上面这一节，也许你会觉得很奇怪，使用断言比错误码更好吗？断言失败，程序可是会直接崩溃啊，这不是应该避免的吗？</p>
+<p>恰恰相反，正因为崩溃冷酷无情，我们才应该更多的使用崩溃，特别当出现重大问题时，我们应该尽早的崩溃，而不应该悄无声息的继续执行。</p>
+<ul>
+<li>首先，崩溃绝不说谎，而且崩溃还会生成崩溃转储文件（Crash Dump），它可以提供出错时的堆栈，甚至完整的内存数据来告诉我们为什么出错了，这些信息量是一两行错误日志远远不能比的，这可以大大增加程序出错时的可观察性。</li>
+<li>其次，当程序处于一种不确定的状态下时，直接崩溃通常比继续执行更好，因为我们无法预测接下来程序要做什么，它也许会胡乱的修改用户数据，也许会执行本完全不应该执行的逻辑，调用别的模块或者服务，这些错误造成的影响通常都很难恢复。（想想如果因为我们服务中一个的bug，导致用户在文件中或者数据库中的数据被一个“好的”请求损坏了……恢复起来就真的要自求多福了）</li>
+<li>最后，崩溃在任何时候都无法被忽略，无论是测试，预发布，还是最终发布。这个给了我们两个特别好的性质：
+<ul>
+<li>断言保证的事情，一定为真。这可以帮助我们精简代码，并且增加我们对代码正确执行的信心。想一下你的程序中某个断言，在好几百万台机器上执行确从未触发过，是不是很有自信？</li>
+<li>断言失败很难不被发现。我们希望任何的错误都能被尽早的暴露，而不是最后到了最终用户的手里，被用户发现，然后收到一大堆故障单。</li>
+</ul>
+</li>
+</ul>
+<p>当然，断言虽然好，但是也不要忘了上面已经提过的使用断言的场景：简单的说就是代码上而言不可能的事情，就应该用断言，不然就应该要合理的处理，比如用户的输入。</p>
+<h4 id="自杀点（Suicide-Point）">4.3.2. 自杀点（Suicide Point）</h4>
+<blockquote>
+<p>“Let there be light!”</p>
+</blockquote>
+<p>由于崩溃有如此好的性质，我们还可以利用其来更好的观察我们程序中的行为。</p>
+<p>在我刚加入现在的组时，给我负责的服务是一个规模超大，但是非常老旧错误百出的服务，所以为了了解这个服务真正在做什么，我在所有模块中的关键函数上都打上了追踪点（追踪点不会触发崩溃），比如核心系统API调用失败的时候等等，然后版本发布了之后，我惊讶的发现，这个服务的核心系统API调用错误率高到惊人，所有实例加起来每分钟错误数可以达到数百万次（是的，你没看错）。有一些错误，就算加了日志也看不出来为什么，因为信息量太有限。于是我便在代码里面加入了自杀点，这样我能随意控制任意节点，在任意追踪点被触发的时候崩溃。之后，通过慢慢的收集信息和迭代修复，现在核心系统API的错误量已经下降到了每小时甚至每天个位数。最后，我们还给这些追踪点加上了报警，帮助我们第一时间发现新的问题。</p>
+<hr>
+<h2 id="好代码是写好测试的基石">5. 好代码是写好测试的基石</h2>
+<p>写测试之前，我们千万不要忽略代码本身的质量，如果代码本身恶臭无比，测试也将变的一塌糊涂。</p>
+<p>请不要幻想测试可以帮助我们提高多少代码的可维护性，再烂的代码都可以加测试，只不过加的测试也会变得极烂而已。</p>
+<h3 id="让测试支持重构：找到分界点">5.1. 让测试支持重构：找到分界点</h3>
+<p>很多公司或者项目，为了追求所谓的100%代码覆盖率，想都不想的就要求给所有的类和函数都给加上测试。这个我个人是非常讨厌的，因为这和我们想利用测试达到的其中一个目的相冲突 —— 帮助我们重构。写代码就像是规划城市，只要我们项目还在发展，重构就不可避免，而重构又必然要在一定范围之内改变代码结构。所以这种蛮力测试，只会导致我们浪费大量的时间，拖慢开发进度，而收益几乎为0。</p>
+<p>所以，测试需要给代码一定的活动空间，更好的方法是先观察代码中模块的分界点或者代码分层的点在什么地方，然后在这些分界点上添加测试。我们重构代码，大部分都是在这些分界点的内部进行的，很少会跨越他们，所以这样加入的测试在重构时几乎不用做任何的修改！</p>
+<p>而这也会带来代码重构流程的变更，这也是我在我现在项目里推荐大家的一种做法：</p>
+<ol>
+<li>代码重构前，先添加测试并提交，固定代码行为，如果发现了bug，先修bug。</li>
+<li>开始代码重构，并且每一个提交都不宜过大。最重要的是：<strong>重构的提交中不能出现任何对现有测试中行为的修改</strong>。如果需要添加测试，则返回第一步，先添加好测试，再继续第二步进行重构。</li>
+</ol>
+<p>这样做的好处是，首先，在做出任何修改之前，系统的当前行为会被了解的一清二楚；其次，代码审查时一目了然：我改了代码，但是<strong>对系统没有任何副作用</strong>，所以这是一个安全的提交。</p>
+<h3 id="增加可测试面：高内聚，低耦合">5.2. 增加可测试面：高内聚，低耦合</h3>
+<p>高内聚和低耦合可能大家都已经听到耳朵起茧了，但是这里却不得不提，因为它真的对写测试非常有帮助。</p>
+<p>高内聚低耦合的代码，都有一些特点：模块化非常好，每个部分功能单一（<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%8D%95%E4%B8%80%E5%8A%9F%E8%83%BD%E5%8E%9F%E5%88%99">单一职责原则（SRP）</a>）且相互正交。这样的代码非常的利于测试。所以，如果你发现自己正在维护的代码乱七八糟，那么可以考虑将其进行一些重构，提高内聚减少耦合。这样可以带来更好和更细粒度的模块分割或代码分层，从而为我们提供更多可测试的面（参考上一条）。</p>
+<p>我之前接手过一个模块，就是由于违反了单一责任原则而导致完全无法测试。这个模块要做的事情非常简单，它是一个多线程多协议的健康状况的探针，但是这个模块里面，底层api，多协议实现和异步并发管理的实现都被塞在了一起，结果就导致测试的时候要么没办法做同步（探针请求发出去了，不知道什么时候能结束，只能盲目的等待30秒），要么就是没办法模拟出错流程，特别是底层api的异常错误和多线程竞争。最后，这个模块几乎无法测试和维护，而这导致其线上问题接连不断。于是，为了提高服务质量，我只能先耐着性子添加和改进测试，哪怕他们跑一次要20分钟，然后改进日志和指标数据，再对代码进行小步重构，使用组合模式分离api，多协议实现和异步并发。就这样，两周的时间里，我发现并修复了数不清的问题，异常行为和多线程问题遍地都是。最后，不仅测试数量大大增加，测试的时间也从20分钟下降到了3分钟，所有中间版本都可随时发布或回滚，而从修复后的模块上线到现在已经快一年的时间了，除了一个已知但是属于行为变化的“bug”不好直接修复以外，这个模块已经从一个问题重灾区变成了一个几乎没有出过问题的模块，日志和指标数据也从之前的莫名其妙变成了调试线上问题时的重要依据。</p>
+<h3 id="避免不稳定的代码">5.3. 避免不稳定的代码</h3>
+<p>上面提到写测试的一个原则就是要可重现：没出问题时不乱报错，但出了问题就要能稳定重现。如果一个测试总是运行十次有两三次过不了，很快就没有人把这个测试当回事了，因为没有人知道这个错误是不是自己引起的，反正多重试两次就过了。这种情况是测试中的大忌。</p>
+<p>这种不稳定的问题多半是由于代码本身逻辑就不是稳定的：</p>
+<ul>
+<li>逻辑或测试对时间敏感，比如：timer，sleep，多线程竞争，等等。</li>
+<li>随机逻辑，比如：jitter，随机数等等。</li>
+<li>影响行为的程序内部状态，比如：配置。</li>
+</ul>
+<p>对于时间或者随机的情况，我们都可以先把不稳定的部分分离出来，抽象成一个触发器，然后分别对触发器和其他逻辑进行单独测试。这样我们就可以很容易的使用各种同步机制，比如Event，锁，将其变稳定了。而内部状态，我们可以尝试着将其转化为函数的参数，或者通过测试桩（下面会介绍）将其变为我们输入的一部分，如初值，这样就能将其稳定住了。</p>
+<h3 id="测试小帮手：测试桩">5.4. 测试小帮手：测试桩</h3>
+<p>相信大家在写测试的时候都或多或少会遇到以下这些尴尬的情况：</p>
+<ul>
+<li>某一个类会调用一个系统的API，但是这个API却无法在测试环境中工作</li>
+<li>某个成员变量是私有的，但是很重要，我们想通过测试保证其工作正常</li>
+<li>我们想要测试处于特定条件下的某一个类的行为，但是这个条件不好达到</li>
+<li>等等等等</li>
+</ul>
+<p>这个时候测试桩就能提供帮助了：</p>
+<ul>
+<li>将系统API进行一层薄薄的封装，让我们能轻松模拟成功和失败的情况</li>
+<li>如果是我们自己的代码，那么请考虑代码是否能进行分层。分层一旦完成，便可以进行稳定的抽象，并将其作为我们的测试桩，帮我们对其他层的情况进行模拟</li>
+<li>C++中被大家诟病的friend class可以很好的帮助我们解决对私有成员变量进行检查的问题：<code>friend class FooTests;</code></li>
+</ul>
+<hr>
+<h2 id="休息一下">6. 休息一下</h2>
+<p>好了，上篇到这里就结束了。如果你看到了这里，你会发现，我们居然还没有开始真正讨论如何写测试！是的，这里重复一下我的观点，写测试不仅仅是写测试，它不是我们的目的。测试不是一剂万能药，加几个测试并不能帮我们改善多少代码质量，把代码本身写好才是根本。</p>
+<p>这里也阶段性的总结一下：</p>
+<ol>
+<li>首先我们总结了测试的作用：保证代码不会出现回归（Regression），帮助我们确认代码改动，并且充当具有约束力的文档和知识库。</li>
+<li>然后讨论了测试的原则：最短距离，可观察，可重复。</li>
+<li>接下来开始讨论方法论，这一篇里我们主要关注在被测试的代码本身上：
+<ol>
+<li>好的代码本身就是好的测试：使用合约编程（Design by contract）；尽量约束代码行为；合理的利用崩溃增加程序的可观察性。</li>
+<li>好的代码是写好测试的基石：利用分界点让测试更好的支持重构；通过提高内聚度降低耦合度来为我们增加更多可测试的面；避免不稳定的代码；通过测试桩帮助我们进行更深度的测试。</li>
+</ol>
+</li>
+</ol>
+<p>下篇，我们再来讨论如何写出好的测试。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends-final/">测试，你写代码时最好的朋友（下篇）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends-continue/">测试，你写代码时最好的朋友（中篇）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends/">测试，你写代码时最好的朋友（上篇）</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/make-tests-your-friends/" target="_blank">测试，你写代码时最好的朋友（上篇）</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag"># 测试</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/summarizing-consistency-model/" rel="prev" title="一致性模型一句话总结">
+                  <i class="fa fa-chevron-left"></i> 一致性模型一句话总结
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/make-tests-your-friends-continue/" rel="next" title="测试，你写代码时最好的朋友（中篇）">
+                  测试，你写代码时最好的朋友（中篇） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

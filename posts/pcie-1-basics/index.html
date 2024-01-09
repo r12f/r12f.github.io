@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="PCIe的全称是Peripheral Component Interconnect Express，是一种用于连接外设的总线。它于2003年提出来，作为替代PCI和PCI-X的方案，现在已经成了现代CPU和其他几乎所有外设交互的标准或者基石，比如，我们马上能想到的GPU，网卡，USB控制器，声卡，网卡等等，这些都是通过PCIe总线进行连接的，然后现在非常常见的基于m.2接口的SSD，也是使用NVM">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PCIe（一） —— 基础概念与设备树">
+<meta property="og:url" content="http://r12f.com/posts/pcie-1-basics/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="PCIe的全称是Peripheral Component Interconnect Express，是一种用于连接外设的总线。它于2003年提出来，作为替代PCI和PCI-X的方案，现在已经成了现代CPU和其他几乎所有外设交互的标准或者基石，比如，我们马上能想到的GPU，网卡，USB控制器，声卡，网卡等等，这些都是通过PCIe总线进行连接的，然后现在非常常见的基于m.2接口的SSD，也是使用NVM">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-example-topology.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/intel-i7-processor-die.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-i9-10980xe.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-i7-9750h.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/epyc-io-ports.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pci-bus.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-bus.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-ari.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rcie.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-root-port.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-device-mapping.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-switch.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-topo-full.png">
+<meta property="article:published_time" content="2023-05-22T16:56:15.000Z">
+<meta property="article:modified_time" content="2023-05-22T23:56:15.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="pcie">
+<meta property="article:tag" content="hardware">
+<meta property="article:tag" content="bus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-example-topology.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pcie-1-basics/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pcie-1-basics/","path":"posts/pcie-1-basics/","title":"PCIe（一） —— 基础概念与设备树"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PCIe（一） —— 基础概念与设备树 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#PCIe%E6%80%BB%E4%BD%93%E6%A1%86%E5%9B%BE"><span class="nav-text">1. PCIe总体框图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Root-Complex%EF%BC%88RC%EF%BC%89"><span class="nav-text">2. Root Complex（RC）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCIe%E6%80%BB%E7%BA%BF%EF%BC%88Bus%EF%BC%89"><span class="nav-text">3. PCIe总线（Bus）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCIe-Device"><span class="nav-text">4. PCIe Device</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BDF%EF%BC%88Bus-Number-Device-Number-Function-Number%EF%BC%89"><span class="nav-text">4.1. BDF（Bus Number, Device Number, Function Number）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Type-0-Device%E5%92%8CEndpoint"><span class="nav-text">4.2. Type 0 Device和Endpoint</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RCIE%EF%BC%88Root-Complex-Integrated-Endpoint%EF%BC%89"><span class="nav-text">4.3. RCIE（Root Complex Integrated Endpoint）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Port-Bridge"><span class="nav-text">4.4. Port &#x2F; Bridge</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Switch"><span class="nav-text">4.5. Switch</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">5. 小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link"><span class="nav-text">6. 参考资料</span></a></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pcie-1-basics/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PCIe（一） —— 基础概念与设备树 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PCIe（一） —— 基础概念与设备树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-05-22 09:56:15 / Modified: 16:56:15" itemprop="dateCreated datePublished" datetime="2023-05-22T09:56:15-07:00">2023-05-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pcie-1-basics/" class="post-meta-item leancloud_visitors" data-flag-title="PCIe（一） —— 基础概念与设备树" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pcie-1-basics/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pcie-1-basics/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>PCIe的全称是Peripheral Component Interconnect Express，是一种用于连接外设的总线。它于2003年提出来，作为替代PCI和PCI-X的方案，现在已经成了现代CPU和其他几乎所有外设交互的标准或者基石，比如，我们马上能想到的GPU，网卡，USB控制器，声卡，网卡等等，这些都是通过PCIe总线进行连接的，然后现在非常常见的基于m.2接口的SSD，也是使用NVMe协议，通过PCIe总线进行连接的，除此以外，Thunderbolt 3 <a target="_blank" rel="noopener" href="https://www.thunderbolttechnology.net/sites/default/files/18-241_Thunder7000Controller_Brief_FIN_HI.pdf">[2]</a>，USB4 <a target="_blank" rel="noopener" href="https://www.usb.org/document-library/usb4r-specification-v20">[3]</a>，甚至最新的CXL互联协议 <a target="_blank" rel="noopener" href="https://www.computeexpresslink.org/download-the-specification">[4]</a>，都是基于PCIe的！</p>
+<p>所以一旦开始往设备相关的开发上面走了之后，PCIe可以算是一个绕不过的坎。这几天看了一些和PCIe相关的资料，这里简单的总结一下，也希望对大家有所帮助。这篇文章主要会聚焦在硬件的部分，和操作系统本身没有什么太大的关系，无论是Windows还是Linux，底层的部分都是非常类似的，文章中也会提到调试的方法，不过会主要以Linux为主。</p>
+<p>那我们就开始吧！</p>
+<span id="more"></span>
+<h2 id="PCIe总体框图">1. PCIe总体框图</h2>
+<p>首先，我们先从PCIe的基本概念开始。PCIe的架构主要由五个部分组成：Root Complex，PCIe Bus，Endpoint，Port and Bridge，Switch。其整体架构呈现一个树状结构，如下图所示：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-example-topology.png" alt></p>
+<h2 id="Root-Complex（RC）">2. Root Complex（RC）</h2>
+<p>Root Complex是整个PCIe设备树的根节点，CPU通过它与PCIe的总线相连，并最终连接到所有的PCIe设备上。</p>
+<p>由于Root Complex是管理外部IO设备的，所以在早期的CPU上，Root Complex其实是放在了北桥（MCU）上 <a target="_blank" rel="noopener" href="https://www.mouser.com/pdfdocs/3010datasheet.pdf">[5]</a>，后来随着技术的发展，现在已经都集成进了CPU内部了 <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-introduction-basics-paper.pdf">[8]</a>。（注意下图的System Agent的部分，他就是PCIe Root Complex所在的位置。）</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/intel-i7-processor-die.png" alt></p>
+<p>另外，虽然是根节点，但是系统里面可以存在不只一个Root Complex。随着PCIe Lane的增加，PCIe控制器和Root Complex的数量也随之增加。比如，我的台式机的CPU是i9-10980xe，上面就有4个Root Complex，而我的笔记本是i7-9750H，上面就只有一个Root Complex。我们在Windows上可以通过设备管理器来查看：</p>
+<table>
+<thead>
+<tr>
+<th>i9-11900K</th>
+<th>i7-9750H</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-i9-10980xe.png" alt></td>
+<td><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-i7-9750h.png" alt></td>
+</tr>
+</tbody>
+</table>
+<p>Linux上也类似。下图是从我的服务器的主板说明书上截出来的框图，用的CPU是EPYC 7742，可以很明显的看到PEG P0-3，对应着4个PCIe Controller和Root Complex：<a target="_blank" rel="noopener" href="https://www.supermicro.com/en/products/motherboard/H12DSi-Nt6">[6]</a></p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/epyc-io-ports.png" alt></p>
+<p>而我们可以通过<code>lspci</code>命令来查看所有的Root Complex：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -t -v</span><br><span class="line">-+-[0000:c0]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line"> +-[0000:80]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line"> +-[0000:40]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line"> \-[0000:00]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br></pre></td></tr></table></figure>
+<h2 id="PCIe总线（Bus）">3. PCIe总线（Bus）</h2>
+<p>PCIe上的设备通过PCIe总线互相连接。虽然PCIe是从PCI发展而来的，并且甚至有很多地方是兼容的，但是它与老式的PCI和PCI-X有两点特别重要的不同：</p>
+<ol>
+<li>PCIe的总线并不是我们传统意义上共享线路的总线（Bus），而是一个点对点的网络，我们如果把PCI比喻成网络中的集线器（Hub），那么PCIe对应的就是交换机了。换句话说，当Root Complex或者PCIe上的设备之间需要通信的时候，它们会与对方直接连接或者通过交换电路进行点对点的信号传输。<a target="_blank" rel="noopener" href="https://www.fpga4fun.com/PCI-Express2.html">[7]</a></li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>PCI Bus</th>
+<th>PCIe Bus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pci-bus.png" alt></td>
+<td><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-bus.png" alt></td>
+</tr>
+</tbody>
+</table>
+<ol start="2">
+<li>老式的PCI使用的是单端并行信号进行连接，但是由于干扰过大导致频率无法提升，所以后来就演变成PCIe之后就开始使用了高速串行信号。这也导致了PCI设备和PCIe设备无法兼容，只能通过PCI-PCIe桥接器来进行连接。当然这些我们都不需要再去关心了，因为现在已经很少看见PCI的设备了。</li>
+</ol>
+<p>关于PCIe的通讯和包路由交换，我们先到这里，后面会更深入的介绍。</p>
+<h2 id="PCIe-Device">4. PCIe Device</h2>
+<p>PCIe上连接的设备可以分为两种类型：</p>
+<ul>
+<li>Type 0：它表示一个PCIe上最终端的设备，比如我们常见的显卡，声卡，网卡等等。</li>
+<li>Type 1：它表示一个PCIe Switch或者Root Port。和终端设备不同，它的主要作用是用来连接其他的PCIe设备，其中PCIe的Switch和网络中的交换机类似。</li>
+</ul>
+<h3 id="BDF（Bus-Number-Device-Number-Function-Number）">4.1. BDF（Bus Number, Device Number, Function Number）</h3>
+<p>PCIe上所有的设备，无论是Type 0还是Type 1，在系统启动的时候，都会被分配一个唯一的地址，它有三个部分组成：</p>
+<ul>
+<li><strong>B</strong>us Number：8 bits，也就是最多256条总线</li>
+<li><strong>D</strong>evice Number：5 bits，也就是最多32个设备</li>
+<li><strong>F</strong>unction Number：3 bits，也就是最多8个功能</li>
+</ul>
+<p>这就是我们常说的<strong>BDF</strong>，它类似于网络中的IP地址，一般写作<code>BB:DD.F</code>的格式。在Linux上，我们可以通过<code>lspci</code>命令来查看每个设备的BDF，比如，下面这个FCH SMBus Controller就是<code>00:14.0</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -t -v</span><br><span class="line"> <span class="comment"># [Domain:Bus]</span></span><br><span class="line"> \-[0000:00]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line">         <span class="comment"># Device.Function</span></span><br><span class="line">             +-14.0  Advanced Micro Devices, Inc. [AMD] FCH SMBus Controller</span><br></pre></td></tr></table></figure>
+<p>在我们知道了任何一个设备的BDF之后，我们就可以通过它查看到这个设备的详细信息了，如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -s 00:14.0 -vv </span><br><span class="line">00:14.0 SMBus: Advanced Micro Devices, Inc. [AMD] FCH SMBus Controller (rev 61)</span><br><span class="line">        Subsystem: Super Micro Computer Inc H12SSL-i</span><br><span class="line">        Control: I/O+ Mem+ BusMaster- SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+</span><br><span class="line">        Status: Cap- 66MHz+ UDF- FastB2B- ParErr- DEVSEL=medium &gt;TAbort- &lt;TAbort- &lt;MAbort- &gt;SERR- &lt;PERR- INTx-</span><br><span class="line">        IOMMU group: 39</span><br><span class="line">        Kernel driver <span class="keyword">in</span> use: piix4_smbus</span><br><span class="line">        Kernel modules: i2c_piix4, sp5100_tco</span><br></pre></td></tr></table></figure>
+<p>另外，由于默认BDF的方式最多只支持8个Function，可能不够用，所以PCIe还支持另一种解析方式，叫做ARI（Alternative Routing-ID Interpretation），它将Device Number和Function Number合并为一个8bit的字段，只用于表示Function，所以最多可以支持256个Function，但是它是可选的，需要通过设备配置启用 <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-ari.png" alt></p>
+<h3 id="Type-0-Device和Endpoint">4.2. Type 0 Device和Endpoint</h3>
+<p>所有连接到PCIe总线上的Type 0设备（终端设备），都可以来实现PCIe的Endpoint，用来发起或者接收PCIe的请求和消息。每个设备可以实现一个或者多个Endpoint，每个Endpoint都对应着一个特定的功能。比如：</p>
+<ul>
+<li>一块双网口的网卡，可以每个为每个网口实现一个单独的Endpoint；</li>
+<li>一块显卡，其中实现了4个Endpoint：一个显卡本身的Endpoint，一个Audio Endpoint，一个USB Endpoint，一个UCSI Endpoint；</li>
+</ul>
+<p>这些我们都可以通过<code>lspci</code>或者Windows上的设备管理器来查看：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -t -v</span><br><span class="line">-+-[0000:c0]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line">             <span class="comment"># A NIC card with 2 ports:</span></span><br><span class="line"> |           +-01.1-[c1]--+-00.0  Mellanox Technologies MT2892 Family [ConnectX-6 Dx]</span><br><span class="line"> |           |            \-00.1  Mellanox Technologies MT2892 Family [ConnectX-6 Dx]</span><br><span class="line"> +-[0000:80]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line">             <span class="comment"># A graphic card with 4 endpoints:</span></span><br><span class="line"> |           +-01.1-[81]--+-00.0  NVIDIA Corporation TU104 [GeForce RTX 2080]</span><br><span class="line"> |           |            +-00.1  NVIDIA Corporation TU104 HD Audio Controller</span><br><span class="line"> |           |            +-00.2  NVIDIA Corporation TU104 USB 3.1 Host Controller</span><br><span class="line"> |           |            \-00.3  NVIDIA Corporation TU104 USB Type-C UCSI Controller</span><br></pre></td></tr></table></figure>
+<h3 id="RCIE（Root-Complex-Integrated-Endpoint）">4.3. RCIE（Root Complex Integrated Endpoint）</h3>
+<p>说到PCIe设备，脑海里面可能第一反应就是有一个PCIe的插槽，然后把显卡或者其他设备插在里面，就像我们上面看到的这样。但是其实系统中有大量的设备是主板上集成好了的，比如，内存控制器，集成显卡，Ethernet网卡，声卡，USB控制器等等。这些设备在连接PCIe的时候，可以直接连接到Root Complex上面。这种设备就叫做RCIE（Root Complex Integrated Endpoint），如果我们去查看的话，他们的Bus Number都是0，代表Root Complex。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rcie.png" alt></p>
+<h3 id="Port-Bridge">4.4. Port / Bridge</h3>
+<p>那么其他的需要通过插槽连接的设备呢？这些设备就需要通过PCIe Port来连接了。</p>
+<p>在Root Complex上，有很多的Root Port，这些Port每一个都可以连接一个PCIe设备（Type 0或者Type 1）。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-root-port.png" alt></p>
+<p>本质上，所有这些连接其他设备用的部件都是由桥（Bridge）来实现的，这些桥的两端连接着两个不同的PCIe Bus（Bus Number不同）。比如，一个Root Port其实是靠两个Bridge来实现的：一个（共享的）Host Bridge（上游连接着CPU，下游连接着Bus 0）和一个PCI Bridge用来连接下游设备（上游连着的是Bus 0（Root Complex），下游连着的PCIe的设备（Bus Number在启动过程中自动分配）） <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">[1]</a>。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-rc-device-mapping.png" alt></p>
+<p>我们通过<code>lspci</code>命令可以看到这些桥的存在（注意设备详情中的Kernel driver in use: pcieport）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"> +-[0000:80]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line">             <span class="comment"># This is the Host bridge that connects to the root port and CPU:</span></span><br><span class="line"> |           +-01.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse PCIe Dummy Host Bridge</span><br><span class="line">             <span class="comment"># This is the PCI bridge that connects to the root port and device with a new bus - 0x81:</span></span><br><span class="line"> |           +-01.1-[81]--+-00.0  NVIDIA Corporation TU104 [GeForce RTX 2080]</span><br><span class="line"> |           |            +-00.1  NVIDIA Corporation TU104 HD Audio Controller</span><br><span class="line"> |           |            +-00.2  NVIDIA Corporation TU104 USB 3.1 Host Controller</span><br><span class="line"> |           |            \-00.3  NVIDIA Corporation TU104 USB Type-C UCSI Controller</span><br><span class="line"></span><br><span class="line"><span class="comment"># Host bridge</span></span><br><span class="line">$ sudo lspci -s 80:01.0 -v</span><br><span class="line">80:01.0 Host bridge: Advanced Micro Devices, Inc. [AMD] Starship/Matisse PCIe Dummy Host Bridge</span><br><span class="line">        Flags: fast devsel, IOMMU group 13</span><br><span class="line"></span><br><span class="line"><span class="comment"># PCI bridge</span></span><br><span class="line">$ sudo lspci -s 80:01.1 -v</span><br><span class="line">80:01.1 PCI bridge: Advanced Micro Devices, Inc. [AMD] Starship/Matisse GPP Bridge (prog-if 00 [Normal decode])</span><br><span class="line">        Flags: bus master, fast devsel, latency 0, IRQ 35, IOMMU group 13</span><br><span class="line">        Bus: primary=80, secondary=81, subordinate=81, sec-latency=0</span><br><span class="line">        I/O behind bridge: 0000b000-0000bfff [size=4K]</span><br><span class="line">        Memory behind bridge: f0000000-f10fffff [size=17M]</span><br><span class="line">        Prefetchable memory behind bridge: 0000020030000000-00000200420fffff [size=289M]</span><br><span class="line">        ....</span><br><span class="line">        Kernel driver <span class="keyword">in</span> use: pcieport</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注意：是否使用PCIe Bridge和是否通过插槽连接不能直接划等号，这取决于你系统的硬件实现，比如，从上面RCIE的截图中我们可以看到USB Controller作为RCIE存在，而下面EPYC的CPU则不同，USB控制器是通过Root Port连接的，但是它在主板上并没有插槽。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ lspci -t -v</span><br><span class="line"> +-[0000:40]-+-00.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse Root Complex</span><br><span class="line">             +-03.0  Advanced Micro Devices, Inc. [AMD] Starship/Matisse PCIe Dummy Host Bridge</span><br><span class="line"> |           +-03.3-[42]----00.0  ASMedia Technology Inc. ASM1042A USB 3.0 Host Controller</span><br><span class="line">             <span class="comment"># ^====== 40:03.3 here is a Bridge. And USB controller is connected</span></span><br><span class="line">             <span class="comment">#         to this Bridge with a new Bus Number 42.</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="Switch">4.5. Switch</h3>
+<p>如果我们需要连接不止一个设备怎么办呢？这时候就需要用到PCIe Switch了。</p>
+<p>PCIe Switch内部主要有三个部分：</p>
+<ul>
+<li>一个Upstream Port和Bridge：用于连接到上游的Port，比如，Root Port或者上游Switch的Downstream Port</li>
+<li>一组Downstream Port和Bridge：用于连接下游的设备，比如，显卡，网卡，或者下游Switch的Upstream Port</li>
+<li>一根虚拟总线：用于将上游和下游的所有端口连接起来，这样，上游的Port就可以访问下游的设备了</li>
+</ul>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-switch.png" alt></p>
+<p>另外，这里再说明一次 —— 由于PCIe的信号传输是点对点的，所以Switch中间的这个总线只是一个逻辑上的虚拟的总线，其实并不存在，里面真正的结构是一套用于转发的交换电路 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Crossbar_switch">[9]</a>。</p>
+<p>最后，看到这里也许你会突然想到Root Complex是不是也可以看成是一个Switch呢？我觉得这两个概念最好还是分开，虽然从很多框图上看着确实很像，只不过Root Complex没有Upstream Port，连接上游的Host Bridge是连接到CPU上，不过Root Complex内部的功能要远比Switch复杂的多，里面不仅仅是简单的包转发，比如，后面会说到的PCIe请求的生成和转换等等。</p>
+<h2 id="小结">5. 小结</h2>
+<p>好了，到这里我们已经将PCIe设备树中的主要部件都介绍完毕了。如果我们把所有这些部件连接在一起，那么其整体的结构就是这样的 <a target="_blank" rel="noopener" href="https://www.mindshare.com/files/resources/MindShare_Intro_to_PCIe.pdf">[10]</a>：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-22-pcie-1-basics/pcie-topo-full.png" alt></p>
+<p>好的，为了避免文章过长，我们这一篇就先到这里，后面有时间再继续总结和PCIe相关的其他知识，比如配置空间和域，消息和消息路由等等。</p>
+<h1>6. 参考资料</h1>
+<ul>
+<li>[1]: <a target="_blank" rel="noopener" href="https://pcisig.com/specifications/pciexpress/">PCI Express Base Specification</a></li>
+<li>[2]: <a target="_blank" rel="noopener" href="https://www.thunderbolttechnology.net/sites/default/files/18-241_Thunder7000Controller_Brief_FIN_HI.pdf">Thunderbolt™ 3 Technology Brief</a></li>
+<li>[3]: <a target="_blank" rel="noopener" href="https://www.usb.org/document-library/usb4r-specification-v20">USB4™ Specification</a></li>
+<li>[4]: <a target="_blank" rel="noopener" href="https://www.computeexpresslink.org/download-the-specification">Compute Express Link™ (CXL™) Specification</a></li>
+<li>[5]: <a target="_blank" rel="noopener" href="https://www.mouser.com/pdfdocs/3010datasheet.pdf">Intel® 3000 and 3010 Chipset Memory Controller Hub (MCH) datasheet</a></li>
+<li>[6]: <a target="_blank" rel="noopener" href="https://www.supermicro.com/en/products/motherboard/H12DSi-Nt6">H12DSi-NT6 motherboard manual</a></li>
+<li>[7]: <a target="_blank" rel="noopener" href="https://www.fpga4fun.com/PCI-Express2.html">fpga4fun - PCI Express 2 - Topology</a></li>
+<li>[8]: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-introduction-basics-paper.pdf">White Paper: Introduction to Intel® Architecture</a></li>
+<li>[9]: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Crossbar_switch">Crossbar Switch</a></li>
+<li>[10]: <a target="_blank" rel="noopener" href="https://www.mindshare.com/files/resources/MindShare_Intro_to_PCIe.pdf">Mindshare - An Introduction to PCI Express</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-4-phy/">PCIe（四）—— 物理层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-3-tl-dll/">PCIe（三）—— PCIe协议栈，事务层和数据链路层</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-2-config/">PCIe（二） —— 配置空间</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pcie-1-basics/">PCIe（一） —— 基础概念与设备树</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pcie-1-basics/" target="_blank">PCIe（一） —— 基础概念与设备树</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pcie/" rel="tag"># pcie</a>
+              <a href="/tags/hardware/" rel="tag"># hardware</a>
+              <a href="/tags/bus/" rel="tag"># bus</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/use-mathjax-in-hexo/" rel="prev" title="在Hexo中使用MathJax">
+                  <i class="fa fa-chevron-left"></i> 在Hexo中使用MathJax
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/pcie-2-config/" rel="next" title="PCIe（二） —— 配置空间">
+                  PCIe（二） —— 配置空间 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="以前从未真正接触过技术团队的管理，所以趁着年末假期，先选了一本比较简单的书入个门。这本书写的比较浅显，但是非常适合第一次接触技术管理的人来读，能帮助新人迅速建立起一些概念，避免很多雷区，虽然有很多不足的地方，不过都还算可以接受，毕竟这种书主要就是看个思想，细节并不是那么的重要，比如结尾的例子结束的过于唐突，看完的时候还以为是我看的版本不全；比如很多技术介绍的部分过于泛泛，比如研发管理体系，另外有些">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《技术领导力：程序员如何才能带团队》知识总结">
+<meta property="og:url" content="http://r12f.com/posts/reading-time-technical-leadership/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="以前从未真正接触过技术团队的管理，所以趁着年末假期，先选了一本比较简单的书入个门。这本书写的比较浅显，但是非常适合第一次接触技术管理的人来读，能帮助新人迅速建立起一些概念，避免很多雷区，虽然有很多不足的地方，不过都还算可以接受，毕竟这种书主要就是看个思想，细节并不是那么的重要，比如结尾的例子结束的过于唐突，看完的时候还以为是我看的版本不全；比如很多技术介绍的部分过于泛泛，比如研发管理体系，另外有些">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-01-01T02:58:21.000Z">
+<meta property="article:modified_time" content="2020-01-01T02:58:21.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="团队管理">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/reading-time-technical-leadership/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/reading-time-technical-leadership/","path":"posts/reading-time-technical-leadership/","title":"《技术领导力：程序员如何才能带团队》知识总结"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>《技术领导力：程序员如何才能带团队》知识总结 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E7%AE%A1%E7%90%86%E5%B7%A5%E4%BD%9C"><span class="nav-text">1. 技术管理工作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E7%AE%A1%E7%90%86"><span class="nav-text">1.1. 技术管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E5%9B%A2%E9%98%9F%E9%A2%86%E5%AF%BC%E8%80%85"><span class="nav-text">1.2. 技术团队领导者</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%A6%E9%A2%86%E6%8A%80%E6%9C%AF%E5%9B%A2%E9%98%9F%E5%BF%83%E5%BE%97"><span class="nav-text">1.3. 带领技术团队心得</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AA%E4%BA%BA%E8%81%8C%E4%B8%9A%E5%8F%91%E5%B1%95"><span class="nav-text">1.4. 个人职业发展</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%A2%E9%98%9F%E5%BB%BA%E8%AE%BE%EF%BC%8C%E4%BA%BA%E5%91%98%E7%AE%A1%E7%90%86"><span class="nav-text">2. 团队建设，人员管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E5%9F%BA%E7%A1%80"><span class="nav-text">2.1. 管理基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%84%E5%BB%BA%E5%9B%A2%E9%98%9F"><span class="nav-text">2.2. 组建团队</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E5%9B%A2%E9%98%9F"><span class="nav-text">2.3. 管理团队</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BD%B1%E5%93%8D%E5%9B%A2%E9%98%9F%E5%9B%A0%E7%B4%A0"><span class="nav-text">2.4. 影响团队因素</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%9B%A2%E9%98%9F%E7%AE%A1%E7%90%86%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86"><span class="nav-text">2.5. 其他团队管理相关知识</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A7%E5%93%81%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B%E7%AE%A1%E7%90%86"><span class="nav-text">3. 产品开发过程管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E7%BB%8F%E7%90%86%E5%8F%8A%E7%A0%94%E5%8F%91%E4%BD%93%E7%B3%BB%E4%BB%8B%E7%BB%8D"><span class="nav-text">3.1. 开发经理及研发体系介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A7%E5%93%81%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B"><span class="nav-text">3.2. 产品开发过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A7%E5%93%81%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B%E6%9D%82%E8%B0%88"><span class="nav-text">3.3. 产品开发过程杂谈</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94%E4%B8%8E%E9%A2%84%E7%A0%94"><span class="nav-text">4. 技术调研与预研</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%BF%9B%E8%A1%8C%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94%EF%BC%9F%E4%BB%80%E4%B9%88%E6%98%AF%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94%EF%BC%9F%E4%BB%80%E4%B9%88%E6%98%AF%E6%8A%80%E6%9C%AF%E9%A2%84%E7%A0%94%EF%BC%9F"><span class="nav-text">4.1. 为什么需要进行技术调研？什么是技术调研？什么是技术预研？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94"><span class="nav-text">4.2. 技术调研</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E9%A2%84%E7%A0%94"><span class="nav-text">4.3. 技术预研</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94%E4%B8%8E%E9%A2%84%E7%A0%94%E7%9A%84%E7%9B%B8%E5%85%B3%E7%9F%A5%E8%AF%86"><span class="nav-text">4.4. 其他技术调研与预研的相关知识</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84"><span class="nav-text">5. 系统架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E5%B7%A5%E4%BD%9C"><span class="nav-text">5.1. 系统架构工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E6%9E%B6%E6%9E%84%E5%B8%88%E5%B2%97%E4%BD%8D"><span class="nav-text">5.2. 软件架构师岗位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E8%83%BD%E5%8A%9B%E5%9F%B9%E5%85%BB"><span class="nav-text">5.3. 系统架构能力培养</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90"><span class="nav-text">5.4. 常见问题分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-text">5.5. 其他</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/reading-time-technical-leadership/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="《技术领导力：程序员如何才能带团队》知识总结 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《技术领导力：程序员如何才能带团队》知识总结
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-12-31 18:58:21" itemprop="dateCreated datePublished" datetime="2019-12-31T18:58:21-08:00">2019-12-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/04-Reading-Time/" itemprop="url" rel="index"><span itemprop="name">04 Reading Time</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/reading-time-technical-leadership/" class="post-meta-item leancloud_visitors" data-flag-title="《技术领导力：程序员如何才能带团队》知识总结" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/reading-time-technical-leadership/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/reading-time-technical-leadership/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>以前从未真正接触过技术团队的管理，所以趁着年末假期，先选了一本比较简单的书入个门。这本书写的比较浅显，但是非常适合第一次接触技术管理的人来读，能帮助新人迅速建立起一些概念，避免很多雷区，虽然有很多不足的地方，不过都还算可以接受，毕竟这种书主要就是看个思想，细节并不是那么的重要，比如结尾的例子结束的过于唐突，看完的时候还以为是我看的版本不全；比如很多技术介绍的部分过于泛泛，比如研发管理体系，另外有些技术也有点过于落后，作为2018年出版的书，源码管理还在讨论vss和cvs，这些难以让读者对其产生同感和共鸣；此外有些观念我也不是特别的认同，比如技术和架构的进化，我觉得理解成演化会更加合适，也能帮助理解技术并没有有高下之分，而主要在于使用的场景。不过总之，对于刚接触基础管理的人来说，这本书还是值得一读的。</p>
+<p>和以前一样，读完之后也还是在这里稍稍把这本书的知识点总结一下，方便以后复习：</p>
+<h2 id="技术管理工作">1. 技术管理工作</h2>
+<h3 id="技术管理">1.1. 技术管理</h3>
+<ul>
+<li>需求方太多
+<ul>
+<li>刚通过校招进入团队的小组成员</li>
+<li>团队内工作3～4年的小组成员</li>
+<li>团队内工作5～6年的小组长</li>
+<li>产品团队管理者</li>
+<li>直属领导</li>
+<li>部门最高领导</li>
+<li>兄弟部门领导</li>
+<li>文档评委</li>
+<li>HR接口人</li>
+</ul>
+</li>
+<li>所需技能
+<ul>
+<li>深入理解一门或多门编程语言</li>
+<li>深入理解多种流行的框架</li>
+<li>系统架构能力强，拥有复杂系统的设计经验</li>
+<li>积极跟随开源社区</li>
+<li>沟通能力强、情商高</li>
+<li>有产品意识，不是技术迷</li>
+<li>会带人，服从领导，责任心强</li>
+<li>会写专利</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h3 id="技术团队领导者">1.2. 技术团队领导者</h3>
+<ul>
+<li>技术团队的定位：“技术引领业务”
+<ul>
+<li>如果技术不能引领业务，那么则对公司的价值不大</li>
+<li>只有成为“技术的业务派，业务的技术派”，才能让技术引领业务，并创造价值</li>
+<li>技术管理者成熟的标志</li>
+</ul>
+</li>
+<li>最重要的是给团队指明方向，包括技术方向和业务方向，还有个人成长方向
+<ul>
+<li>与下属相比，领导者的优势不只在于他的专业能力，还在于他的眼光和胸怀。既然选择做技术管理，你就要有成就他人的心胸，同时还要有超出一般人的眼界，能够给予团队正确的方向。同时，要保持对技术的兴趣，多关注新技术的发展，否则你很难在重大的技术决策上做出正确的决定</li>
+</ul>
+</li>
+<li>工作品质定位
+<ul>
+<li>成熟</li>
+<li>勇敢
+<ul>
+<li>作为团队负责人，我们也应该有硬汉本色，不能惧怕外在的威胁。团队成员都在看着你，你决不能懦弱，要勇敢</li>
+<li>在领导层不明确哪个团队做的前提下，对内组织团队尽全力做下去，而且要做好，对外则勇于承担责任，敢于接受挑战</li>
+</ul>
+</li>
+<li>热爱技术</li>
+<li>勤奋</li>
+<li>脚踏实地：“如果不吸取失败的教训，那么失败就仅仅是失败。”</li>
+<li>逻辑能力：需要快速提炼出测试方案、测试用例，短时间内掌握调研内容，然后通过测试用例运算得出的数据进行分析</li>
+<li>公平、透明
+<ul>
+<li>“举事以为人者，众助之；举事以自为者，众去之。”</li>
+<li>无论是绩效考核，还是职位升迁，亦或是问题处理，都不应该由少数几个领导通过闭门会议的形式完成，而应该是通过制定逻辑严谨的规章制度，通过类似任职资格考核（团队建设部分会深入介绍）的方式完成初步考察，然后通过事情责任制方式明确个人的成绩、责任，最后通过有员工代表、相应部门代表参与的会议讨论决定，这样可以让整个团队朝着健康的方向发展，而不会让一部分人感觉被边缘化，从而滋生小团体</li>
+</ul>
+</li>
+<li>一线作战精神：无论你是CTO、CEO，还是CFO，既然承担了团队负责人的实际工作，那么就应该每天召开例会，不断地抽时间和大家一起讨论架构、业务流程、技术难点、技术方向，这是你的职责</li>
+<li>决策能力
+<ul>
+<li>开放的提炼能力
+<ul>
+<li>第一、要以开放和包容的思想及态度尽可能广泛地获取决策方案</li>
+<li>第二、需要对各种决策方案进行提炼，以把握各种方案的本质和核心</li>
+</ul>
+</li>
+<li>准确的预测能力
+<ul>
+<li>预测的目的是为企业的决策提供准确的资料、信息和数据</li>
+</ul>
+</li>
+<li>准确的决断能力
+<ul>
+<li>所选方案实施的条件要具备</li>
+<li>所选方案要与企业的宗旨和决策目标相符</li>
+<li>所选方案要能被决策方案的受益人及相关利益人所接受</li>
+<li>所选方案要能被决策方案的执行者所接受</li>
+<li>能正确评估决策方案的风险</li>
+</ul>
+</li>
+<li>决策的目标应该是明确的，决策的结论应该是简单而清晰的</li>
+</ul>
+</li>
+<li>培养决策能力
+<ul>
+<li>克服从众心理</li>
+<li>增强自信心
+<ul>
+<li>拥有自信心是具有决策能力者明显的心理特征，没有自信就没有决策</li>
+<li>“凡事预则立，不预则废。”</li>
+</ul>
+</li>
+<li>决策勿求十全十美，注意把握大局</li>
+</ul>
+</li>
+<li>开放姿态</li>
+<li>为人处世</li>
+<li>真诚
+<ul>
+<li>完整的人格魅力，其基本点就是真诚，而真诚待人，恪守信义亦是赢得人心、产生吸引力的必要前提</li>
+<li>大家在一起的工作时间一般来说不会超过5年，既然时间这么短，就应该互相坦诚，一起就事论事，正面指出缺点，才能互相帮助，共同进步</li>
+<li>你若待人真诚，别人也会用心对你</li>
+</ul>
+</li>
+<li>宽容
+<ul>
+<li>有时候确实会遇到一些思维比较慢的同事，你布置了调研任务，也花费了时间做了详细解释，但是他就是理解错了。这种情况下我觉得需要看这位同事的以往工作绩效，以及他对这项任务的工作态度来做出反应。我常说的是，这个人如果自身能力较弱，不愿承认，那就是作死。如果自身能力很强，也很积极做事，这个时候我们应该多放权，让他自己思考，他也会乐于如此。如果自身能力不强，但是他对自身弱点有认识，工作态度很好，这个时候犯错了，我们不能过度责骂，应该宽容对待，先问清楚原因，然后和他一起分析过程，帮助他成长，只要他成长了，我们的团队整体也会受益。</li>
+<li>因为如果一个人想要做事，那么他不可能让所有人满意，如果让所有人都满意了，那就是城府较深，太用心做人，但凡用心做事的人，都会有机会得罪人。</li>
+</ul>
+</li>
+<li>仔细
+<ul>
+<li>抓细节是作为一名技术团队管理者必须做到的。所谓的管理浮于表面，一般都是说管理者不关注细节，例如不参与设计、不参与代码审核，而只是高喊要注意开发设计、注意开发质量，这样的领导对于技术团队来说，尤其是一线技术团队经理来说，是不合格的，也是不能服众的</li>
+</ul>
+</li>
+<li>终身学习：终身学习的回报是不可估量的</li>
+<li>时间管理
+<ul>
+<li>“从不浪费时间的人，没有工夫抱怨时间不够。”</li>
+<li>我们普遍存在着这样一个认知误区：多花时间=态度好=产出高。然而即便是在泰勒管理理论的时代，这都是被否定的结论。</li>
+<li>最重要的资产就是时间，对时间要吝啬</li>
+</ul>
+</li>
+<li>以人为本
+<ul>
+<li>如果你有卓越的人才和卓越的产品，利润就会随之而来</li>
+<li>绝对不可忽视你团队的人，并始终要坚持以人为本</li>
+</ul>
+</li>
+<li>保持身体健康</li>
+</ul>
+</li>
+</ul>
+<h3 id="带领技术团队心得">1.3. 带领技术团队心得</h3>
+<ul>
+<li>创造型管理和遵从型管理
+<ul>
+<li>传统的外包行业、传统行业的IT部门，采用传统教育方式培养出来的学生就能够较好地完成目标</li>
+<li>创造型管理是为不确定具体目标的新型行业、企业培养人才</li>
+</ul>
+</li>
+<li>自主循环
+<ul>
+<li>我们带领一支团队，可能是1、2个人，也可能是几十个人，甚至上百人，我们不可能做到事无巨细、一一谈话，很多时候需要分小组讨论，也要依赖于个人自主工作态度，这就是我们所说的自主循环。</li>
+</ul>
+</li>
+<li>技术人员心态成长四个阶段
+<ul>
+<li>感知阶段
+<ul>
+<li>刚刚工作，有很多知识要学，有很多经验需要积累</li>
+<li>“没有哪一个人的成功是可以很轻松得到的，我到现在也经常通宵，不是因为我不喜欢睡觉，而是因为我对工作有追求，既然有追求，你就要学会付出。”</li>
+</ul>
+</li>
+<li>深入阶段
+<ul>
+<li>对于这类人的指导，应该从实践着手，给他们一些独立思考的机会，给予他们实际的指导，就事论事，就架构论架构，就代码论代码</li>
+</ul>
+</li>
+<li>突破阶段
+<ul>
+<li>这个阶段的技术人员已经遇到了一定的发展瓶颈，他们渴望突破瓶颈</li>
+<li>如果不能很好地解答他们当前的问题，他们很有可能会流失</li>
+</ul>
+</li>
+<li>创新阶段
+<ul>
+<li>这个阶段的技术人员已经不是你能够给予指导的了，他们是在按照自己的思路进行创新，你要做的是给予掌声、认真倾听、给予意见，最好你能一同参与创新活动，这样你们才能一起进步、创新</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>找到属于自己的圈子
+<ul>
+<li>这个圈子需要定期碰面，讨论各自正在从事的工作以及软件开发中遇到的具有挑战性的问题</li>
+<li>学习有三种方式
+<ul>
+<li>通过网上的碎片信息来学习</li>
+<li>通过读书来系统地深入学习</li>
+<li>通过和别人交流来学习
+<ul>
+<li>增加与优秀的人的交流，“听君一席话，胜读十年书”</li>
+<li>很多问题无法在网上和书本上找到答案，需要和行业里的专家不断交流、碰撞，从而快速成长</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>工作内：尝试多参加各类技术论坛</li>
+<li>工作外：
+<ul>
+<li>提前几年为自己未来的发展方向布局</li>
+<li>选择加入一些高管俱乐部，或者知识分子组织</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>何时成为技术管理者
+<ul>
+<li>由于技术管理工作会占用你很大一部分工作时间，所以只有当技术积累到了一定程度，即你可以花较少的时间学会一项新技术或者架构的时候，你才能去做技术管理的工作</li>
+</ul>
+</li>
+</ul>
+<h3 id="个人职业发展">1.4. 个人职业发展</h3>
+<ul>
+<li>对于职业的选择
+<ul>
+<li>做一个简单而靠谱的人
+<ul>
+<li>随着职业生涯阅历的增长，对人的评价大多都会从技术能力高低转到价值观是否合拍上来</li>
+</ul>
+</li>
+<li>最好是技术能力比较强之后再转管理，水到渠成，技术不行的人即使转了管理，也难使人信服</li>
+<li>从技术转管理是一个很大的转变，很难回头
+<ul>
+<li>最大的差异就是，技术面对的是系统性问题，需要的是逻辑思维能力，是智商，而管理需要面对的很多是非逻辑思维能力，是情商</li>
+</ul>
+</li>
+<li>只有自己喜欢的工作才能真正地全身心投入</li>
+</ul>
+</li>
+<li>工程师的等级
+<ul>
+<li>第五等工程师，能够独立设计和实现一项功能的人。这是对工程师的基本要求。</li>
+<li>第四等工程师，一般的高级工程师
+<ul>
+<li>有产品头脑，要知道所做出来的东西是否有用、易用，是否便于维护，是否性能稳定，等等</li>
+<li>具有一定的领导才能，能从头到尾负责一个产品的生命周期</li>
+</ul>
+</li>
+<li>第三等工程师，可以做出行业里最好的产品。他们与第四等工程师有着质的差别，这不仅反映在技术水平、对市场的了解、对用户新的了解以及组织能力等诸方面，而且也反映在悟性的差异上。</li>
+<li>第二等工程师，是那些可以给世界带来惊喜的人，他们在其工作的原创性以及对世界的影响力上和后面三等有巨大差别，例如扎克伯格</li>
+<li>第一等工程师，是开创一个全新行业的人，这些工程师不仅在技术和产品等各个方面与第二等工程师有了质的差别，而且在经验和管理上也是好手，他们通常也是企业家，并通过自己的产品改变了世界。这一类人常常是可遇而不可求的，例如冯·诺依曼</li>
+</ul>
+</li>
+<li>不要计较当下职位
+<ul>
+<li>在企业里面成功，不可否认仍依仗两个方面：要么你聪明，会交际，懂政治，被人认可；要么你做出成绩，贡献巨大，被认可</li>
+</ul>
+</li>
+<li>坚持做正确的技术管理
+<ul>
+<li>最好的领导
+<ul>
+<li>思路敏捷而清晰，做事务实而高效，永远没有废话，永远雷厉风行</li>
+<li>和他共事，绝对不会轻松，他不会讲段子哄你干活，他也不会笑眯眯地安抚你的情绪</li>
+</ul>
+</li>
+<li>评判一个管理者的好坏，从来不是看测验的民意，而是看输出的成绩</li>
+<li>做人的最高境界是“仁慈的狮子”：仁慈是本性，但单靠仁慈，还无法成功。要有狮子的力量，才能赚钱养家，才能保护亲人，才能反抗欺压</li>
+<li>不要当“烂好人”：善良发展到极致，就变成无原则的妥协</li>
+<li>不断地调整自己的工作方式，不断地加强自己各方面的能力，特别是改正自己的弱点，这些才是你应该去关注和为之努力的</li>
+</ul>
+</li>
+<li>抛弃通道思维，建立雷达视角
+<ul>
+<li>没有管理，整个团队会乱，技术与管理结合的方法论掌握不好，整个团队的绩效输出都会差，你别指望纯技术通道的人能够输出业务部门能够理解的产物</li>
+<li>需要能够抛弃单一通道的约束，尽量做到全面的能力建设，即抛弃通道思维</li>
+</ul>
+</li>
+<li>收入浮动曲线</li>
+<li>CTO与技术VP
+<ul>
+<li>CTO
+<ul>
+<li>第一号技术大师，他对于技术非常敏感，需要具备对于技术发展的深远见解，保持公司在技术上的竞争力</li>
+<li>CTO需要保持自己对于专业领域内前沿技术的不断搜寻，也要对可能影响公司的技术方向的旁系领域进行调研</li>
+<li>CTO需要非常热爱技术，并且愿意自己动手尝试新的技术，一般来说CTO也会有自己的“CTO办公室”，有几位全职或者兼职的下属，他们会帮助CTO一起做技术调研或者原型产品</li>
+</ul>
+</li>
+<li>技术VP
+<ul>
+<li>技术VP的职责是交付软件解决方案，确保业务健康，只有业务健康，工程师们的努力才有价值，团队才有可能继续发展</li>
+<li>职能
+<ul>
+<li>人员管理：对于少于10人的团队，技术VP直接管理团队内所有员工，对于10-100人的团队，技术VP下设多位经理，他负责管理这几位经理，对于大于100人的团队，公司会上设工程总经理，他会向这位总经理汇报</li>
+<li>项目管理和执行：技术VP需要对产品的开发、交付负责，他需要在公司内部糅合各个团队之间的关系，包括开发部门、资源部门、审计部门等，确保产品开发的正常进行</li>
+<li>财务管理：这里指的是工程部门范围内的财务管理。具体包括人员投入、原型设计费用、设备费用、出差、娱乐等</li>
+<li>技术领导：首先他需要和CTO一起制定公司的技术战略规划，然后根据规划制定技术演进到产品的RoadMap，确保产品上的技术能够保持创新。对于架构师这个职责，技术VP可以自己担任，也可以委派组织内的其他人担任</li>
+<li>战略发展：技术VP不一定是技术大牛，但是他一定是跨学科人才，因为他的工作需要和多个不同部门的人打交道，包括市场VP、业务发展VP、制造部门VP、运维VP、CEO、CTO、COO，共同开发公司的战略和产品战略</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>CEO和技术VP之间的合作至关重要
+<ul>
+<li>CEO负责明确需求，将市场的需求精简为产品需求，技术VP则从专业角度上确保团队可以按时发布产品，即便在CEO时不时地修改需求的情况下，优秀的技术VP依然可以确保按时完成任务，并且他也起到了CEO与技术团队之间的润滑剂作用，将压力挡在了技术团队门外</li>
+<li>CTO规划技术愿景，工程VP更多负责业务愿景</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="团队建设，人员管理">2. 团队建设，人员管理</h2>
+<h3 id="管理基础">2.1. 管理基础</h3>
+<ul>
+<li>欲管理人，必先了解人：程序员之所以难以管理，在于他们有着各种不同的个性</li>
+<li>什么是管理：观察、假设、校验，是一切科学实践的基础，管理活动也是类似的</li>
+<li>团队成员品质
+<ul>
+<li>职业素养
+<ul>
+<li>不要贪图小利，一个人的职业素养非常重要，让别人觉得你的职业素养有问题，你的职业生涯也会很危险</li>
+</ul>
+</li>
+<li>做事专注
+<ul>
+<li>一名真正的技术牛人，他在做事的时候绝对是全神贯注的，否则他不可能在短时间内读懂别人的代码、找到问题原因、完成框架设计，这是技术专家的必备能力</li>
+</ul>
+</li>
+<li>乐于挑战
+<ul>
+<li>在工作中你一定会遇到各种各样的挑战，你所需要做的是积极地迎接、应对这些挑战，而不是每次都退缩，越退缩就越容易失去机会，失去让自己过上自己喜欢的生活的机会</li>
+<li>当你加入一家新公司时，要挑一个比较棘手的难题（其他人尽量回避的）来解决。这样可以帮你快速积累经验，并赢得成为一名卓有成效的开发者所必需的信誉和尊重</li>
+</ul>
+</li>
+<li>永不气馁</li>
+<li>承认错误
+<ul>
+<li>认知失调，即当我们持有两种相互冲突的想法、信念、观点或态度时所感受到的压力</li>
+<li>如果哪一个领导因为你主动承认错误，而把责任全部推给你，那你也应该离开他了</li>
+<li>你知道大家正在寻找的问题的根源在于你的程序，那么请你主动站出来，简要地解释一下存在什么问题，出现问题的原因，以及你能想到的解决对策</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="组建团队">2.2. 组建团队</h3>
+<ul>
+<li>“一流人才招聘一流人才，二流人才招聘三流人才。”</li>
+<li>招聘策略
+<ul>
+<li>了解岗位需求
+<ul>
+<li>需要明确知道自己需要什么样的程序员</li>
+</ul>
+</li>
+<li>编写职位描述
+<ul>
+<li>基本信息，包括岗位、部门、直接领导、状态、工作地点</li>
+<li>职位概述，包括工作职责和预期表现</li>
+<li>岗位最低要求</li>
+</ul>
+</li>
+<li>STAR面试法
+<ul>
+<li>背景（SITUATION）：通过不断提出与工作业绩有关的背景问题，可以全面了解该应聘者获得优秀业绩的前提因素，从而获知所取得的业绩有多少是与应聘者个人有直接关联的，有多少是与市场的状况、行业的特点有关的</li>
+<li>任务（TASK）：每项任务的具体内容是什么。通过这些可以了解应聘者的工作经历和经验，以确定他所从事的工作与获得的经验是否适合现在的职位</li>
+<li>行动（ACTION）：了解他是如何完成工作的，都采取了哪些行动，所采取的行动是如何帮助他完成工作的。通过这些，可以进一步了解他的工作方式、思维方式和行为方式</li>
+<li>结果（RESULT）：每项任务在采取了行动之后的结果是什么，是好还是不好，好是因为什么，不好又是因为什么</li>
+</ul>
+</li>
+<li>招聘文化
+<ul>
+<li>好的招聘流程可以促成好的工程团队文化，必须做到快速回应、测试驱动和积极沟通</li>
+<li>你在招聘过程中的表现在一定程度上体现了你的团队价值观，所以请无限高度重视招聘</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>面试技巧
+<ul>
+<li>不要在意学历</li>
+<li>面试题：最好是自己出面试题</li>
+<li>逻辑思维观察
+<ul>
+<li>比如，让面试者对口述的场景和需要做的事情进行快速地归纳总结</li>
+</ul>
+</li>
+<li>心理状态观察
+<ul>
+<li>通过提问的方式了解面试人为什么离开上一家公司，是不是发生了严重的冲突，或是存在隐忍的矛盾</li>
+</ul>
+</li>
+<li>面试官形象
+<ul>
+<li>公司派我们出去面试，代表的是公司的形象</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>性格分析
+<ul>
+<li>判断型，这类人非常喜欢按计划办事</li>
+<li>认知型，非常喜欢自由，不按规矩办事</li>
+<li>DISC个性特征理论
+<ul>
+<li>支配型（Dominance）：在敌对的环境中保持主动的态度和反应</li>
+<li>影响力（Influence）：在友好的环境中保持主动的态度和反应</li>
+<li>稳定性（Steadiness）：在友好的环境中采取保守的态度和反应</li>
+<li>遵从性（Compliance）：在敌对的环境中采取保守的态度和反应</li>
+</ul>
+</li>
+<li>九型人格
+<ul>
+<li>按照人们的思维、情绪和行为，将人分为九种：完美主义者、给予者、实干者、悲情浪漫者、观察者、怀疑者、享乐主义者、保护者、调停者</li>
+<li>能穿透人们表面的喜怒哀乐，进入人心最隐秘之处，发现人最真实、最根本的需求和渴望（这个对于工作来说很重要）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>人员分类
+<ul>
+<li>“独狼”
+<ul>
+<li>“独狼”更喜欢一个人完成工作，也就是说，当问题出现时，他们的第一反应是独自去解决问题</li>
+<li>他们常常跳过规划阶段，最终得到的是一次性解决方案</li>
+</ul>
+</li>
+<li>“农民”
+<ul>
+<li>农民会有条不紊地先去了解地形、研究土地的化学成分，然后种植、浇水、除草，最终收获粮食</li>
+<li>可靠、可扩展、可维护的软件也都是这样有条不紊地开发出来的</li>
+</ul>
+</li>
+<li>“英雄”
+<ul>
+<li>“英雄”和“独狼”有点相似，但“英雄”更能够在团队工作和开发过程获得成功</li>
+<li>“英雄”是团队内部培养出来的，不是从外面雇佣过来的，很多时候他们会在企业的成长为超级明星</li>
+<li>管理“英雄”具有一定的挑战。你如果总是希望他们付出超人的努力，时间长了后会发现使用过度，从而发生矛盾</li>
+<li>作为技术团队管理者，你也需要有一定的技术功底，能够让“英雄”觉得可以从你这里学到一些知识，这样才能合作愉快</li>
+</ul>
+</li>
+<li>内向的人
+<ul>
+<li>内向的人表现为非常沉默、内敛，几乎让人感觉不到他们的存在
+<ul>
+<li>他们可以把工作完成得很出色，但是对团队执行力或者在会议上几乎不会有什么贡献</li>
+<li>他们在一对一的时候能正常进行交流，一旦退回到人群里就跟消失了一样</li>
+</ul>
+</li>
+<li>要想方设法与他们建立更紧密的联系
+<ul>
+<li>在会议上让他们发言时，当他们分享自己的意见或见解时，都要给予正面的支持，这样可以逐渐帮助他们建立自信，让他们感觉自己对于团队是有贡献的</li>
+<li>找机会跟他们交谈，当面认可他们的贡献</li>
+<li>通过一些小事情与他们建立特殊的联系，例如分享工作经验、交流教育孩子心得等</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>带有明显负能量的人
+<ul>
+<li>尽量避免团队里存在充满负能量的人，他们可能会挑拨离间或发泄不满情绪来影响整个开发团队，并且对组织造成严重破坏</li>
+</ul>
+</li>
+<li>离奇之人与离奇之事，早点让他们走，无论他们的水平有多高，都不要犹豫
+<ul>
+<li>一心想当“老大”，不择手段压制同事的人</li>
+<li>对同事很粗鲁的人</li>
+<li>到处借钱的人</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>新员工入职
+<ul>
+<li>带着新员工逐一认识团队成员，自己带着他去食堂吃午饭，并指定新员工的导师（技术上的），然后和他聊聊最近一个月准备给他安排的工作等，等他和团队成员熟悉后，我会找机会组织全组人一起吃顿饭，一起欢迎新员工</li>
+<li>新员工流失的原因
+<ul>
+<li>没有对新员工进行明确区分
+<ul>
+<li>校招新员工就像是一张白纸，太多无经验、能力不足</li>
+<li>社招新员工则正好相反，因此在进行培训时要将两者区别对待</li>
+</ul>
+</li>
+<li>忽略新员工直属主管的重要作用
+<ul>
+<li>人才成长是一个长期培训的过程，任何企业都无法通过新员工培训就帮助其快速成长</li>
+</ul>
+</li>
+<li>培训方式缺失
+<ul>
+<li>无论是选择内部培训还是外部培训，重点要考虑培训的对象和背景</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="管理团队">2.3. 管理团队</h3>
+<ul>
+<li>向下管理
+<ul>
+<li>技术尊重
+<ul>
+<li>成功地管理程序员最重要、最关键的因素，是在技术层面得到他们的尊重，其关键因素有：
+<ul>
+<li>理解计算机程序设计的艺术</li>
+<li>拥有良好的过往履历</li>
+<li>做出过技术贡献</li>
+<li>追逐技术潮流</li>
+<li>成为一个技术或者职业组织的活跃成员</li>
+<li>展现出强大的个人价值</li>
+</ul>
+</li>
+<li>深入理解他们使用的工具、流程，以及程序设计的艺术，理解得越深入，在和他们进行技术对话时，参与能力就越强，越容易获得他们的尊重</li>
+<li>空降管理者
+<ul>
+<li>需要充分考虑他是否有良好、可以被证明的履历，这样才能让他获得团队的尊重</li>
+<li>一般情况下技术团队是不会空降高管的</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>强化现有的团队
+<ul>
+<li>招聘1～2位杰出的程序员</li>
+<li>杰出程序员不仅仅是系统程序员/架构师
+<ul>
+<li>系统程序员/架构师往往会在团队里显得格格不入，这是因为他们很多都是“独狼”</li>
+<li>杰出程序员能带来杠杆效应
+<ul>
+<li>以一种优雅、简洁、易懂的设计来架构大型的复杂系统</li>
+<li>让所有其他程序员的工作都更加轻松</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>团队组成
+<ul>
+<li>杰出的程序员需要一群称职的程序员来配合，依赖他们完成日常的开发工作，实现设计好的系统和产品</li>
+</ul>
+</li>
+<li>薪酬组成
+<ul>
+<li>薪酬 = i * 工资 + j * 股票期权 + k * 福利 + l * 与谁共事 + m * 工作地点 + n * 做了什么 + 。。。。</li>
+</ul>
+</li>
+<li>进度管理
+<ul>
+<li>最高效的团队管理者往往都是坦率的，也往往对下属有足够的时间，能让员工找到他们并说出自己的想法，他们会认真倾听</li>
+<li>一些不紧急但是很重要的事情，如果迫于压力被放下，到后面往往需要花费好几倍的代价才能弥补回来</li>
+</ul>
+</li>
+<li>效率管理
+<ul>
+<li>如果每一个人效率提高10%，组织的效率就会提升很多倍</li>
+<li>团队的效率并不是简单的加法关系，而是乘法关系</li>
+<li>高效的软件工程师，产出是普通的工程师的10倍</li>
+<li>提高效率
+<ul>
+<li>先确保做正确的事，再把正确的事做对</li>
+<li>找到团队的资源瓶颈：效率其实就是性能。性能往往受限于系统的资源瓶颈。</li>
+<li>高效与工具化、自动化程度强相关</li>
+<li>高效的组织，每个人都会主动优化流程，并且持续改进</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>引导工作
+<ul>
+<li>引导事情走向正确的方向，并确保团队成员之间以及与其他团队之间有正确的沟通方式</li>
+<li>引导程序员自己做出正确的决定，而不应该自己就把决定做了</li>
+<li>帮助下属员工培养技术、积累经验、建立自信，还能获得具体执行决定的员工的认同</li>
+<li>作为团队管理者，你必须指出大方向，然后做好充分的检查，以确保员工做出正确的决定并实现。</li>
+<li>应及早检查员工做出的重要决定，否则当你想中途接手并做出改正时，员工可能已经做了大量无用的工作。</li>
+</ul>
+</li>
+<li>保护成员
+<ul>
+<li>学会保护团队成员，让他们免受组织中的各种问题、争议和“机会”的干扰。团队领导者，可能是他们最后或者唯一的防线。
+<ul>
+<li>官僚主义</li>
+<li>销售驱动的机会</li>
+<li>客户驱动的争议问题</li>
+<li>管理驱动的想法</li>
+</ul>
+</li>
+<li>周五的晚上和休息日
+<ul>
+<li>公司内部非重要部门组织的会议，尽量不要放在周五的晚上和休息日进行
+<ul>
+<li>看起来很有效率，其实是在过度使用研发资源</li>
+</ul>
+</li>
+<li>可以打扰研发人员的事情
+<ul>
+<li>现场问题，必须立即处理（不处理会损害公司未来利益）</li>
+<li>重要客户提出需求，要求立即做出回复（不处理会损害公司当前利益）</li>
+<li>特别重大的突发事件（对你和公司都很重要）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>评估和改进绩效
+<ul>
+<li>“信任但要核实”</li>
+<li>为每一个人设定工作目标并规定完成的时间，接着定期审查这些目标的进度和实现方式</li>
+</ul>
+</li>
+<li>任务责任制
+<ul>
+<li>每项任务都必须有且仅有一位负责人，如果有两个负责人，那就没有人负责了</li>
+<li>只有担任责任人的员工，才能在考核中得到良好或优秀的评价</li>
+</ul>
+</li>
+<li>裁员
+<ul>
+<li>表现很差的员工都知道自己很差，所以裁掉不适合的员工对双方都是一种更好的结局</li>
+</ul>
+</li>
+<li>主动沟通
+<ul>
+<li>承担并顺利地完成与员工的主动沟通，这是你的职责，千万不要轻视沟通能力，这一能力对你的晋升起决定性作用</li>
+<li>团队越来越大时，信息之间的传递会变得越来越困难</li>
+<li>通过配置HRBP的方式来加强和团队的沟通，也可以通过要求团队Leader每两周组织一次与小组成员的一对一沟通，并在每个月底的时候召开一次全员例会</li>
+</ul>
+</li>
+<li>被动沟通
+<ul>
+<li>如果一名团队成员在你不太方便的时间来找你聊天，一定要先把手上的工作放下，专心跟他交流，他可能想鼓起勇气告诉你一件大事</li>
+</ul>
+</li>
+<li>文化冲突</li>
+<li>负面效应
+<ul>
+<li>应对问题雇员
+<ul>
+<li>刚开始时可以安排适合他们的工作，如果一个项目不那么重要，可以安排问题雇员承担他能力较弱的工作</li>
+<li>问题凸显后你就可以找他进行一对一沟通了，通过事实来指出他的问题，努力让他提高</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>会议记录：没有记录的会议，相当于没有开过</li>
+<li>人才评测机制：利用独特性
+<ul>
+<li>独特性不是在个体身上偶然表现出来的暂时特点，而是稳定的个人特点</li>
+<li>因为个人特点具有相对性、稳定性，才使人才测评变得很有可能</li>
+</ul>
+</li>
+<li>下放权力：抓大放小，注重结果
+<ul>
+<li>程序员在工作中经常犯的错误是只见树木，不见森林。</li>
+<li>管理者需要为成果而工作，以结果为导向。</li>
+</ul>
+</li>
+<li>激励员工：马斯洛理论
+<ul>
+<li>在低层次需求尚未完全满足之前，更高层次的激励并没有多少用武之地。</li>
+<li>“在没有奖金、没有加薪区别的情况下如何激励员工？”
+<ul>
+<li>连基本的激励都不存在，还怎么让员工做出成绩？</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>向上管理
+<ul>
+<li>成功地管理好你的老板可能比管理好你的团队还重要</li>
+<li>外在认知往往比实际行动更重要：成功并不只在于你做了什么，更需考虑别人如何看待你所做的成果</li>
+<li>了解老板：你老板的级别越高，你的报告就越要精简，越要注重大局，细节更少、局面更大、文字更少、项目符号更多</li>
+<li>准备讨论内容：不要把每一个问题都带到你老板那里寻求解决方案</li>
+<li>主动承担：当问题出现时，你也可以尝试主动自荐，帮助他解决问题</li>
+<li>向上管理本身也有直接的回报：当你为更多的交流做出努力时，会潜在加固和上层领导的关系。可能其中一位领导，会成为你的好友，并在你今后的职业生涯中一直支持你。</li>
+</ul>
+</li>
+<li>对外管理
+<ul>
+<li>与部门内的人合作
+<ul>
+<li>能够让你老板的工作更容易，因为你能解决很多部门内部的事务，不再需要他参与解决</li>
+<li>互相帮助、对遇到的问题互相提供超常规的支持、共享资源和培训，并相互守望</li>
+</ul>
+</li>
+<li>了解其他部门
+<ul>
+<li>一直保持欣赏其他部门的贡献，因为他们的贡献不管怎么看都和你的部门一样重要</li>
+<li>当你被聘请或提拔为程序设计经理时，你需要仔细研究组织架构图，找到各个职能部门的主管，想办法让自己逐渐了解他们，或者是各部门中与你同级的经理</li>
+</ul>
+</li>
+<li>平级的人相处较难，怎么办
+<ul>
+<li>保持自己的职业素养，不要轻易被别人激怒，时刻保持一颗平常心，努力把自己的工作做好</li>
+<li>找你们共同的领导反映你的困惑，或是通过你的领导找到他们的领导，由领导层沟通</li>
+<li>所有的管理类问题，首先要自我检查，确保不是自身的问题，然后是沟通，保持高效、简单的沟通</li>
+<li>放松自我，不要被不值得的事情或人所烦恼</li>
+</ul>
+</li>
+<li>合理的沟通
+<ul>
+<li>如果对方是产品经理，尝试以产品的语言去解释</li>
+<li>如果对方是计算机科班出身，那么简洁地使用计算机术语，直接说理论的名字或者算法的名字就行（如二次握手、NP等）</li>
+<li>如果对方是其他专业转行的程序员，不妨试试直接拿着代码来讲</li>
+<li>如果对方完全不是一个行业的，就尝试针对他了解的一些问题和知识来举例解释</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>自我管理
+<ul>
+<li>最难管理的人总是自己
+<ul>
+<li>个人管理系统就是一个由世界观和方法论组成的整体，构建这个整体的目的是为了实现自我提升，这个整体里包含个人价值观、个人思考模式、做事的流程体系、做判断和决策的方法和一系列的健康生活习惯等</li>
+</ul>
+</li>
+<li>避免过度管理
+<ul>
+<li>造成延迟和混乱的最主要的原因之一就是允许一个上级直接管理过多的下属</li>
+<li>你能够覆盖完整的团队成员，最好不要超过10人，多于10人以上，可以采用分小组形式间接管理</li>
+<li>管理者与下级的交互次数（以及由此产生的指导实践）呈几何级别增长</li>
+</ul>
+</li>
+<li>沟通管理
+<ul>
+<li>建立有效机制来控制和管理洪水般的信息
+<ul>
+<li>制定一个切实可行的做法和流程来管理工作电子邮件，不能让接二连三的电子邮件分散你的注意力</li>
+<li>别人打电话或发短信给你时，不必一定答复或回应</li>
+<li>在会议上或在其他需要的时刻，不要让电话或短信转移你的注意力</li>
+<li>委托管理会议议程</li>
+<li>仔细规划你的时间，以减少需求和信息的洪流</li>
+<li>建立或协助建立适当的电子邮件礼仪</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>面对面交流注意事项
+<ul>
+<li>关注对方，放下你的手机，停止处理电子邮件或写代码</li>
+<li>用眼神交流，仔细聆听对方在说什么（并思考他们呈现的信息）</li>
+<li>谈话时隔着办公桌，或者隔着任何其他东西，都会让人不舒服</li>
+<li>把自己放在金字塔的底部，而你的员工在顶端。他们和他们做的工作才是真正重要的</li>
+</ul>
+</li>
+<li>形象管理
+<ul>
+<li>要去克服你的老板和其他高级管理层与你交流时因着装而产生的负面看法</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="影响团队因素">2.4. 影响团队因素</h3>
+<ul>
+<li>不懂技术的技术领导
+<ul>
+<li>不懂技术的人很容易完全从产品角度考虑，忽略研发团队面临的困难和风险，忽略技术人员对于技术的憧憬，造成团队超负荷工作、技术团队缺少技术愿景等情况发生</li>
+<li>团队领导可以不是对口的专业出身，但是必须对技术有热情：
+<ul>
+<li>基础知识和理论知识非常重要，多多使用已有的且成熟的方案是关键</li>
+<li>对技术要有一颗严谨和敬畏的心，想清楚了再干，坚持高标准，很多事情都急不来</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>薪资管理
+<ul>
+<li>公平、公正
+<ul>
+<li>对工作努力的人，要给予薪资方面的倾斜，即便他是亿万富翁，该多给的奖金一分都不能少，如果他经济有困难，还要更多给予倾斜</li>
+<li>对不努力的人，无论多么困难，天平绝对不会向他倾斜</li>
+</ul>
+</li>
+<li>千万不要以为“公司内部不能谈论工资”这一条很有用</li>
+<li>在薪资、奖金和期权分配上为他们争取更多的回报，这是对优秀人才最好的奖励</li>
+<li>注意点
+<ul>
+<li>按照能力和他的付出进行衡量，不要把个人情感混淆其中</li>
+<li>制定标准化的考核规则，输出能够让人信服的流程和细则</li>
+<li>薪资的组成结构最好能够多元化，这样可以让员工在每一项奖金中感受自己的付出和回报</li>
+<li>薪资真的是第一要务，一定要把握标准，做到公平、公正，不然你的团队会垮的</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>上升通道
+<ul>
+<li>关注结果，而不是方法：不要期望每个人都以同样的方式来进行管理，每个人在工作与管理时都有自己的风格与方法</li>
+</ul>
+</li>
+<li>大规模变革
+<ul>
+<li>慎重执行大规模变革，无论是组织架构，还是人员任命，因为所有的改变，都会在人的内心引起权力欲望和恐惧</li>
+<li>多做核心人物的思想沟通工作</li>
+<li>不要由闭门小团体会议决定所有的改变方案，这样会让核心技术人员感觉到被边缘化、被决定命运</li>
+<li>人是有感情的，让他们感觉被尊重，胜过加薪</li>
+</ul>
+</li>
+<li>一言堂</li>
+<li>频繁开会
+<ul>
+<li>会议规模越小越好</li>
+<li>每个会议都必须有一个决策者，如果没有决策者或者会议中无法产生决策，这个会就不应该开</li>
+</ul>
+</li>
+<li>各种无端限制
+<ul>
+<li>开发团队间存在的“锁”
+<ul>
+<li>技术能力上的锁</li>
+<li>负责模块上的锁</li>
+<li>时间锁、进度锁</li>
+<li>沟通锁、利益锁</li>
+</ul>
+</li>
+<li>把“分工”当成了永远只干一件事的借口
+<ul>
+<li>一个程序员应该能够掌握多个语言，也能够负责多个模块甚至不同的职责。如果一个程序员觉得多学习一门语言，多掌握一个模块是件很困难的事，那么这个程序员本质上是不合格的</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>老员工的管理
+<ul>
+<li>避免生锈
+<ul>
+<li>当公司的成长速度和人的成长速度不匹配时，就会产生缺口，这个缺口需要管理者去填补</li>
+<li>不能因为是老员工而忽略沟通</li>
+</ul>
+</li>
+<li>兑现承诺
+<ul>
+<li>在请有问题的人离开时，之前的承诺全部要兑现，这是一个管理者的道德</li>
+<li>一个小气的老板必然留不住人</li>
+<li>一旦发生不兑现承诺这种事情，员工也会受到很大影响</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>工作时间
+<ul>
+<li>时间自由，即自己可以左右时间
+<ul>
+<li>使用弹性工作制，不要太过于限制工作的时间和地点</li>
+</ul>
+</li>
+<li>真正应该关注的是工作能力是否自由</li>
+</ul>
+</li>
+<li>缺乏愿景
+<ul>
+<li>最有效的领导方法，包括两个能力：一是愿景（Vision），二是沟通能力</li>
+<li>愿景就是作为一名软件工程师，未来你的发展前途、你做的产品对未来世界有什么影响等
+<ul>
+<li>能够落地</li>
+<li>虚无缥缈（例如我们要做最好的科技公司）的目标，会让底层员工感觉不到真实</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="其他团队管理相关知识">2.5. 其他团队管理相关知识</h3>
+<ul>
+<li>理解程序员工作
+<ul>
+<li>程序员是独立的个体，他们之间的差异非常大</li>
+<li>努力地让每个人的长处都得到发挥，同时尽力提高或者至少抵消每个人的短板</li>
+<li>利用程序员的自我意识和改变世界的欲望</li>
+</ul>
+</li>
+<li>左脑型VS右脑型
+<ul>
+<li>左脑通常专用于分析任务和语言表达，而右脑主要用于空间感知任务、音乐等，左脑的表达能力比右脑强得多</li>
+<li>对于一名优秀的程序员来说，强大的左脑分析能力是必不可少的，不过，与右脑相关的活动往往也同样重要，这是因为程序设计是一门很有创意的艺术</li>
+</ul>
+</li>
+<li>程序员思维
+<ul>
+<li>计算思维是根据计算机科学的基本概念和方法提出的，是用来理解需求、设计系统、实现编程、解决问题的思维方法</li>
+<li>抽象思维
+<ul>
+<li>去掉纷繁芜杂的与计算无关的部分，用规约（Reduction）的方法还原到问题的本质</li>
+<li>本质即把原来的问题转换为一个或几个可以使用计算机描述并解决的问题</li>
+<li>表示（Presentation）是解决问题的第一步，也是关键的一步</li>
+</ul>
+</li>
+<li>逻辑推理 (Reasoning)
+<ul>
+<li>首先必须掌握程序执行过程的细节。然后从问题出发，分别朝着产生的原因和导致的后果前后两个方向推理。逐渐定位问题的范围，最终找到问题的根源和解决的方案</li>
+<li>案子越是离奇，越容易解决，因为奇怪的点都是线索</li>
+</ul>
+</li>
+<li>分析 (Analysis)
+<ul>
+<li>猜测加验证（guess-and-verify）</li>
+</ul>
+</li>
+<li>分解 (Decomposing)
+<ul>
+<li>分而治之（Divide-and-Conquer）</li>
+<li>把一个复杂的过程分解为几个子过程</li>
+</ul>
+</li>
+<li>递归 (Recursion)</li>
+<li>并行、异步/同步、模拟/近似、优化、分层、封装、解耦</li>
+</ul>
+</li>
+<li>杰出的程序员
+<ul>
+<li>杰出的程序员是大师级的工匠</li>
+<li>对大多数杰出的程序员来说，动力实际上来源于更高的追求，例如改变世界，做出人们喜欢使用的程序或产品</li>
+<li>不会在某种压力下自愿做低技术含量的重复劳动</li>
+</ul>
+</li>
+<li>小型团队VS大型团队
+<ul>
+<li>小型团队的效率比较高
+<ul>
+<li>高效的小型团队会在所有成员之间平等地共享所有沟通信息，坚持做到遇到问题时能够立即回答，当发生设计难题时马上解决，并互相提供调试相关的建议与帮助</li>
+</ul>
+</li>
+<li>大型团队需要团队管理者
+<ul>
+<li>最好的方式是从内部培养团队管理者</li>
+<li>能够变成杰出管理者的优秀程序员很少</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>扁平化管理
+<ul>
+<li>更容易让能干的人冒出来</li>
+<li>使企业快速地将决策权延至企业生产、营销的最前线，从而为提高企业效率建立富有弹性的新型管理模式</li>
+<li>知识型员工的一个鲜明特点就是，对专业的忠诚大于对所服务的企业的忠诚，选择企业的目的是致力于寻求能够实现自身专业成就最大化的成长平台</li>
+</ul>
+</li>
+<li>金州勇士奇迹
+<ul>
+<li>坚持用数据说话，而不是凭经验</li>
+</ul>
+</li>
+<li>KPI之祸
+<ul>
+<li>问题
+<ul>
+<li>因为要考核业绩，几乎所有人都提出相对容易实现的低目标</li>
+<li>因实行绩效主义，追求眼前利益的风气蔓延</li>
+<li>上司不把部下当有感情的人看待，而是一切都看指标</li>
+<li>为衡量业绩，首先必须把各种工作要素量化，但是工作是无法简单量化的</li>
+</ul>
+</li>
+<li>绩效考核
+<ul>
+<li>程序员的工作怎么量化？Bug数？代码行？版本数？</li>
+<li>即使程序员的工作可以量化，每次绩效都是这几个指标，定绩效目标还有意义么？</li>
+<li>团队Leader如何制定团队的KPI？</li>
+<li>前瞻性的工作谁愿意做，有风险的工作谁愿意做？</li>
+</ul>
+</li>
+<li>OKR （Objectives and Key Results）
+<ul>
+<li>OKR和KPI具体的差别表现在：OKR的关键词是Objectives, KPI的关键词是Indicators</li>
+<li>这两个词决定了OKR和KPI的本质差异：OKR关注的是目标，KPI关注的是指标</li>
+<li>OKR让我们做正确的事情，KPI让我们正确地做事情！</li>
+<li>示例
+<ul>
+<li>以程序员为例，如果我们关注目标，我们会想接下来我应该做什么事情，是要解决产品的卡顿问题，还是引入大数据来做精准推荐</li>
+<li>以足球运动员为例，如果关注目标，我们会想到夺冠、四强、保级；如果关注指标，那我们就会想到进球数、助攻数、跑动距离、比赛场次等</li>
+</ul>
+</li>
+<li>如果方向对了，就不怕路途遥远！如果方向不对，指标再漂亮都没有意义，甚至指标越漂亮就错得越离谱</li>
+<li>“并不是有了工作才有目标，而是相反，有了目标才能确定每个人的工作。所以企业的使命和任务，必须转化为目标。”</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>团建活动的技巧
+<ul>
+<li>越来越多的情况是Outing变成了单纯的休闲旅游</li>
+<li>户外活动，最好是有一定强度并过夜的活动，当然最好能够找专业的户外拓展公司来协助，效果会更好</li>
+<li>通过刻意划分的小组、强制的行为约束、集体的协作，共同挑战艰苦的旅程，在别无选择和共同的困难面前，人和人的心会迅速打开和贴近，自觉地相互帮助共同完成目标，再通过晚上的喝酒助兴进一步加强和巩固团队关系</li>
+</ul>
+</li>
+</ul>
+<h2 id="产品开发过程管理">3. 产品开发过程管理</h2>
+<h3 id="开发经理及研发体系介绍">3.1. 开发经理及研发体系介绍</h3>
+<ul>
+<li>软件的开发生命周期：确定业务需求，编码，测试，上线</li>
+<li>管理软件开发生命周期，而不是僵化地照搬流程</li>
+<li>什么是开发经理
+<ul>
+<li>开发经理是公司委派的负责实现产品开发目标的个人，是公司授权的产品开发负责人，是产品开发的直接组织者和领导者</li>
+<li>职责：“按预期交付成果”，“让客户满意”，“让员工满意”
+<ul>
+<li>对产品开发全过程进行组织和管理，按预期交付产品开发的成果</li>
+<li>管理产品开发团队，为成员提供技术和业务上的支撑，使之高效而愉快地工作，并获得最满意的工作体验</li>
+<li>管理对外关系，以取得外部对交付成果及过程的最满意评价</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>主要任务
+<ul>
+<li>与产品经理交流</li>
+<li>负责产品开发交付</li>
+<li>完成产品开发收尾
+<ul>
+<li>完成交付成果之后，要将成果移交相关部门，确保相关部门可以稳定地使用系统</li>
+<li>将后续服务移交给服务部门，确保客户得到后续的服务保障</li>
+</ul>
+</li>
+<li>管理干系人的关系</li>
+<li>管理项目团队</li>
+</ul>
+</li>
+<li>开发经理素质
+<ul>
+<li>领导力
+<ul>
+<li>通过领导他人来完成工作的能力</li>
+<li>不仅要自己先做到要求别人做到的事，而且要知道“下一步”应该干什么，下一个目标在哪里</li>
+<li>开发经理的口号应该是“跟我冲”，而不是“给我上”</li>
+</ul>
+</li>
+<li>责任心
+<ul>
+<li>具有强烈责任心的人，也会非常注重细节，能主动发现问题，会时不时地在脑子中模拟一件事的执行过程，设想各种意外情况，考虑如何应对，这样的人比别人看得远，看得透</li>
+</ul>
+</li>
+<li>积极主动
+<ul>
+<li>不要抱怨，因为抱怨本身是没有用的</li>
+<li>开发经理是项目组的“主心骨”，如果这个人很容易慌乱，那这个项目也会混乱</li>
+</ul>
+</li>
+<li>抗压能力
+<ul>
+<li>即使在无能为力的时候，也能保持“风度”和“幽默感”，从而稳定军心、解决问题</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>常用研发管理体系
+<ul>
+<li>CMMI（能力成熟度模型集成）
+<ul>
+<li>开发模型，即CMMI_DEV</li>
+<li>采购模型，即CMMI_ACQ</li>
+<li>服务模型，即CMMI_Service</li>
+<li>初始级，管理级，定义级，量化级，优化级</li>
+</ul>
+</li>
+<li>RDMS（Research and Development Management System，研发管理体系）
+<ul>
+<li>研发管理体系框架一般包括概念、定义、设计、实现、验证、移交、维护等多个步骤</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="产品开发过程">3.2. 产品开发过程</h3>
+<ul>
+<li>产品研发过程体系需要随着业务实际实现要求变化，不要拘泥于瀑布方式或敏捷方式，凡事都需要找到契合自己的方式</li>
+<li>善用里程碑
+<ul>
+<li>里程碑包括4个要素：时间点、标志性事件、交付物、关闭条件</li>
+<li>到达里程碑后要对项目进行评估，确定是按计划继续执行，还是进行必要的变更和调整</li>
+</ul>
+</li>
+<li>项目启动会
+<ul>
+<li>项目启动会的目标是明确该产品开发项目的目标</li>
+<li>在项目启动会之前，我们需要和用户沟通并明确用户需求
+<ul>
+<li>需要说明项目目标、阶段划分、组织结构、管理流程</li>
+<li>关键角色任命</li>
+</ul>
+</li>
+<li>过程及议题
+<ul>
+<li>会议的内容需要整理成《项目启动会纪要》</li>
+<li>项目的启动过程、项目组成员的承诺、各级领导的明确表态</li>
+</ul>
+</li>
+<li>经验和教训
+<ul>
+<li>迅速建立组织架构、明确分工，大家分头工作，然后再着手制定后续详细的项目计划</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>用户需求
+<ul>
+<li>软件开始开发前需要确定投入与产出的比值，也就是ROI（Return On Investment，投资回报率）</li>
+<li>产品或者技术方案会议
+<ul>
+<li>开任何会议，一定不要上来就讲解方案，应该先讲解场景</li>
+<li>大家一起讨论，研究这个场景背后的需求是不是最佳场景，能不能删除这个场景，或者是否有其他场景可以代替这个场景同时还能满足背后的需求</li>
+<li>如果是需求的最佳场景，再开始讨论这个场景下的产品解决方案</li>
+<li>这个时候你打开事先设计好的产品原型图、产品流程图、状态图、用例图，你会发现有很多需要修改，修改之后就是大家一起生成的方案</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>产品需求
+<ul>
+<li>产品需求矩阵
+<ul>
+<li>按照子系统、功能集、执行单元的结构列出所有的功能需求，每列则对应每项功能的工作步骤以及每个步骤的工作量</li>
+</ul>
+</li>
+<li>产品需求规格说明书
+<ul>
+<li>简介</li>
+<li>产品描述</li>
+<li>技术约束和局限</li>
+<li>需求详细描述</li>
+<li>接口需求</li>
+<li>质量需求</li>
+<li>用户文档需求</li>
+</ul>
+</li>
+<li>需求评审
+<ul>
+<li>WHY：为什么做这个需求？</li>
+<li>WHAT：需求的价值是什么？</li>
+<li>WHEN：需求期望什么时候上线？截止日期？</li>
+<li>HOW：需求是否完整？正常场景是什么？异常场景是什么？技术上分别怎么应对？</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>用户需求vs产品需求
+<ul>
+<li>用户需求关注的是系统如何支持业务流程，背后的需求是“实现业务目标”</li>
+<li>技术人员关注的是合理技术方案，背后的需求是“工作量”，“实现难度”和“系统性能”</li>
+</ul>
+</li>
+<li>总体设计
+<ul>
+<li>设计阶段的目标主要是对待开发系统的架构进行分析和设计，并建立系统架构的基线，以便为之后的实施工作提供一个稳定的基础</li>
+<li>总体设计是整个系统的框架型设计</li>
+</ul>
+</li>
+<li>概要设计：设计软件的结构，包括组成模块，模块的层次结构，模块的调用关系，每个模块的功能等</li>
+<li>详细设计：依据概要设计阶段的分解，设计每个模块内的算法、流程，为每个模块完成的功能进行具体的描述，把功能描述转变为精确的、结构化的过程描述</li>
+<li>编写代码
+<ul>
+<li>编码技巧
+<ul>
+<li>优先考虑核心模块的压力测试</li>
+<li>确保过程可控
+<ul>
+<li>先从小数据量开始执行测试</li>
+<li>代码执行时定时跟踪</li>
+<li>断点可续：尽可能做到可以在中断的地方，或者上一个可控的断点重新开始跑</li>
+</ul>
+</li>
+<li>预留地方写注释</li>
+<li>用人人看得懂的逻辑</li>
+<li>不要沉迷于框架：框架并不是越高端越好，所谓高端的框架，往往结构更加复杂，而且让人很难理解其中的数据调用过程</li>
+<li>使用熟悉、成熟的技术
+<ul>
+<li>技术的极限性能</li>
+<li>使用新技术前，建议全面了解该技术的特征、适用范围，以及不适用的范围</li>
+</ul>
+</li>
+<li>细节没优化前，别谈架构</li>
+<li>多留日志</li>
+</ul>
+</li>
+<li>日志规范
+<ul>
+<li>日志级别动态调整，无须重新编译程序</li>
+<li>日志大小可定制，实现循环覆盖，无须定制时可以压缩打包</li>
+<li>日志等级
+<ul>
+<li>严重的系统错误，会导致流程中断或异常流程，需要使用等级最高的ERROR等级</li>
+<li>异常但不影响系统的正常流程，使用WARN等级</li>
+<li>系统或流程的关键状态变化，使用INFO等级</li>
+<li>业务流程点或调试信息，使用TRACE等级</li>
+<li>实际生产场景下日志等级一般是INFO</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>代码审核
+<ul>
+<li>代码审核有利于跟踪项目进展情况</li>
+<li>代码审核内容
+<ul>
+<li>前置条件</li>
+<li>代码规范性</li>
+<li>代码逻辑</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>单元测试</li>
+<li>集成测试
+<ul>
+<li>在单元测试的基础上，将所有模块按照设计要求组装成为子系统或系统，进行集成测试</li>
+<li>检查软件单位之间的接口是否正确</li>
+</ul>
+</li>
+<li>系统测试
+<ul>
+<li>系统测试方案和用例编写、功能性测试、性能测试、稳定性测试</li>
+</ul>
+</li>
+<li>产品发布</li>
+<li>开发过程复盘
+<ul>
+<li>所有的总结，只有带着问题去思考才会有收获，这就是复盘</li>
+<li>总结项目经验教训的目的在于总结问题、分析原因，避免以后犯同样的错误，而不是追究谁的责任</li>
+<li>项目经理需要在产品开发过程中召开一个或者多个复盘会议，会议要对项目启动会的每一个环节进行回溯</li>
+</ul>
+</li>
+</ul>
+<h3 id="产品开发过程杂谈">3.3. 产品开发过程杂谈</h3>
+<ul>
+<li>理解业务的重要性：业务问题的本质是业务所服务对象的利益问题</li>
+<li>应对需求变更：
+<ul>
+<li>不能抵制变更，但是一定要用切实有效的办法控制变更</li>
+<li>变更控制的目的并不是控制变更的发生，而是对变更进行管理，确保变更有序进行</li>
+</ul>
+</li>
+<li>开发进度管理
+<ul>
+<li>“向进度落后的项目中增加人手，只会使进度更加落后”</li>
+<li>伊格尔森定律（Eagleson’s Law）:“自己写的代码如果有半年时间没有看过，就跟别人写的代码没什么区别了。”</li>
+<li>为了有效控制进度，开发经理需要请各个小组每天召开“晨会”以检查昨天工作进展，并且布置当天工作；另外，每周五下午召开周例会，项目组全体成员都要参加</li>
+</ul>
+</li>
+<li>评审的重要性</li>
+<li>软件版本管理</li>
+<li>优先级安排：划去清单中那些既不紧急也不重要的事项，找到那些紧急，重要的事项</li>
+<li>项目管理重要性
+<ul>
+<li>支撑公司收入</li>
+<li>项目进度把控：技术人员很容易犯的错误是技术优先，对项目的进展不太关注</li>
+<li>人员工作安排：缺少强有力项目管理能力的技术领导，很容易让团队的部分成员陷入迷茫</li>
+</ul>
+</li>
+<li>产品质量的重要性：质量就是你的最高水平，以及你对用户理解的最高水平</li>
+<li>测试驱动开发
+<ul>
+<li>要求在编写某个功能的代码之前先编写测试代码，然后只编写测试能通过的功能代码，从而推动整个开发的进行</li>
+<li>测试驱动开发就是通过编写测试用例，先考虑代码的使用需求（包括功能、过程、接口等），而且这个描述是无二义的，可执行验证的。</li>
+</ul>
+</li>
+<li>自动化部署工具</li>
+<li>业务代码对技术的作用：技术只有支撑了业务，你才有未来</li>
+<li>迭代的意义
+<ul>
+<li>软件无法一次性把所有的业务都模拟出来，必须要分步骤将一个一个阶段做出来，通过用户的反馈，一点点地升级</li>
+<li>迭代的前提是必须要先确定优先级，而理解清楚业务的核心生命周期是最高优先级</li>
+</ul>
+</li>
+<li>倾听的重要性：充分理解需求，避免出现分歧，因为最终是由需求提出方（产品经理）来判断项目成败</li>
+<li>事必躬亲的错误：事必躬亲是对员工智慧的扼杀，长此以往，员工容易形成惰性，责任心大大降低、技术能力止步不前</li>
+</ul>
+<h2 id="技术调研与预研">4. 技术调研与预研</h2>
+<h3 id="为什么需要进行技术调研？什么是技术调研？什么是技术预研？">4.1. 为什么需要进行技术调研？什么是技术调研？什么是技术预研？</h3>
+<ul>
+<li>技术调研
+<ul>
+<li>针对粗粒度需求实现方案进行的研究，很有可能对所需技术根本不清楚，需要通过调研项目来完成技术了解、技术选型、技术可行性分析、技术方案设计等工作</li>
+<li>针对每一项技术都会有一份单独的报告，然后汇总成一份调研报告（对各项进行汇总、对比、总结）</li>
+</ul>
+</li>
+<li>技术预研
+<ul>
+<li>针对细粒度需求的实现方案进行的预先尝试，主要针对的是通过技术调研所选择的技术，同时结合我们产品化时的实际需求，对实现时存在的不确定性因素、细节等进行预先研究、尝试，从而减小产品化过程中的技术实现风险</li>
+<li>只输出一份报告，通过这份预研报告说明预研项是否成功，是否可以采用该种方案、技术并进行下一步的产品化立项</li>
+</ul>
+</li>
+<li>技术负责人亲自主导或参与了设计，就能有针对性地去解决问题，即便将来系统遇到瓶颈，也能更好地优化或者重新设计</li>
+</ul>
+<h3 id="技术调研">4.2. 技术调研</h3>
+<ul>
+<li>思路
+<ul>
+<li>了解动机
+<ul>
+<li>听到几个关键字就以为已经了解需求</li>
+<li>担心一开始问太多会显得自己很无知</li>
+</ul>
+</li>
+<li>明确目的
+<ul>
+<li>明确具体技术内容，各个技术的差异点，对技术实现原理进行总结，通过测试数据、数据对比及原因分析，分析哪种技术或者框架适用于用户提出的实际需求</li>
+</ul>
+</li>
+<li>确定步骤
+<ul>
+<li>调研过程往往伴随着对新知识的探索，很容易“沉迷于学习”。别忘了这是一项工作。</li>
+<li>步骤
+<ul>
+<li>尽量多地收集各种方案和资料</li>
+<li>迅速粗略地过一遍上述方案和资料，大体上总结出几种可能合适的方案</li>
+<li>针对几种方案，一边调研每种方案，一边做笔记</li>
+<li>最后拿着笔记做最后的横向对比</li>
+<li>得出结论，同时因为做了笔记，反馈的素材也有了</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>结论跟踪
+<ul>
+<li>反馈的内容
+<ul>
+<li>简要说明下调研需求</li>
+<li>介绍跟需求相关的前置知识</li>
+<li>目前有哪些方案，具体分析各个方案的优缺点及适合的场景</li>
+<li>技术调研的结果是怎样的，不可行的话是因为什么</li>
+<li>如是新库的引进，需要简要介绍该库的使用方法及内部原理</li>
+<li>调研过程中碰到了哪些问题，如何解决</li>
+</ul>
+</li>
+<li>把一次技术调研当成一次绝佳的学习机会来做，那反馈的内容就不会显得空洞</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>调研过程
+<ul>
+<li>需求整理
+<ul>
+<li>业务需求转化为技术需求，从技术层面理解业务需求</li>
+</ul>
+</li>
+<li>技术选型
+<ul>
+<li>没有评估在实际需求驱动下的性能数据
+<ul>
+<li>有的团队会根据社交媒体上的讨论来决定选择哪种架构</li>
+<li>团队会跟风走，哪个热门就选哪个</li>
+</ul>
+</li>
+<li>首先明确该技术/框架所使用的需求范围，根据需求明确技术调研方向，然后通过技术评估手段进行选型，最终的选型结果需要需求提出方、技术调研方、技术专家代表等多个维度人员参与，以事实作为评判标准</li>
+<li>技术采用生命周期
+<ul>
+<li>创新者阶段（2.5%）、早期采用者阶段（13.5%）、早期大众阶段（34%）、晚期大众阶段（34%）与落后者阶段（16%）</li>
+<li>创新者阶段：有很多的坑，但却不乏众多爱好者乐于踩坑。</li>
+<li>早期采用者阶段：有一些开发人员在尊重自己的直觉和喜欢的前提下，开始使用该技术。</li>
+<li>早期大众阶段：各大论坛、技术会议开始纷纷报道，这时候需要慎重思考之后决定是否采用。</li>
+<li>晚期大众阶段：标准、社区已经完善，大部分人都在使用了。</li>
+<li>落后者阶段：除非万不得已，否则没人再用了。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>明确方案
+<ul>
+<li>实现方案</li>
+<li>测试方案
+<ul>
+<li>通用测试场景</li>
+<li>业务测试场景指的是完全模拟现有或者未来需要实现的业务的实际场景</li>
+</ul>
+</li>
+<li>测试用例</li>
+</ul>
+</li>
+<li>执行方案
+<ul>
+<li>执行方案就需要执行测试用例</li>
+<li>执行结束后的输出数据都需要保存下来，最好是采用图表方式进行展示</li>
+</ul>
+</li>
+<li>讨论结论
+<ul>
+<li>性能角度</li>
+<li>技术评测角度</li>
+<li>需求方角度</li>
+<li>产品化角度</li>
+<li>其他因素</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="技术预研">4.3. 技术预研</h3>
+<ul>
+<li>意义：在项目立项前，攻克难度较大的关键技术，帮助开发团队在产品立项后进行快速开发</li>
+<li>思路
+<ul>
+<li>了解动机
+<ul>
+<li>是否需要立项预研项目</li>
+<li>是否有实际的需求</li>
+</ul>
+</li>
+<li>明确目的</li>
+<li>确定步骤
+<ul>
+<li>需要针对各个方案（包含当前方案）进行各维度对比，指出每个方案的设计和实现原理，指出存在的不足。然后结合方案进行具体的实现，并测试数据。</li>
+<li>根据方案的对比、测试数据对比，我们可以明确提出的方案是否适用于用户需求，如果适用，可以推荐进行产品化立项；如果不适用，需要找到备选方案继续预研</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>预研过程
+<ul>
+<li>技术介绍
+<ul>
+<li>定义：对基本概念进行介绍</li>
+<li>综述：对当前该技术的发展及应用进行介绍
+<ul>
+<li>技术研究设定的工作目标应可验证</li>
+<li>明确技术适用的范围，以便于后续研发项目的可行性研究</li>
+<li>指明研究的局限性，明确写出后续待完成及验证的研发工作</li>
+<li>在进行技术研究时，应注意借鉴过程资产库中的经验库，以及可重用和通用的模块库等</li>
+<li>当有多种技术路线需要研究、比对时，应在关键技术分析报告中对各技术路线进行对比</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>明确方案
+<ul>
+<li>重点说明需要被本预研过程验证的一个或多个解决方案，并说明其各自的优缺点，以及提供潜在改进方向和应用可能性</li>
+</ul>
+</li>
+<li>执行方案
+<ul>
+<li>方案列举—论证—推翻—再列举</li>
+</ul>
+</li>
+<li>讨论结论
+<ul>
+<li>技术可行性分析报告（技术介绍文档、技术环境搭建文档、功能验证文档、性能测试），有优越性和风险性评估</li>
+<li>需要通过各种数据对比、架构对比、原因剖析等方式，给出被排除的方案的排除原因，对被选择的方案应明确说明其优缺点</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="其他技术调研与预研的相关知识">4.4. 其他技术调研与预研的相关知识</h3>
+<ul>
+<li>各种开源协议介绍
+<ul>
+<li>BSD：使用者可以“为所欲为”</li>
+<li>Apache Licence 2.0</li>
+<li>GPL：GPL的出发点是代码的开源/免费使用和引用/修改/衍生代码的开源/免费使用，但不允许修改后和衍生的代码作为闭源的商业软件发布和销售。</li>
+<li>LGPL：在GPL的基础上，LGPL允许商业软件通过类库引用（link）方式使用LGPL类库而不需要开源商业软件的代码</li>
+</ul>
+</li>
+<li>对技术发展的预估
+<ul>
+<li>必须了解当前技术发展趋势，并能够对趋势进行分析，进而明确自己团队未来1年、3年，甚至是5年、10年的发展目标</li>
+<li>国外论文，我们可以通过Google Scholar进行检索</li>
+<li>技术峰会</li>
+</ul>
+</li>
+<li>开源的好处
+<ul>
+<li>技术闭环：开源不仅意味着公司技术有了影响力，而且开源后技术需求的输入会变多，外部会给内部提供许多技术需求，从而通过从外部推进内部加快技术产出与技术创新。创新后再回归到开源，进而构成技术闭环。</li>
+</ul>
+</li>
+</ul>
+<h2 id="系统架构">5. 系统架构</h2>
+<h3 id="系统架构工作">5.1. 系统架构工作</h3>
+<ul>
+<li>软件架构概念
+<ul>
+<li>软件架构本身是对于软件实体组织形式的阐述</li>
+<li>使用框架的意义是快速完成软件架构设计，而不是取代软件架构设计</li>
+<li>通过对软件生命周期的拆分，在符合业务架构的前提下，达到软件本身访问增长目的的方式</li>
+<li>软件架构离不开软件开发团队的组织架构</li>
+</ul>
+</li>
+<li>架构拆分的原则，首先来源于业务自身的组织架构，软件架构要保持和业务组织架构的匹配关系。</li>
+<li>进化
+<ul>
+<li>架构追求的实际上是业务不断长大：通过对业务生命周期的拆分，突出并精简业务核心生命周期，弱化非核心生命周期，达到不同生命周期可以在空间和时间上并行，便于不同的人同时开展工作，提升业务人员单位时间内的产出。</li>
+<li>只有业务才会进化，架构是支撑业务长大的。业务的核心生命周期相当于架构树的主干，主干没有变化，则说明没有变成一棵不同品种的树，因此只有架构的拆分不能叫作进化。</li>
+</ul>
+</li>
+</ul>
+<h3 id="软件架构师岗位">5.2. 软件架构师岗位</h3>
+<ul>
+<li>职责
+<ul>
+<li>架构师要解决的问题都是人的问题</li>
+<li>理解并发现问题永远比解决问题更加重要，遇到问题首先进行分析，不要急于解决问题</li>
+</ul>
+</li>
+<li>谁是架构师
+<ul>
+<li>不具备调动组织架构的权利，往往不能发挥架构师的作用</li>
+<li>软件开发团队的组织领导人其实都是架构师</li>
+<li>一个开发团队的领导，如果不能在架构方面给出意见，那就不能在整个设计环节给出自己的观点或者对团队进行指导，也就可能会在整个软件开发流程中脱节，进而丢失自己的技术领导力，也就做不成技术管理者</li>
+</ul>
+</li>
+<li>责任
+<ul>
+<li>必须时刻把对软件生命周期和业务生命周期的识别放在第一位</li>
+<li>技术管理者（也可能有独立架构师存在）的大部公时间就需要花费在思考上面了，当然也可以继续编程，但是编程的目的是验证架构是否合理，所以不要受是否需要编程这一思维的束缚</li>
+</ul>
+</li>
+<li>软件架构思路
+<ul>
+<li>前提条件
+<ul>
+<li>软件架构师是为业务服务的，而不是主导业务的业务架构师</li>
+</ul>
+</li>
+<li>应对增长
+<ul>
+<li>架构的目的就是为了增长</li>
+<li>把需要增长的业务了解清楚，挖掘出核心生命周期，并确定核心生命周期的主体</li>
+<li>发现问题的主体，并确定核心问题</li>
+<li>如果以很少的资源达到了很大的业务增长，那肯定是一位好的架构师，公司所节省下来的资源应该回馈给架构师，从而形成正向反馈</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>软件架构落地
+<ul>
+<li>只要问题明确，寻找技术并组合来实现架构的拆分并不是难事</li>
+<li>架构师负责拆分生命周期，技术人员负责实现生命周期</li>
+<li>组织架构是树状的，上层节点要求下层执行，所以执行才是架构的核心</li>
+<li>权力要下放，只有权力下放了，下层节点才能够更好地执行</li>
+</ul>
+</li>
+<li>有用的工具
+<ul>
+<li>IBM Rational RequisitePro
+<ul>
+<li>针对项目组（想要改进项目目标的交流、增强协作开发、减少项目风险，以及在部署之前提高应用程序质量的项目组）的需求和用例进行管理的工具</li>
+</ul>
+</li>
+<li>ArgoUML</li>
+<li>Notability</li>
+<li>Mindmanager</li>
+<li>Enterprise Architect</li>
+</ul>
+</li>
+</ul>
+<h3 id="系统架构能力培养">5.3. 系统架构能力培养</h3>
+<ul>
+<li>提升驱动力
+<ul>
+<li>一个技术团队必须有自己的技术定位，也可以说是有技术愿景，只有这样才能留住对技术很有热情的工程师</li>
+<li>来源
+<ul>
+<li>客户实际需求</li>
+<li>测试数据</li>
+<li>外部公司技术资料</li>
+</ul>
+</li>
+<li>这些推动力实际上也是人的自我愿景设置，只有不断给自己设置愿景的人，才会不断地尝试提高自己的技术能力、设计能力</li>
+</ul>
+</li>
+<li>步步为营
+<ul>
+<li>事物是在发展中不断前进的，网站架构也会随着业务的扩大、用户的需求不断完善，在这个过程中设计能力也是一步步在提升的</li>
+</ul>
+</li>
+<li>学习能力
+<ul>
+<li>如果你想进步、想要有所成绩，就需要持续学习、终身学习</li>
+<li>看论文</li>
+<li>架构师是一个充满挑战的职业，知识面的宽窄往往决定着一个架构师的架构能力，你需要阅读大量的技术书籍，但是不要仅限于软件相关的书籍</li>
+<li>不光需要知道让软件如何高效地运行，还需要知道如何去结合网络、存储，甚至一些文件系统的特性</li>
+</ul>
+</li>
+<li>创新思维
+<ul>
+<li>创新无疑需要批判性思维，但前提是我们能将“批判”与“批判性思维”区别开，批判的目的只是为了达到对某个事物的否定，而批判性思维则是通过否定来寻找更好的做事方法。单纯批判是消极的，而批判性思维是积极的</li>
+<li>核心要素
+<ul>
+<li>创新需要挑战现状，即批判性思维</li>
+<li>批判性思维需要准确的问题定义</li>
+<li>问题的定义有赖于概念系统的建立</li>
+<li>在初始阶段，概念模型的正确与否是次要的，更为重要的是要有一个概念模型，然后这个概念模型可以随着认识的深入而不断演化</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="常见问题分析">5.4. 常见问题分析</h3>
+<ul>
+<li>无从入手
+<ul>
+<li>需要真正去理解软件系统架构，而不是粗略的看一些跟随潮流的书籍，然后简单的使用一下流行的开源框架</li>
+</ul>
+</li>
+<li>轻视设计
+<ul>
+<li>需求沟通完，马上就开始设计数据表结构</li>
+<li>一提笔就是写代码，想到哪里写到哪里</li>
+<li>有一些工作经验的人，做出来的设计也是一团糟，不是考虑不周全</li>
+</ul>
+</li>
+<li>技术优先
+<ul>
+<li>没有永远最好的技术，也没有永远最差的技术，问题总是在不断发生变化的</li>
+<li>架构师必须深入了解不同的技术，知道这些技术的强项和弱点，懂得合适取舍</li>
+<li>技术人员如果要成为架构师，就必须跳出技术的视角，换一个角度去看技术：把时间花在研究生命周期规律和业务的增长上，花在选择合适的技术上，而不只是追求新潮的或自己喜欢的技术</li>
+<li>架构师需要很冷静、很平等地对待所有的技术</li>
+</ul>
+</li>
+<li>业务困境
+<ul>
+<li>业务和架构都是处理人的问题，而技术人员最讨厌处理的就是人的问题，内心厌恶，却又无法逃避</li>
+<li>随着对业务的熟悉，对时间的恐惧才会慢慢消失。对业务领域理解得越深入，就越知道如何去发现问题，慢慢就成为业务专家了。只有做到这一点，才能在业务领域建立自信，成为一个合格的软件架构师</li>
+<li>如果软件工程师对业务一知半解的话，软件是不可能写好的</li>
+</ul>
+</li>
+<li>专职架构师
+<ul>
+<li>如果软件架构师不具备组织架构上的权利，那么架构师的设计慢慢就会被弱化，无法落地</li>
+</ul>
+</li>
+<li>一步到位的思想：一步到位不可能，也没有必要
+<ul>
+<li>在流量不大的时候，做太复杂的拆分会浪费大量时间和不必要的成本</li>
+<li>流量是外在的因素，有经验的人可以做出部分预判，但也没有办法完全预测流量会在哪个地方增长</li>
+</ul>
+</li>
+<li>系统过度设计问题：设计的方案如果不结合目前的实际情况，考虑得太复杂，实现起来也会特别复杂</li>
+</ul>
+<h3 id="其他">5.5. 其他</h3>
+<ul>
+<li>架构和树
+<ul>
+<li>树状结构特别适合增长
+<ul>
+<li>树状的增长，成本方面最低、沟通的路径也没有显著的增长，带来的效果最好</li>
+<li>树的结构也保证了分支的能量汇集到树干，保障了整棵树的生长</li>
+</ul>
+</li>
+<li>架构恰恰是为了应对增长的，自然而然架构都是树状的</li>
+<li>分层 —— 架构树状拆分的结果
+<ul>
+<li>分层的前提是把一个生命周期的连续过程拆分成一棵树，因为有了树才会有层的出现</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>为什么会有架构
+<ul>
+<li>在软件开发生命周期中参与的人员越来越多，进而形成软件开发团队的组织架构</li>
+<li>在软件运行生命周期中，当软件的流量越来越大时，慢慢就会超出软件所在机器的负荷，接着按照树状的结构开始拆分，所形成的是硬件部署树状架构和软件部署树状架构</li>
+</ul>
+</li>
+<li>业务、技术、架构三者关系
+<ul>
+<li>业务、架构和技术之间是共生的关系，而不是互斥的关系
+<ul>
+<li>技术是为了解决业务问题而产生的，没有了业务，技术也就没有了存在的前提</li>
+<li>业务是核心，技术是解决业务问题的工作，而架构是让业务长大的组织方法。</li>
+<li>架构需要用技术来实现拆分，技术需要架构来合理组织，以提升效率。</li>
+</ul>
+</li>
+<li>业务和技术属于两个不同的树，也就是说有两个不同的根节点，因此只有沟通才能解决问题</li>
+</ul>
+</li>
+<li>架构拆分要点
+<ul>
+<li>原则
+<ul>
+<li>如果必须要生命周期的主体在连续时间内持续执行，不能够被打断并更换生命周期主体，那么被拆分的生命周期，不能切分出去</li>
+<li>每个生命周期的负责人对所负责生命周期的权利和义务必须是平等的</li>
+<li>切分出来的生命周期不应该超出一个自然人的负载</li>
+<li>切分是内部活动，内部无论怎么切，对整个系统的外部都应该是透明的</li>
+</ul>
+</li>
+<li>架构切分的过程就是建模的过程
+<ul>
+<li>要做拆分就必须要去识别核心生命周期和非核心生命周期，把非核心生命周期切分出来</li>
+<li>切分出来的不同子生命周期就形成了不同的概念。所以每个概念背后都是一个生命周期，每个生命周期都是一个模型</li>
+<li>核心生命周期模型把所有的模型通过树组织起来，形成了一个新的模型</li>
+</ul>
+</li>
+<li>架构切分的结果最终都会体现在组织架构上，因为架构的切分是对人利益的重新分配</li>
+</ul>
+</li>
+<li>企业应用架构演进
+<ul>
+<li>企业IT架构的设计不仅仅是注重某一个系统能力，更需要给企业一个可进化的、可持续发展、不断创新的平台</li>
+<li>给架构师的建议
+<ul>
+<li>系统定位和边界要清晰，对应的业务定位和边界要清晰</li>
+<li>系统要实现松耦合、高内聚</li>
+<li>易变的、尝试中的新业务要避免影响现有业务的稳定性</li>
+<li>系统之间数据要实现单向流转</li>
+<li>架构设计核心目标是支持业务，有时候不合理的存在是合理的</li>
+</ul>
+</li>
+<li>对于CTO或公司架构师而言，要保证整体企业应用架构的合理性，只要大框架合理，局部的偏差可以忽略，修正的成本也比较小</li>
+<li>对于产品线负责人而言，要保证局部框架的合理性，避免出现由于设计不合理造成的返工和补救工作</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%A2%E9%98%9F%E7%AE%A1%E7%90%86/" rel="tag"># 团队管理</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-building-microservices/" rel="prev" title="《微服务架构》知识总结">
+                  <i class="fa fa-chevron-left"></i> 《微服务架构》知识总结
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/automatically-increase-version-number-in-azure-pipeline/" rel="next" title="使用Azure Pipeline在每次编译时自动升级版本号">
+                  使用Azure Pipeline在每次编译时自动升级版本号 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

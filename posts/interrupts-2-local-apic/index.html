@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在上一篇，我们总结了和中断相关的概念和x86平台下最基础的，基于PIC的，中断处理流程。虽然看起来PIC可以很好的解决中断的问题，而且凭借主从扩展，能力也不错（默认支持15个设备，最多64个设备），但是随着系统的发展，多处理器系统开始出现，PIC的结构就不够用了，所以，APIC（Advanced PIC）就出现了。在这一篇中，我们就来看看吧！ 1. 多处理器系统中的中断问题 我们知道PIC和CPU">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漫谈中断（二）：Local APIC">
+<meta property="og:url" content="http://r12f.com/posts/interrupts-2-local-apic/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在上一篇，我们总结了和中断相关的概念和x86平台下最基础的，基于PIC的，中断处理流程。虽然看起来PIC可以很好的解决中断的问题，而且凭借主从扩展，能力也不错（默认支持15个设备，最多64个设备），但是随着系统的发展，多处理器系统开始出现，PIC的结构就不够用了，所以，APIC（Advanced PIC）就出现了。在这一篇中，我们就来看看吧！ 1. 多处理器系统中的中断问题 我们知道PIC和CPU">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-apic-architecture.jpeg">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-82093aa.jpg">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/madt_local_apic.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-local-apic.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/apic-base-msr.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-82093aa-lint-nmi.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/local-vector-table.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/interrupt-command-register.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/apic-message-status-code.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/ring-vs-mesh.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-alder-lake-p-die-floor-plan.jpg">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/x86-tpr.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/x86-ppr.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-x2apic-icr.png">
+<meta property="article:published_time" content="2023-04-17T17:00:25.000Z">
+<meta property="article:modified_time" content="2023-04-18T00:00:25.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="interrupt">
+<meta property="article:tag" content="hardware">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-apic-architecture.jpeg">
+
+
+<link rel="canonical" href="http://r12f.com/posts/interrupts-2-local-apic/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/interrupts-2-local-apic/","path":"posts/interrupts-2-local-apic/","title":"漫谈中断（二）：Local APIC"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>漫谈中断（二）：Local APIC | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E4%B8%AD%E6%96%AD%E9%97%AE%E9%A2%98"><span class="nav-text">1. 多处理器系统中的中断问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#APIC%EF%BC%88Advanced-PIC%EF%BC%89"><span class="nav-text">2. APIC（Advanced PIC）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Local-APIC"><span class="nav-text">3. Local APIC</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E7%B1%BB%E5%9E%8B"><span class="nav-text">3.1. 中断类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E4%B8%AD%E6%96%AD"><span class="nav-text">3.1.1. 本地中断</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%97%B6%E9%92%9F%E4%B8%AD%E6%96%AD"><span class="nav-text">3.1.1.1. 时钟中断</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#LINT0-LINT1"><span class="nav-text">3.1.1.2. LINT0 &#x2F; LINT1</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#NMI"><span class="nav-text">3.1.1.3. NMI</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E5%90%91%E9%87%8F%E8%A1%A8%EF%BC%88LVT%EF%BC%89"><span class="nav-text">3.1.1.4. 本地向量表（LVT）</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E4%B8%AD%E6%96%AD%E6%B6%88%E6%81%AF%EF%BC%88Interrupt-Message%EF%BC%89%E7%9A%84%E4%B8%AD%E6%96%AD"><span class="nav-text">3.1.2. 基于中断消息（Interrupt Message）的中断</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E8%B7%A8%E5%A4%84%E7%90%86%E5%99%A8%E4%B8%AD%E6%96%AD%EF%BC%88IPI%EF%BC%89%E4%B8%8E%E4%B8%AD%E6%96%AD%E5%91%BD%E4%BB%A4%E5%AF%84%E5%AD%98%E5%99%A8%EF%BC%88ICR%EF%BC%89"><span class="nav-text">3.1.2.1. 跨处理器中断（IPI）与中断命令寄存器（ICR）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E5%A4%84%E7%90%86%E5%99%A8%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-text">3.1.2.2. 目标处理器的选择</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81"><span class="nav-text">3.1.2.3. 消息发送</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E6%B6%88%E6%81%AF"><span class="nav-text">3.1.2.3.1. 中断消息</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%80%BB%E7%BA%BF%E4%B8%8E%E6%B6%88%E6%81%AF%E5%8F%91%E9%80%81"><span class="nav-text">3.1.2.3.2. 系统总线与消息发送</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E6%8E%A5%E6%94%B6"><span class="nav-text">3.1.2.4. 中断接收</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E8%AF%B7%E6%B1%82%E7%9A%84%E5%A4%84%E7%90%86"><span class="nav-text">3.2. 中断请求的处理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E5%AF%84%E5%AD%98%E5%99%A8"><span class="nav-text">3.2.1. 中断寄存器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E4%BC%98%E5%85%88%E7%BA%A7"><span class="nav-text">3.2.2. 中断优先级</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#EOI%E5%AF%84%E5%AD%98%E5%99%A8%E5%92%8C%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%E7%BB%93%E6%9D%9F"><span class="nav-text">3.2.3. EOI寄存器和中断处理结束</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xAPIC-x2APIC"><span class="nav-text">3.3. xAPIC &#x2F; x2APIC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x86%E4%B8%8B%E5%9F%BA%E4%BA%8ELocal-APIC%E7%9A%84%E4%B8%AD%E6%96%AD%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B%E5%B0%8F%E7%BB%93"><span class="nav-text">4. x86下基于Local APIC的中断处理流程小结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E4%B8%AD%E6%96%AD%E6%8E%A5%E6%94%B6%E6%B5%81%E7%A8%8B"><span class="nav-text">4.1. 本地中断接收流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E4%B8%AD%E6%96%AD%E6%B6%88%E6%81%AF%E7%9A%84%E4%B8%AD%E6%96%AD%E7%9A%84%E5%8F%91%E9%80%81%E5%92%8C%E6%8E%A5%E6%94%B6%E6%B5%81%E7%A8%8B"><span class="nav-text">4.2. 基于中断消息的中断的发送和接收流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E5%93%8D%E5%BA%94%E6%B5%81%E7%A8%8B"><span class="nav-text">4.3. 中断响应流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">5. 小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">6. 参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/interrupts-2-local-apic/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="漫谈中断（二）：Local APIC | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漫谈中断（二）：Local APIC
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-04-17 10:00:25 / Modified: 17:00:25" itemprop="dateCreated datePublished" datetime="2023-04-17T10:00:25-07:00">2023-04-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/interrupts-2-local-apic/" class="post-meta-item leancloud_visitors" data-flag-title="漫谈中断（二）：Local APIC" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/interrupts-2-local-apic/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/interrupts-2-local-apic/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在上一篇，<a href="/posts/interrupts/">我们总结了和中断相关的概念和x86平台下最基础的，基于PIC的，中断处理流程</a>。虽然看起来PIC可以很好的解决中断的问题，而且凭借主从扩展，能力也不错（默认支持15个设备，最多64个设备），但是随着系统的发展，多处理器系统开始出现，PIC的结构就不够用了，所以，APIC（Advanced PIC）就出现了。在这一篇中，我们就来看看吧！</p>
+<h2 id="多处理器系统中的中断问题">1. 多处理器系统中的中断问题</h2>
+<p>我们知道PIC和CPU直接相连，所以PIC其实是一个全局的中断控制器，也就是说，它只能支持一个CPU。而随着系统的发展，多核处理器开始出现，有很多问题PIC就无能为力了，比如：</p>
+<ol>
+<li>当外部中断发生的时候，我们怎么知道这个中断要去哪个处理器呢？</li>
+<li>如果一个处理器需要请求另外一个处理器发生中断，我们要如何去触发呢？</li>
+<li>有些中断是每个处理器都需要单独处理的，比如温度过高的中断，所以我们的新模型是不是还需要支持类似PIC的本地中断处理模型呢？</li>
+</ol>
+<p>于是为了解决这些问题，APIC就被发明了出来。</p>
+<span id="more"></span>
+<h2 id="APIC（Advanced-PIC）">2. APIC（Advanced PIC）</h2>
+<p>APIC是一个全新的中断控制器架构，<strong>它的设计目标就是为了支持<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Symmetric_multiprocessing">多处理器系统（SMP）</a></strong>。（这里的处理器（Processor），是指一个CPU内部的一个逻辑处理器/线程，不是指的Socket，后面只要提到处理器，我们都是指的这个相同的意思）。与PIC的monolithic设计非常不同，为了支持多处理器，APIC采用了分布式的设计，它将中断控制器分成了两个大的部分，其主要思想如下：</p>
+<ol>
+<li>每个处理器都拥有自己独占的Local APIC（LAPIC），主要用来处理每个处理器本地的中断，比如时钟中断，NMI等等。这个部分一般作为处理器的一部分存在，也就是说现在处理器上提供的中断引脚，并非直接连接在处理器的核心上，而是连接在Local APIC上。</li>
+<li>整个系统会存在一个或者多个全局共享的I/O APIC，用来处理外部设备的中断，比如，鼠标，键盘，或者其他PCI设备等等。</li>
+<li>Local APIC之间，还有与I/O APIC之间，会通过系统总线或者APIC总线来进行通信（APIC总线现在已经不用了，所以后面我们只会讨论系统总线）。外部设备的中断会被汇聚到I/O APIC上，然后通过总线发送给指定的Local APIC，最后转发给处理器。</li>
+</ol>
+<p>这样，我们就可以很好的解决上面我们提到的三个问题了！它的设计总体框图大概如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-apic-architecture.jpeg" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a>)</em></p>
+<p>有意思的是，也许是Intel的工程师们，在很早就开始思考多处理器系统的问题了，所以第一个APIC的设计在Intel 80486时就已经出现了，叫做<a target="_blank" rel="noopener" href="https://www.datasheetarchive.com/pdf/download.php?id=06fe61ee2d5c232135bfbe601dc959874fca43&amp;type=P&amp;term=intel%252082489dx">82489DX</a>，当时才1989年，但是也许是因为当时没有多处理器的出现，所以并没有采用分离的设计，但是在1994年，奔腾（Pentium）P54C（80502）的系统中，Local APIC和I/O APIC就完全分离了。Local APIC被集成进了CPU作为CPU的一部分，而I/O APIC则是一个独立的芯片，叫做<a target="_blank" rel="noopener" href="https://html.alldatasheet.com/html-pdf/66087/INTEL/82093AA/126/1/82093AA.html">82093AA</a>，用来处理外部设备的中断。之后随着系统的演化，I/O APIC也被集成进了南桥，后来的PCH（Platform Controller Hub），甚至与CPU内部了。</p>
+<p>为了给大家一个直观的I/O APIC的印象，这里是一张Intel 82093AA的照片，使用的QFP64的封装：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-82093aa.jpg" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.cpu-world.com/SSpec_submissions.html">CPU-world</a>)</em></p>
+<p>好了，那么我们先从靠核心的部分开始，Local APIC。</p>
+<h2 id="Local-APIC">3. Local APIC</h2>
+<p>上面我们已经提到，Local APIC是一个针对CPU中每个处理器的本地的中断控制器，用来处理只和这个处理器相关的中断。每个Local APIC/处理器在系统启动的时候，都会被BIOS分配全局唯一的ID，并通过处理器上特定的引脚传递并保存在Local APIC ID Register中，这个ID一般也用作处理器Id，用于在整个系统中区分自己。</p>
+<blockquote>
+<p>我们通过解析系统中的<a target="_blank" rel="noopener" href="https://wiki.osdev.org/MADT">MADT（Multiple APIC Description Table）</a>表来查看系统中所有的Local APIC，及其ID和处理器的对应关系，Windows上可以使用<a target="_blank" rel="noopener" href="https://www.nirsoft.net/utils/firmware_tables_view.html">Firmware Tables View</a>, Linux上可以使用<a target="_blank" rel="noopener" href="https://manpages.ubuntu.com/manpages/bionic/man1/acpidump-acpica.1.html">acpidump</a>，方法大家可以查看链接或者自行在网上Google，这里就不赘述了。</p>
+<p>我用来实验的系统中有64个核，128线程，从下图中我们可以看到：</p>
+<ul>
+<li>在MADT表中有128个（下标127）合法的Local APIC的信息（apic_id != 0xFF &amp;&amp; flags != 0）。</li>
+<li>对于合法的Local APIC，它们的ID和处理器的ID是一致的，不然它会是0xFF，同样，Flag中的高位第二位的1也是一个证明，它表示这个处理器是在线的（Online）或者可用的。</li>
+</ul>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/madt_local_apic.png" alt></p>
+</blockquote>
+<p>我们知道中断控制器主要的作用是来支持外部中断的处理，帮助CPU减负，Local APIC也是一样，其总体框图如下，我们可以在其中看到和PIC很多类似的设计，比如ISR（In-Service Register）和IRR（Interrupt Request Register）寄存器：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-local-apic.png" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a>)</em></p>
+<p>Local APIC除了与CPU处理器的INTR和INTA相连以外，为了来支持更丰富的中断场景，它和CPU处理器的其他引脚也相连，比如，ExtINT，NMI，SMI，INIT等等，这些引脚的具体用途我们后面会讲到。</p>
+<p>另外和PIC一样，Local APIC也与系统总线相连，并将其所有的寄存器都映射到内存中，这样我们就可以通过内存读写来访问它们了。Intel的文档中很清楚的描述了所有寄存器和其地址的映射关系，大家可以在<a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">这里</a>找到Table 10-1 Local APIC Register Address Map自行查看，表有点长，这里就不放出来了，我们下面如果用到了，我们会单独把地址列出来。</p>
+<p>默认情况下，Local APIC的寄存器都被map到0xFEE00000到0xFEE00FFF的地址空间中，但是这个地址空间是可以被修改的，我们可以通过修改Local APIC Base Address Register（IA32_APIC_BASE MSR，MSR：1BH）来修改它。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/apic-base-msr.png" alt></p>
+<h3 id="中断类型">3.1. 中断类型</h3>
+<p>为了支持APIC的分布式的结构，Local APIC的一部分设计和PIC非常不同。从实现角度来看，Local APIC将外部中断又细分成了两个大类：<strong>本地中断</strong> 和 <strong>基于中断消息的中断</strong>。我们这里来依次看看这两个部分。</p>
+<h4 id="本地中断">3.1.1. 本地中断</h4>
+<p>首先，和PIC架构设计最接近的就是本地中断的处理了，它的主要目的是用来处理和这个处理器相关的中断，比如，时钟中断，NMI中断，本地错误等等。和PIC类似，每个中断源都有其独立的引脚，而由于其集成到了处理器的内部，每个处理器对外提供的中断引脚，其实就是Local APIC的引脚了。</p>
+<p>从上面的框图中，我们可以看到其处理的中断类型和中断源主要有如下几种：</p>
+<table>
+<thead>
+<tr>
+<th>中断源</th>
+<th>中断类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时钟计数器</td>
+<td>时钟中断</td>
+</tr>
+<tr>
+<td>温度传感器引脚</td>
+<td>温度传感器中断，比如过热</td>
+</tr>
+<tr>
+<td>性能监控引脚</td>
+<td>性能监控计数器overflow时产生的中断</td>
+</tr>
+<tr>
+<td>LINT0 / LINT1</td>
+<td>本地连接的I/O设备的中断</td>
+</tr>
+<tr>
+<td>错误寄存器</td>
+<td>错误中断，比如，寄存器访问错误等等</td>
+</tr>
+</tbody>
+</table>
+<h5 id="时钟中断">3.1.1.1. 时钟中断</h5>
+<p>和PIC不同，Local APIC不再依赖外部的PIT，而是自带了一个32位的时钟，由于和处理器集成在了一起，它的时钟频率就是CPU处理器的总线频率。它由三个寄存器实现：</p>
+<ul>
+<li><strong>Initial Count Register（ICR，0xFEE00380）</strong>：用来设置时钟计数器的初始值，如果被设置为0，则时钟计数器会被禁用</li>
+<li><strong>Current Count Register（CCR, 0xFEE00390）</strong>：用来保存当前的时钟计数器的值，当计时开始的时候，时钟会将初始值拷贝到这个寄存器中，并开始倒数计数，而当它到0时，就会产生一个时钟中断</li>
+<li><strong>Divide Configuration Register（DCR，0xFEE003E0）</strong>：用来设置时钟计数器的时钟分频系数，比如，设置为2，则时钟计数器的时钟频率为总线频率的1/2</li>
+</ul>
+<p>为了方便使用，Local APIC的时钟通过LVT表项中的配置（下面会提到）提供了三种不同的模式：</p>
+<ul>
+<li><strong>One-Shot Mode</strong>*：时钟倒计时完成后，时钟计数器会被禁用</li>
+<li><strong>Periodic Mode</strong>：时钟倒计时完成后，时钟计数器会被重新设置为初始值，然后继续倒数计数</li>
+<li><strong>TSC-Deadline Mode</strong>：它也是一种One-Shot模式，不同的是，在这个模式下，我们不会使用Local APIC时钟中的寄存器，而使用另一个寄存器IA32_TSC_DEADLINE MSR来指定时钟的deadline，并使用当前逻辑处理器的时间戳作为当前的时钟计数器，当其大于或等于deadline的时候，处理器就会触发中断。通过这种方式，我们可以使用绝对时间来进行中断，而不是相对时间。</li>
+</ul>
+<h5 id="LINT0-LINT1">3.1.1.2. LINT0 / LINT1</h5>
+<p>相比于PIC连接设备用的中断引脚，LINT0和LINT1有一点特殊，虽然它们连接的是所谓的“本地设备”，但是这两个引脚却是所有处理器都共享的！也就是说，如果中断被触发，这个中断会被传递到所有的处理器上。不过，每个处理器可以使用单独的LVT配置，来决定是否对其进行响应。</p>
+<h5 id="NMI">3.1.1.3. NMI</h5>
+<p>这里我们并没有看见专门用于NMI的引脚，原因是因为NMI的引脚是和LINT0/1共用的，比如，在我们上面提到的实验系统中，NMI引脚其实是连接到了LINT1上的，我们从MADT表中也可以找到这个信息（如下），而这也符合Intel的文档中对于禁用APIC的要求（NMI必须连接到LINT1引脚上）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">/*</span><br><span class="line"> * Intel ACPI Component Architecture</span><br><span class="line"> * AML/ASL+ Disassembler version 20200925 (64-bit version)</span><br><span class="line"> * Copyright (c) 2000 - 2020 Intel Corporation</span><br><span class="line"> *</span><br><span class="line"> * Disassembly of ./apic.dat, Sat Apr 15 01:32:36 2023</span><br><span class="line"> *</span><br><span class="line"> * ACPI Data Table [APIC]</span><br><span class="line"> *</span><br><span class="line"> * Format: [HexOffset DecimalOffset ByteLength]  FieldName : FieldValue</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">[82Ch 2092   1]                Subtable Type : 04 [Local APIC NMI]</span><br><span class="line">[82Dh 2093   1]                       Length : 06</span><br><span class="line">[82Eh 2094   1]                 Processor ID : FF</span><br><span class="line">[82Fh 2095   2]        Flags (decoded below) : 0005</span><br><span class="line">                                    Polarity : 1</span><br><span class="line">                                Trigger Mode : 1</span><br><span class="line">[831h 2097   1]         Interrupt Input LINT : 01     // &lt;=== LINT1</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这里，我们可以通过<a target="_blank" rel="noopener" href="https://html.alldatasheet.com/html-pdf/66087/INTEL/82093AA/126/1/82093AA.html">Intel 82093AA的datasheet</a>来确认这个设计：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-82093aa-lint-nmi.png" alt></p>
+<h5 id="本地向量表（LVT）">3.1.1.4. 本地向量表（LVT）</h5>
+<p>本地向量表（LVT，Local Vector Table）是一个用于保存各个中断的配置的表，当本地中断到来之后，Local APIC便会从LVT表中找到对应的中断配置，读取中断向量号，并根据其配置开始中断处理流程，通知处理器进行处理。具体的流程，我们会放在后面基于中断消息的中断之后来一起讨论。</p>
+<p>本地向量表由一系列寄存器组成，每个寄存器对应一个中断源，和其他寄存器一样，它也被映射到了内存空间中，方便我们进行访问：</p>
+<table>
+<thead>
+<tr>
+<th>寄存器</th>
+<th>地址</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LVT CMCI</td>
+<td>0xFEE002F0</td>
+<td>CMCI（Corrected Machine Check Interrupt）中断</td>
+</tr>
+<tr>
+<td>LVT Timer</td>
+<td>0xFEE00320</td>
+<td>时钟中断</td>
+</tr>
+<tr>
+<td>LVT Performance Monitoring Counter</td>
+<td>0xFEE00340</td>
+<td>性能监控计数器overflow时产生的中断</td>
+</tr>
+<tr>
+<td>LVT LINT0</td>
+<td>0xFEE00350</td>
+<td>本地连接的I/O设备的中断</td>
+</tr>
+<tr>
+<td>LVT LINT1</td>
+<td>0xFEE00360</td>
+<td>本地连接的I/O设备的中断</td>
+</tr>
+<tr>
+<td>LVT Error</td>
+<td>0xFEE00370</td>
+<td>错误中断，比如，寄存器访问错误等等</td>
+</tr>
+</tbody>
+</table>
+<p>其中每个寄存器都是32位，保存着对应的中断向量号，当前是否有中断等待和其他配置，比如是否启用，触发方式，通过哪个针脚通知CPU，等等。具体的信息如下图所示（在这里，我们也可以看到上面提到的时钟中断的配置）：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/local-vector-table.png" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a>)</em></p>
+<h4 id="基于中断消息（Interrupt-Message）的中断">3.1.2. 基于中断消息（Interrupt Message）的中断</h4>
+<p>好了，现在我们已经大概了解了本地中断的接收设施了，那么如何在处理器之间发送和接收中断，还有如何接收汇聚到I/O APIC再转发过来的外部设备中断呢？这就是APIC的另一个重要的功能了，它提供了一种基于中断消息的中断处理机制，这种机制可以让我们在不同的处理器之间传递中断请求，也可以让我们处理外部设备的中断。这个机制是APIC中最重要的一部分，它也是后面更为现代的中断的基石。</p>
+<p>由于这两种中断在接收方处理的方法是一样的，所以，我们这里就只来看看和Local APIC相关的部分：<strong>跨处理器中断（IPI，Inter-Processor Interrupt）</strong>，而关于I/O APIC的中断转发，我们放在以后说I/O APIC的时候再来讨论。</p>
+<h5 id="跨处理器中断（IPI）与中断命令寄存器（ICR）">3.1.2.1. 跨处理器中断（IPI）与中断命令寄存器（ICR）</h5>
+<p>跨处理器中断（IPI，Inter-Processor Interrupt）在系统中十分有用，它不仅可以用于通知对方处理器执行中断或者某些特殊操作，如Flush TLB，也可以用来给自己发送中断，打断当前执行的任务，做抢占式调度等等。</p>
+<p>为了支持跨处理器中断，Local APIC中，有一个非常特殊的寄存器，叫做中断命令寄存器（ICR，Interrupt Command Register），他是一个64Bit的寄存器，在内存中会被map到0xFEE00300的地址上。其结构如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/interrupt-command-register.png" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a>)</em></p>
+<p>当我们需要发送IPI消息的时候，我们要对这个寄存器进行两次操作：</p>
+<ol>
+<li><strong>写入目标处理器ID</strong>：将目标CPU的ID写入到这个寄存器的高32位，这个ID就是我们系统启动的时候给每个Local APIC和处理器分配的ID</li>
+<li><strong>写入中断配置</strong>：将中断向量号和其他相关的中断配置写入到这个寄存器的低32位，而这个写操作就会触发Local APIC产生一个IPI消息，发送给系统总线了</li>
+</ol>
+<p>这个寄存器的结构比较复杂，以下是它每个字段的含义：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vector</td>
+<td>需要触发的中断向量号</td>
+</tr>
+<tr>
+<td>Destination Mode</td>
+<td>目标处理器ID的模式，0表示物理模式，1表示逻辑模式</td>
+</tr>
+<tr>
+<td>Destination Field</td>
+<td>目标处理器的ID，物理模式和逻辑模式下，ID的含义不同</td>
+</tr>
+<tr>
+<td>Destination Shorthand</td>
+<td>目标处理器的范围，0x00 = 由Destination Field指定，0x01 = 自己，0x10 = 所有处理器，0x11 = 除了自己的所有处理器</td>
+</tr>
+<tr>
+<td>Delivery Status</td>
+<td>表示中断是否已经被发送出去了，0表示当前没有消息需要发送，1表示正在等待发送</td>
+</tr>
+<tr>
+<td>Trigger Mode</td>
+<td>目标处理器上中断的触发方式，0表示电平触发，1表示边沿触发</td>
+</tr>
+<tr>
+<td>Delivery Mode</td>
+<td>目标处理器上如何通知处理器，比如通过IVT来触发，还是SMI，NMI或者INIT针脚来触发</td>
+</tr>
+<tr>
+<td>Level</td>
+<td>已经基本废弃，永远为1</td>
+</tr>
+<tr>
+<td>Reserved</td>
+<td>保留字段，必须为0</td>
+</tr>
+</tbody>
+</table>
+<p>另外需要注意的一点是，如果中断消息发送失败，那么Local APIC会尝试重新发送此消息。所以，如果指定的目标处理器不存在，那么这个消息将被重复发送多次。</p>
+<h5 id="目标处理器的选择">3.1.2.2. 目标处理器的选择</h5>
+<p>在选择目标处理器时，我们有两种方法来通过Destination Field来指定目标处理器：物理模式或者逻辑模式。这个模式可以通过Desination Mode来设置。</p>
+<p>首先是<strong>物理模式</strong>，很好理解，这个时候Destination Field就是目标处理器的ID，也就是Local APIC的ID。</p>
+<p>然后是<strong>逻辑模式</strong>，在这个模式下，Destination Field中我们需要填写MDA（Message Destination Address），这个MDA并不是一个真实的地址，而接收方需要根据其DFR（Destination Format Register）和LDR（Logical Destination Register）来判断是否应该接收这个消息。其流程如下：</p>
+<ul>
+<li>先从DFR中读取当前目标地址的格式：这个格式有4位，但是目前只有两个值：Flat Model（0b1111）和Cluster model（0b0000）。</li>
+<li>再从LDR中读取当前目标地址的值：如果是Flat model，那么这个值中的每一位代表着一个单独的处理器；如果是Cluster model，那么这个值的高4位将被看作是一个Cluster ID，低4位和Flat model一样，每一位代表着一个单独的处理器。</li>
+</ul>
+<p>当然，随着时间推移，Cluster model也有了更多新的玩法，甚至需要专门的，独立于APIC之外的Cluster Manager来帮忙，但是这些都不是我们今天要讨论的内容，所以我们就不再深入了。</p>
+<h5 id="消息发送">3.1.2.3. 消息发送</h5>
+<p>好了，我们已经知道中断是靠系统总线上的消息进行传递的，可是这个消息是如何发送到系统总线上的呢，它又长什么样子呢？</p>
+<p>这里有一些可惜，关于Intel对系统总线的实现细节和内部消息的结构，公开的资料非常少，所以我们只能通过一些相关的资料来大概的对其进行一些猜测了。</p>
+<h6 id="中断消息">3.1.2.3.1. 中断消息</h6>
+<p>Local APIC支持过两种总线：系统总线和APIC总线，虽然APIC总线现在已经被系统总线淘汰了，但是它的消息格式却是完全公开的。我们知道不同的片上网络会有自己的独特的消息格式，但是如果是同一个消息，那么很有可能只是用来路由的包头和包尾不同，包体很有可能是一样的，所以我们可以通过APIC总线的消息格式来推测系统总线的消息格式。</p>
+<p>首先，是<strong>请求中断的消息</strong>，又称短消息（Short Message），它全长42个bit，用来发送绝大部分的中断，比如基于IVT, NMT, SMI, INIT, Start-up，ExtINT和带Focus的最低优先级的中断请求，其结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">apic_short_message</span> &#123;</span></span><br><span class="line">    <span class="comment">// Header</span></span><br><span class="line">    <span class="type">uint8_t</span> type:<span class="number">2</span>;             <span class="comment">// 0b01 = Normal interrupt</span></span><br><span class="line">    <span class="type">uint8_t</span> arbitration_id:<span class="number">6</span>;   <span class="comment">// Arbitration ID</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Body</span></span><br><span class="line">    <span class="type">uint8_t</span> destination_mode:<span class="number">1</span>; <span class="comment">// Destination mode, 0 = Physical, 1 = Logical</span></span><br><span class="line">    <span class="type">uint8_t</span> delivery_mode:<span class="number">3</span>;    <span class="comment">// Delivery mode</span></span><br><span class="line">    <span class="type">uint8_t</span> level:<span class="number">1</span>;            <span class="comment">// Level, Always 1</span></span><br><span class="line">    <span class="type">uint8_t</span> trigger_mode:<span class="number">1</span>;     <span class="comment">// Trigger mode, 0 = Level, 1 = Edge</span></span><br><span class="line">    <span class="type">uint8_t</span> <span class="built_in">vector</span>;             <span class="comment">// Interrupt vector</span></span><br><span class="line">    <span class="type">uint8_t</span> destination_field;  <span class="comment">// Destination ID</span></span><br><span class="line">    <span class="type">uint8_t</span> checksum:<span class="number">2</span>;         <span class="comment">// Checksum of packet body</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Separator</span></span><br><span class="line">    <span class="type">uint8_t</span> reserved:<span class="number">2</span>;         <span class="comment">// Always 0</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Reply</span></span><br><span class="line">    <span class="type">uint8_t</span> status:<span class="number">4</span>;           <span class="comment">// Destination APIC reply status</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// End</span></span><br><span class="line">    <span class="type">uint8_t</span> idle:<span class="number">2</span>;             <span class="comment">// Idle, Always 0</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个消息中有两处注意的地方：</p>
+<ol>
+<li>
+<p>status字段不是由源Local APIC发送的，而是由目标Local APIC回复的，0代表成功，其他的值则代表有错误。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/apic-message-status-code.png" alt></p>
+<p><em>(Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a>)</em></p>
+</li>
+<li>
+<p>这个消息里面并没有destination_shorthand字段，当需要广播中断的时候，我们会使用physical destination mode，然后将destination field设置为0x0F，这样就可以将消息广播到所有的处理器上了。如果是需要将自己排除在广播外，那么需要源Local APIC自己做判断，发给总线上的数据包是没有区别的。</p>
+</li>
+</ol>
+<p>而用于<strong>ACK中断的消息</strong>，全长28个bit，如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">apic_eoi_message</span> &#123;</span></span><br><span class="line">    <span class="comment">// Header</span></span><br><span class="line">    <span class="type">uint8_t</span> type:<span class="number">2</span>;             <span class="comment">// 0b11 = EOT</span></span><br><span class="line">    <span class="type">uint8_t</span> arbitration_id:<span class="number">6</span>;   <span class="comment">// Arbitration ID</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Body</span></span><br><span class="line">    <span class="type">uint8_t</span> <span class="built_in">vector</span>;             <span class="comment">// Interrupt vector</span></span><br><span class="line">    <span class="type">uint8_t</span> checksum:<span class="number">2</span>;         <span class="comment">// Checksum of packet body</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Separator</span></span><br><span class="line">    <span class="type">uint8_t</span> reserved:<span class="number">2</span>;         <span class="comment">// Always 0</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Reply</span></span><br><span class="line">    <span class="type">uint8_t</span> status:<span class="number">4</span>;           <span class="comment">// Destination APIC reply status</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// End</span></span><br><span class="line">    <span class="type">uint8_t</span> idle:<span class="number">2</span>;             <span class="comment">// Idle, Always 0</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h6 id="系统总线与消息发送">3.1.2.3.2. 系统总线与消息发送</h6>
+<p>Intel的CPU通常使用两种体系结构中经典的系统总线来做互联：环形总线（Ring）和网状总线（Mesh）。环形总线是一个圈，所有的处理器依次连接在上面，而网状总线会复杂一些，它们在网络中形成一个网格的形式。这两种结构的区别对我们理解消息发送关系不大，所以我们就选一种比较简单的Ring来进行分析。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/ring-vs-mesh.png" alt></p>
+<p><em>(左边是Ring Bus，右面是Mesh Bus，Source: <a target="_blank" rel="noopener" href="https://www.intel.com/content/www/us/en/developer/articles/technical/xeon-processor-scalable-family-technical-overview.html">Intel® Xeon® Processor Scalable Family Technical Overview</a>)</em></p>
+<p>环形系统总线其实并不是一个简单的电路环路，它是一个双向的通信通道，连接着CPU里面很多重要的模块，比如，计算处理器，图像处理单元，LLC，System Agent（以前叫un-core，里面包含了I/O接口等等）。从大的方面来说，它两个大部分组成：</p>
+<ol>
+<li>Ring Agent：每个处理器都有一个Ring Agent，它连接到真正的总线上，负责管理和这个处理器相关的消息。Ring Agent会进行总线的仲裁，消息路由等等操作。</li>
+<li>四条环形总线：一个Ring Bus其实是由四条32位的环形总线组成的：Data, Request，Ack和Snoop，每条总线都是双向的，每个Clock Cycle都可以读写32个bit，并且工作频率与处理器保持一致，且随着处理器的变化而变化。</li>
+</ol>
+<p>当消息从Local APIC通过Bus Interface发给Ring Agent之后，Ring Agent便会开始根据arbitration id进行仲裁，并开始寻路，将消息投递给目标处理器对应的Ring Agent上，然后Ring Agent会将消息转发给目标处理器的Local APIC，这样就完成了消息的发送。另外，关于总线的占用，虽然总线是一个环形，但是总线却是双向的，Ring Agent会永远使用和目标处理器最短的路线进行投递，并且总线还可以同时收发多条消息，只要路径上没有冲突就可以。</p>
+<p>这样子，我们上面的消息基本上在几个Clock Cycle就可以完成发送了，如果CPU是3GHz，整个过程只需要大概1ns左右。</p>
+<p>这里，大神<a target="_blank" rel="noopener" href="https://twitter.com/Locuza_">Locuza</a>对Intel Alter Lake CPU的DIE floor plan进行了一个很好的注释，也让我们可以一窥Ring Bus的真实面貌，以及它是如何连接CPU中各个模块的：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-alder-lake-p-die-floor-plan.jpg" alt></p>
+<p><em>(请注意：为了节省CPU内宝贵的面积，Ring Bus和Ring Agent都是叠在LLC上方的，是一个3D的设计。Source: <a target="_blank" rel="noopener" href="https://locuza.substack.com/p/die-walkthrough-alder-lake-sp-and">Die walkthrough: Alder Lake-S/P and a touch of Zen 3</a>)</em></p>
+<h5 id="中断接收">3.1.2.4. 中断接收</h5>
+<p>当IPI消息到达Local APIC时，Local APIC会对消息进行一些检查：</p>
+<ol>
+<li><strong>Checksum校验</strong>：在接收过程中，Local APIC会对checksum进行校验，如果失败了，就会在status位上回复0b11，然后丢弃消息</li>
+<li><strong>检查目标地址</strong>：消息接收完成后，Local APIC会对目标地址进行检查，如果目标地址不是自己，那么就会将消息丢弃。具体的检查流程根据物理模式和逻辑模式的不同会有不同，我们在上面目标处理器的选择已经说过了，这里就不再赘述了。</li>
+</ol>
+<p>如果检查都通过了，那么Local APIC就会根据其消息中的中断请求配置，开始和本地中断类似的正常的中断处理流程了，我们在下面马上会来介绍。</p>
+<h3 id="中断请求的处理">3.2. 中断请求的处理</h3>
+<p>无论是本地中断还是基于中断消息的中断，中断请求最后都会通过这最后的一步将中断请求转发给处理器，这里我们就来一起看看这个过程吧。</p>
+<h4 id="中断寄存器">3.2.1. 中断寄存器</h4>
+<p>和PIC非常类似，Local APIC中有三个关键的256bit的寄存器控制中断请求的处理：</p>
+<ul>
+<li><strong>IRR（Interrupt Request Register，0xFEE00200）</strong>：记录中断请求的到来，每个bit对应一个中断，如果有中断请求，则会标记为1，否则为0。</li>
+<li><strong>ISR（In-Service Register，0xFEE00100）</strong>：记录中断请求正在被处理，和IRR类似，每个bit对应一个中断，如果有中断请求正在被处理，则会标记为1，否则为0。</li>
+<li><strong>TMR（Trigger Mode Register，0xFEE00180）</strong>：记录中断请求的触发模式，每个bit对应一个中断，0代表水平触发，1代表边缘触发。</li>
+</ul>
+<h4 id="中断优先级">3.2.2. 中断优先级</h4>
+<p>在APIC中，中断优先级依然和中断向量号相关，但是和PIC不同的是，APIC中的，中断优先级由向量号的高4位来决定。</p>
+<p>当中断到来后，Local APIC会检查如下两个寄存器，如果待执行的中断的优先级比它们都高，则会开始通知处理器，否则就会被忽略掉，直到当前的中断处理完毕。</p>
+<ul>
+<li>
+<p><strong>TPR（Task Priority Register）</strong>：任务优先级寄存器，这个寄存器可以被软件修改，用来屏蔽比它小的所有的中断。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/x86-tpr.png" alt></p>
+</li>
+<li>
+<p><strong>PPR（Processor Priority Register）</strong>：处理器优先级寄存器，它是一个只读的寄存器，表示当前处理器上正在执行的中断的优先级。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/x86-ppr.png" alt></p>
+</li>
+</ul>
+<h4 id="EOI寄存器和中断处理结束">3.2.3. EOI寄存器和中断处理结束</h4>
+<p>对于使用INTR引脚进行通知的中断，如Fixed Delivery Mode，当处理器处理完中断后，我们还需要进行一些清理的工作，比如，更新ISR，选择下一个中断，回复IPI消息等等。但是和PIC不同，我们不能简单的调用IRET函数，而是需要对一个叫做EOI（End Of Interrupt）的寄存器进行写操作，这个寄存器的地址是0xFEE000B0，写入任意值都可以。</p>
+<p>这个写操作会触发Local APIC执行刚刚提到的清理操作，具体流程我们会在后面流程小结的时候和整体流程放在一起来看。</p>
+<p>这样，我们整个中断处理流程就完成了。</p>
+<h3 id="xAPIC-x2APIC">3.3. xAPIC / x2APIC</h3>
+<p>在看APIC的架构的时候，我们经常看到这两个词：xAPIC和x2APIC，它们是什么呢？</p>
+<p>这个主要是因为在1995年Intel推出的<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/P6_(microarchitecture)">i686（P6）</a>架构的时候，使用了APIC，但是之后，在2000年，Intel推出了新的架构<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/NetBurst">NetBurst</a>，将之前用于连接所有APIC的特有的APIC总线替换成了系统总线，于是不得不制定了新的标准 —— xAPIC（Extended APIC）。<strong>我们现在的系统里面默认跑的都是xAPIC</strong>，早期的APIC架构现在已经完全被淘汰了。</p>
+<p>而随着系统的发展，在2008年，Intel推出了新的架构<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Nehalem_(microarchitecture)">Nehalem</a>，引入了x2APIC，它是xAPIC的升级版，它的优势在于：</p>
+<ul>
+<li><strong>更大的ID</strong>：x2APIC中处理器的ID可以达到32位（Destination Field），这样在物理模式下，我们可以支持最多2^32 - 1个处理器，而虚拟模式也有所改变，我们可以支持最多2^20 - 16个处理器。</li>
+<li><strong>更方便的操作</strong>：比如，广播用的ID变简单了，ICR中的Delivery Status也被删掉了，发送变成了Fire and forget，给自己发送中断可以使用Self IPI寄存器了，等等。</li>
+</ul>
+<p>如下是x2APIC中ICR的结构，可以帮助大家更清晰的感受到和xAPIC的变化：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-04-17-interrupts-2-local-apic/intel-x2apic-icr.png" alt></p>
+<p>这些简化也带来了很多好处，比如，<a target="_blank" rel="noopener" href="https://lists.nongnu.org/archive/html/qemu-devel/2014-01/msg02441.html">kvm可以通过软件模拟的方式来实现x2APIC，而不需要硬件支持</a>，等等。</p>
+<h2 id="x86下基于Local-APIC的中断处理流程小结">4. x86下基于Local APIC的中断处理流程小结</h2>
+<p>好了！到此，我们终于对和Local APIC的中断处理相关的每个组件都有了一个大概的认识。</p>
+<p>首先，根据中断的分类，Local APIC处理的中断其实都属于外部中断。然后，对于Local APIC而言，中断源主要有两类：一类是本地中断，比如时钟中断，NMI中断等等；一类是基于中断消息的中断，比如IPI消息，或者I/O APIC中转发过来的中断。它们的不同主要在于中断信号接收的部分，所以这里，我们来假设当前内核已经初始化完成，系统运行在保护模式下，然后用两个例子来总结一下它们的处理流程吧！</p>
+<p>（注：软件部分这里不会过多涉及，主要是关注在硬件的部分）</p>
+<h3 id="本地中断接收流程">4.1. 本地中断接收流程</h3>
+<p>我们假设系统中LINT0引脚连接了一个本地设备A，并且在处理器A中的LVT将其标记为了启用，然后它触发了，那么其整体中断的流程大致如下：</p>
+<ol>
+<li><strong>设备发起中断</strong>：设备A发起中断，将LINT0引脚的电平拉高。</li>
+<li><strong>Local APIC响应中断</strong>：处理器A的Local APIC根据当前CPU的时钟对所有引脚的电平进行检测，发现LINT0的电平变高后，便会开始读取LVT（本地向量表）中对应的配置，比如中断向量号，然后检查是否启用，向量号是否合法等等。如果没有问题，则会开始中断响应流程。</li>
+</ol>
+<h3 id="基于中断消息的中断的发送和接收流程">4.2. 基于中断消息的中断的发送和接收流程</h3>
+<p>我们假设系统中某个处理器B需要通知处理器A执行某个中断，那么其整体中断的流程大致如下：</p>
+<ol>
+<li><strong>源处理器B发起中断</strong>：处理器B首先将处理器A的ID写入ICR寄存器的高32位，然后将IPI消息写入低32位，用以触发Local APIC像总线发送IPI消息给处理器A。</li>
+<li><strong>源处理器B的Local APIC发送消息</strong>：处理器B的Local APIC将IPI消息发送给系统总线上的Agent（环形总线则是Ring Agent），然后，Agent会根据消息中的arbitration ID进行仲裁。如果仲裁成功，则开始寻路，找到去处理器A最近的路线，发送消息。</li>
+<li><strong>目标处理器A的Local APIC接收消息</strong>：处理器A的Agent接收到消息后，将消息转发给Local APIC，Local APIC对消息进行解析和检查，如Checksum和向量号，如果发现错误，则会立刻在status位回发错误，通知源处理器B失败。如果没有问题，则会开始中断响应流程。</li>
+</ol>
+<h3 id="中断响应流程">4.3. 中断响应流程</h3>
+<p>到这里，中断信号已经在目标处理器A上通过了检查，接下来就可以开始正式的逻辑处理了：</p>
+<ol>
+<li><strong>Local APIC检查delivery mode</strong>：Local APIC检查LVT或者IPI消息中的delivery mode，如果是NMI，SMI，INIT，ExtINIT，或者Start-up IPI，那么将直接通过特殊针脚直接转发给处理器进行处理，否则继续下一步。</li>
+<li><strong>Local APIC记录中断</strong>：Local APIC根据收到的中断向量号，对修改IRR（中断请求寄存器）进行更新，将对应的位设置为1，表示有中断正在等待处理。</li>
+<li><strong>Local APIC进行优先级检查</strong>：Local APIC获取当前IRR中的最高的bit来进行优先级检查，对比当前TPR（Task Priority Register）和PPR（Processor Priority Register）中的值，如果优先级不满足，则继续等待，直到处理器上当前的中断处理完毕。</li>
+<li><strong>Local APIC通知处理器中断到来</strong>：Local APIC更新IRR和ISR，将IRR中选中的中断向量号对应的标志位至0，ISR中的置1，然后将处理器的INTR引脚电平拉高，通知处理器中断到来。此时，如果新的中断到来，会被继续保存在IRR中，而如果发生了中断嵌套，ISR寄存器则会出现多个标志位置为1的情况。</li>
+<li><strong>CPU响应中断</strong>：处理器收到INTR引脚的电平变化后，会等待当前正在执行的指令的完成，然后停止执行，准备中断处理。这个时候，CPU上CS:IP保存的地址是下一条指令的地址。</li>
+<li><strong>CPU获取中断向量号</strong>：CPU通过系统总线向Local APIC获取存储在ISR寄存器中的中断向量号。</li>
+<li><strong>CPU通知Local APIC中断响应</strong>：CPU通过INTA引脚通知PIC中断已经被响应，但是此时APIC并不会把ISR寄存器清0。</li>
+<li><strong>Local APIC取消中断信号</strong>：APIC恢复INTR引脚的电平，这样CPU就可以继续接收新的中断了，这是为了支持中断嵌套。</li>
+<li><strong>CPU读取中断描述符</strong>：CPU从IDTR寄存器中获取中断描述符表的地址，然后根据中断向量号来获取中断描述符，并通过GDTR寄存器找到GDT的基址和段描述符，最后结合IDT中的CS:IP，计算出ISR的最终地址。</li>
+<li><strong>CPU进行特权级检查</strong>：CPU根据中断描述符中的特权级（DPL）来检查当前的特权级（CPL）是否满足中断描述符的要求，如果不满足，就会触发一个特权级异常并结束中断。</li>
+<li><strong>CPU暂停接收中断信号</strong>：CPU根据当前中断描述符的类型，有选择的修改IF标记，暂停中断信号的接收，这是为了能安全的保存上下文。</li>
+<li><strong>CPU保存当前的上下文</strong>：这里的上下文并不是完整的上下文，只是保存了当前的CS，EIP和EFLAGS寄存器。如果在步骤8中发现需要进行栈切换，那么这里还会保存SS和ESP寄存器。</li>
+<li><strong>CPU跳转至中断服务例程</strong>：根据步骤7中计算出的ISR地址，CPU更新指令寄存器，跳转到中断服务例程。</li>
+<li><strong>中断服务例程开始（SOI）</strong>：开始阶段，中断服务例程会做两件事情，一个保存当前的进程更加完整的上下文，另一个是如果允许中断嵌套，则会开始恢复中断，但是不同的系统做的事情可能略有不同。</li>
+<li><strong>中断服务例程执行</strong>：这里就是执行中断服务例程的主逻辑了，另外，在linux内核中，为了保证中断响应速度，硬中断处理的代码会尽量的短，处理器逻辑会被移入软中断中来实现，这里就不多展开了。</li>
+<li><strong>中断服务例程结束（EOI）</strong>：结束阶段，中断服务例程会做两件事情，首先再次禁止中断，保证上下文安全的恢复，然后从堆栈中恢复当前进程的上下文。</li>
+<li><strong>CPU恢复上下文</strong>：中断服务例程的最后会给EOI寄存器中写入任意值，通知中断完成，然后调用iret指令，将控制流交还给CPU，CPU会从堆栈中恢复CS、EIP、EFLAGS寄存器，然后重置IF标记，恢复中断信号的接收。此时CS和EIP指向的是中断前CPU执行的下一条指令，于是CPU可以恢复指令执行。</li>
+<li><strong>Local APIC更新ISR</strong>：将ISR寄存器中最高的为1的bit置为0，表示中断处理完成。</li>
+<li><strong>Local APIC选择下一个中断</strong>：Local APIC会根据当前的IRR（Interrupt Request Register）寄存器中的值，选择下一个优先级最高的中断（最高位），继续通知处理器进行处理。</li>
+<li><strong>Local APIC回复IPI消息</strong>：如果当前中断是IPI消息，那么Local APIC会向发送者回复EOI消息，通知其处理完成。如果TMR（Trigger Mode Register）寄存器中的值为1（水平触发），那么此时会给所有的I/O APIC广播EOI消息。</li>
+<li><strong>结束</strong>：中断处理结束。</li>
+</ol>
+<h2 id="小结">5. 小结</h2>
+<p>好了，在这一篇中，我们详细总结了和x86平台下和Local APIC相关的中断请求和处理流程。这一篇总结虽然有点长，而且细节也较多，但是，有了它我们就可以更方便的理解IO APIC的中断处理和其他更现代的中断方式，比如：MSI/MSI-X了。</p>
+<p>另外，ARM上解决方式也非常类似，<a target="_blank" rel="noopener" href="https://developer.arm.com/documentation/ihi0069/h/?lang=en">与APIC对应的架构叫做GIC，而Local APIC对应着里面的CPU Interface</a>，我们这里不会深入的讨论，如果后面有时间，我们再补上。</p>
+<h2 id="参考资料">6. 参考资料</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 3A: System Programming Guide, Part 1</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/9-series-chipset-pch-datasheet.pdf">Intel® 9 Series Chipset Family Platform Controller Hub</a></li>
+<li><a target="_blank" rel="noopener" href="https://html.alldatasheet.com/html-pdf/66087/INTEL/82093AA/126/1/82093AA.html">82093AA I/O Advanced Programmable Interrupt Controller (APIC)</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.datasheetarchive.com/pdf/download.php?id=06fe61ee2d5c232135bfbe601dc959874fca43&amp;type=P&amp;term=intel%252082489dx">Intel Multi-Processor specification v1.4</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.anandtech.com/show/3922/intels-sandy-bridge-architecture-exposed">Intel’s Sandy Bridge Architecture Exposed</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Advanced_Programmable_Interrupt_Controller">Wiki: Advanced Programmable Interrupt Controller</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.osdev.org/MADT">OSDev: MADT</a></li>
+<li>Understanding the Linux Kernel, Third Edition (Daniel P. Bovet, Marco Cesati Ph.D.)</li>
+<li><a target="_blank" rel="noopener" href="https://developer.arm.com/documentation/ihi0069/h/?lang=en">Arm Generic Interrupt Controller Architecture Specification</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/interrupts-2-local-apic/">漫谈中断（二）：Local APIC</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/interrupts/">漫谈中断（一）：PIC</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/interrupts-2-local-apic/" target="_blank">漫谈中断（二）：Local APIC</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/interrupt/" rel="tag"># interrupt</a>
+              <a href="/tags/hardware/" rel="tag"># hardware</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/interrupts/" rel="prev" title="漫谈中断（一）：PIC">
+                  <i class="fa fa-chevron-left"></i> 漫谈中断（一）：PIC
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/sonic-local-lab-gns3/" rel="next" title="通过GNS3快速搭建本地SONiC Lab">
+                  通过GNS3快速搭建本地SONiC Lab <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

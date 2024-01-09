@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在发布了0.1 Preview版本之后，又折腾了一个月，Mirror v0.2 Preview 2终于诞生了。 这一次的发布主要是让界面可以自由缩放了，这样能适当的缓解一些界面太大导致的调试困难。另外还增加了一些小功能，并且修复了一些bug。 由于加入的部分功能在64位的机器上只有64位的API才能正常工作，所以之后的Mirro可能都将发布32位和64位两个版本，后面我会尽量想办法将两个版本合并。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具">
+<meta property="og:url" content="http://r12f.com/posts/mirror-v0-2-preview-2/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在发布了0.1 Preview版本之后，又折腾了一个月，Mirror v0.2 Preview 2终于诞生了。 这一次的发布主要是让界面可以自由缩放了，这样能适当的缓解一些界面太大导致的调试困难。另外还增加了一些小功能，并且修复了一些bug。 由于加入的部分功能在64位的机器上只有64位的API才能正常工作，所以之后的Mirro可能都将发布32位和64位两个版本，后面我会尽量想办法将两个版本合并。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-auto-layout.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-log.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-save-window-list.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-window-op.png">
+<meta property="article:published_time" content="2012-05-10T22:05:39.000Z">
+<meta property="article:modified_time" content="2012-05-11T05:05:39.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="mirror">
+<meta property="article:tag" content="project">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-auto-layout.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/mirror-v0-2-preview-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/mirror-v0-2-preview-2/","path":"posts/mirror-v0-2-preview-2/","title":"Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E5%9C%B0%E5%9D%80"><span class="nav-text">1. 下载地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E4%BF%AE%E6%94%B9"><span class="nav-text">2. 主要修改</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2012-05-12"><span class="nav-text">2.1. 2012-05-12</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2012-05-11"><span class="nav-text">2.2. 2012-05-11</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E6%AD%A3Bug"><span class="nav-text">2.3. 修正Bug</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E6%88%AA%E5%9B%BE"><span class="nav-text">3. 软件截图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E5%8E%86%E5%8F%B2"><span class="nav-text">4. 软件历史</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Mirror-v1-0-Preview-0-1-21-101"><span class="nav-text">4.1. Mirror v1.0 Preview (0.1.21.101)</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/mirror-v0-2-preview-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2012-05-10 15:05:39 / Modified: 22:05:39" itemprop="dateCreated datePublished" datetime="2012-05-10T15:05:39-07:00">2012-05-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/mirror-v0-2-preview-2/" class="post-meta-item leancloud_visitors" data-flag-title="Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/mirror-v0-2-preview-2/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/mirror-v0-2-preview-2/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在发布了<a href="/r12f-assets/post-assets/Mirror-v0-1-Preview-%E5%8F%91%E5%B8%83-Windows%E5%BC%80%E5%8F%91%E8%BE%85%E5%8A%A9%E5%B7%A5%E5%85%B7">0.1 Preview</a>版本之后，又折腾了一个月，Mirror v0.2 Preview 2终于诞生了。</p>
+<p>这一次的发布主要是让界面可以自由缩放了，这样能适当的缓解一些界面太大导致的调试困难。另外还增加了一些小功能，并且修复了一些bug。</p>
+<p>由于加入的部分功能在64位的机器上只有64位的API才能正常工作，所以之后的Mirro可能都将发布32位和64位两个版本，后面我会尽量想办法将两个版本合并。</p>
+<p>欢迎您<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issues?status=new&amp;status=open">点此乱入反馈各种意见和问题</a>，或者<a target="_blank" rel="noopener" href="https://me.alipay.com/bigasp">点此捐助作者鸡蛋灌饼</a>，支持作者继续开发~</p>
+<h2 id="下载地址">1. 下载地址</h2>
+<p>Mirror v0.2 Preview 2 (0.2.69.102)</p>
+<ul>
+<li>项目地址：<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror">https://bitbucket.org/bigasp/mirror</a></li>
+<li>打包下载 (推荐)：<a target="_blank" rel="noopener" href="http://bigasp.com/wp-content/plugins/download-monitor/download.php?id=194" title=" 已下载 919 次">Mirror-0.2.69.102</a></li>
+<li>下载地址：<a target="_blank" rel="noopener" href="http://bigasp.com/wp-content/plugins/download-monitor/download.php?id=195">Mirror-0.2.69.102-x86</a> (32位) | <a target="_blank" rel="noopener" href="http://bigasp.com/wp-content/plugins/download-monitor/download.php?id=196">Mirror-0.2.69.102-x64</a> (64位)</li>
+</ul>
+<span id="more"></span>
+<h2 id="主要修改">2. 主要修改</h2>
+<h3 id="2012-05-12">2.1. 2012-05-12</h3>
+<p>紧急修正了两个较为严重的问题：</p>
+<ul>
+<li>拖拽窗口时，如果控件很多，则非常的卡 (<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issue/33">#33</a>)</li>
+<li>窗口最小化时退出程序，之后将再也无法正常显示主界面，除非删除配置文件 (<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issue/32">#32</a>)</li>
+</ul>
+<h3 id="2012-05-11">2.2. 2012-05-11</h3>
+<p>新增功能：</p>
+<ul>
+<li>由于一些API在64位系统上需要64位程序才能正常使用，所以将程序分为32位和64位两个版本</li>
+<li>界面终于能缩放大小了，并在关闭的时候自动保存其位置</li>
+<li>状态栏添加反馈问题的快捷入口</li>
+<li>刷新窗口树时，自动定位到当前观察的窗口</li>
+<li>保存当前窗口列表中显示的窗口树</li>
+<li>增加一些新的窗口高亮：</li>
+<li>高亮窗口中选中的窗口</li>
+<li>高亮当前正在观察的窗口</li>
+<li>获取窗口Unicode属性</li>
+<li>发送窗口消息支持Send和Post两种，并且支持发送自定义的消息</li>
+<li>在Vista之上的系统，可以检测窗口所在线程的等待链</li>
+<li>增加了一些新的模拟鼠标输入</li>
+<li>添加程序日志Tab</li>
+</ul>
+<h3 id="修正Bug">2.3. 修正Bug</h3>
+<ul>
+<li>修正无法获取进程外窗口的窗口过程的问题 (<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issue/19">#19</a>) (通过注入代码解决，在窗口失去响应的时候，可能会有一些不稳定)</li>
+<li>修正模拟消息输入WPARAM和LPARAM永远为0的Bug (<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issue/31">#31</a>)</li>
+<li>修正没有选中窗口，就不可以刷新部分全局的数据 (<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issue/16">#16</a>)</li>
+<li>其他一些小Bug和崩溃</li>
+</ul>
+<h2 id="软件截图">3. 软件截图</h2>
+<p>支持自动布局的界面，想摆多大弄多大<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-auto-layout.png" alt="mirror-auto-layout"></p>
+<p>以后会陆续完善各种Log，让你不丢失调试中的各种信息<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-log.png" alt="mirror-log"></p>
+<p>窗口列表随时存，Dump回去查问题<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-save-window-list.png" alt="mirror-save-window-list"></p>
+<p>窗口消息任意发，窗口阻塞不着急（等待链检测需要Vista以上的系统支持）<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-05-10-mirror-v0-2-preview-2/mirror-window-op.png" alt="mirror-window-op"></p>
+<h2 id="软件历史">4. 软件历史</h2>
+<h3 id="Mirror-v1-0-Preview-0-1-21-101">4.1. Mirror v1.0 Preview (0.1.21.101)</h3>
+<p>新增功能：</p>
+<ul>
+<li>查看/修改窗口基本信息</li>
+<li>查看窗口所在的线程信息</li>
+<li>查看/高亮显示/设置前景窗口，焦点窗口，激活窗口</li>
+<li>查看窗口类信息</li>
+<li>查看/修改窗口Prop</li>
+<li>发送窗口消息，并提供一些常用的窗口相关的Api调用</li>
+<li>模拟鼠标，键盘输入</li>
+<li>查看/修改DWM信息，可以自己设置几乎所有的窗口DWM的属性</li>
+<li>基本上面提到的所有的功能，都可以对其设置热键，甚至包括切换软件中的Tab</li>
+<li>应用设置之后，新的热键会被自动保存在mirror.ini配置文件中</li>
+<li>每隔一天自动检查更新</li>
+<li>等等等等</li>
+</ul>
+<p>更多信息可参阅项目首页：<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror">https://bitbucket.org/bigasp/mirror</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/mirror/" rel="tag"># mirror</a>
+              <a href="/tags/project/" rel="tag"># project</a>
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/" rel="tag"># 开发工具</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/mirror-v0-1-preview/" rel="prev" title="Mirror v0.1 Preview 发布 —— Windows开发辅助工具">
+                  <i class="fa fa-chevron-left"></i> Mirror v0.1 Preview 发布 —— Windows开发辅助工具
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/cannot-help-say-something-about-diablo-3-after-playing-for-a-day/" rel="next" title="玩了一天就实在忍不住要吐槽暗黑3了">
+                  玩了一天就实在忍不住要吐槽暗黑3了 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

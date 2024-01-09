@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="**说明啊说明：**本人纯属小菜，对Objective-C神马的完全的不懂，这篇文章纯属扯淡，各位大大路过，欢迎各种指教~ 今天一个同事对我说，他花了两个晚上的时间，啃完了Objective-C。我表示非常震惊，这种速度，应该是为了避免跟不上工作进度，穿越回来的时候选早了几天。于是接着我们就围着Objective-C侃了起来。 他说他看到Objective-C里面的一些特性非常好玩，于是说给我听，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一次好玩的扯淡——在C++中实现Objective-C的categories">
+<meta property="og:url" content="http://r12f.com/posts/implementing-objective-c-categories-in-c/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="**说明啊说明：**本人纯属小菜，对Objective-C神马的完全的不懂，这篇文章纯属扯淡，各位大大路过，欢迎各种指教~ 今天一个同事对我说，他花了两个晚上的时间，啃完了Objective-C。我表示非常震惊，这种速度，应该是为了避免跟不上工作进度，穿越回来的时候选早了几天。于是接着我们就围着Objective-C侃了起来。 他说他看到Objective-C里面的一些特性非常好玩，于是说给我听，">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-static-lib-sln.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-static-lib-result.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/simple-static-lib-symbols.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/main-symbols-1.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/main-symbols-2.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-sln.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-result.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/simple-dynamic-lib-exports.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-var-result.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-var-rt.png">
+<meta property="article:published_time" content="2012-03-19T09:47:23.000Z">
+<meta property="article:modified_time" content="2012-03-19T16:47:23.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="c++">
+<meta property="article:tag" content="categories">
+<meta property="article:tag" content="My Life">
+<meta property="article:tag" content="objective-c">
+<meta property="article:tag" content="编译">
+<meta property="article:tag" content="链接">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-static-lib-sln.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/implementing-objective-c-categories-in-c/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/implementing-objective-c-categories-in-c/","path":"posts/implementing-objective-c-categories-in-c/","title":"一次好玩的扯淡——在C++中实现Objective-C的categories"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一次好玩的扯淡——在C++中实现Objective-C的categories | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5%E4%B8%8B%E7%9A%84%E7%B1%BB%E6%89%A9%E5%B1%95"><span class="nav-text">1. 静态链接下的类扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E5%9B%A0%E5%88%86%E6%9E%90"><span class="nav-text">2. 原因分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E4%B8%8B%E7%9A%84%E7%B1%BB%E6%89%A9%E5%B1%95"><span class="nav-text">3. 动态链接下的类扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%90%E5%91%98%E5%8F%98%E9%87%8F%E7%9A%84%E6%89%A9%E5%B1%95"><span class="nav-text">4. 成员变量的扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">5. 总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/implementing-objective-c-categories-in-c/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一次好玩的扯淡——在C++中实现Objective-C的categories | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一次好玩的扯淡——在C++中实现Objective-C的categories
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2012-03-19 02:47:23 / Modified: 09:47:23" itemprop="dateCreated datePublished" datetime="2012-03-19T02:47:23-07:00">2012-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/implementing-objective-c-categories-in-c/" class="post-meta-item leancloud_visitors" data-flag-title="一次好玩的扯淡——在C++中实现Objective-C的categories" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/implementing-objective-c-categories-in-c/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/implementing-objective-c-categories-in-c/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>**说明啊说明：**本人纯属小菜，对Objective-C神马的完全的不懂，这篇文章纯属扯淡，各位大大路过，欢迎各种指教~</p>
+<p>今天一个同事对我说，他花了两个晚上的时间，啃完了Objective-C。我表示非常震惊，这种速度，应该是<a target="_blank" rel="noopener" href="http://coolshell.cn/articles/2250.html">为了避免跟不上工作进度，穿越回来的时候选早了几天</a>。于是接着我们就围着Objective-C侃了起来。</p>
+<p>他说他看到Objective-C里面的一些特性非常好玩，于是说给我听，比如：</p>
+<p>这是一个很神奇的特性，虽然我完全没有看过Objective-C，但是听大致的描述是这个意思：只要我们拥有某个类的头文件和其对应的静态链接库，那么我们就可以对这个类进行扩展，比如，给这个类加一个成员函数。</p>
+<p>这种用法，对于基本只在C++里面转圈的我来说，确实也是第一次听到，觉得相当新鲜，于是就开始想了：C++里面是不是也能做到这件事情呢？</p>
+<p>让我们来开始尝试吧！给一个名为Test的类添加名为Func1的成员函数。</p>
+<span id="more"></span>
+<h2 id="静态链接下的类扩展">1. 静态链接下的类扩展</h2>
+<p>我们知道，静态链接生成的.lib文件，实际上可以看成是一个.o文件的集合。<strong>而编译器在链接的时候，实际本质上只是在尝试连接名称匹配的Symbol</strong>。</p>
+<p>那么这样看起来加一个成员函数似乎就变成一件很容易的事情了。</p>
+<p>我们首先来建两个工程：</p>
+<ul>
+<li>SimpleStaticLib：Static Library，用于生成我们要扩展的静态链接库。</li>
+<li>ExpandStaticLib：Console类型的Exe，用于实验类扩展的结果。他依赖于SimpleStaticLib工程。</li>
+</ul>
+<p>最终样子如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-static-lib-sln.png" alt="expand-static-lib-sln"></p>
+<p>然后给SimpleStaticLib添加一个简单的Test类：</p>
+<p>test.h</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">pragma</span> once</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>();</span><br><span class="line">    ~<span class="built_in">Test</span>();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Func0</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>test.cpp</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;stdafx.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;test.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Test::<span class="built_in">Test</span>()</span><br><span class="line">: <span class="built_in">a</span>(<span class="number">1</span>)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Test::~<span class="built_in">Test</span>()</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Test::Func0</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf_s</span>(<span class="string">&quot;Test::Func0! a = %d\n&quot;</span>, a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在ExpandStaticLib中里面，我们按照如下方法给Test类添加一个Func1的函数，代码如下：</p>
+<p>main.cpp</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;stdafx.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Test</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>();</span><br><span class="line">    ~<span class="built_in">Test</span>();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Func0</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Func1</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Test::Func1</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf_s</span>(<span class="string">&quot;Test::Func1! a = %d\n&quot;</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Test o;</span><br><span class="line">    o.<span class="built_in">Func0</span>();</span><br><span class="line">    o.<span class="built_in">Func1</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译，运行，我们可以发现，成功了！<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-static-lib-result.png" alt="expand-static-lib-result"></p>
+<h2 id="原因分析">2. 原因分析</h2>
+<p>刚刚我们也提到，Link的本质是链接同名的符号，那么这些符号在真正编译器里面是个什么样子呢？我们来一探究竟。</p>
+<p>在Windows上，我们可以使用dumpbin来查看Obj和Lib文件中的具体内容。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dumpbin /SYMBOLS SimpleStaticLib.lib</span><br></pre></td></tr></table></figure>
+<p>在SimpleStatictest.lib中，我们可以找到Test类的成员函数的符号。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/simple-static-lib-symbols.png" alt="simple-static-lib-symbols"></p>
+<p>在ExpandStaticLib工程的Debug目录下，我们可以找到main.obj，在里面我们可以找到对Test::Func1的引用。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/main-symbols-1.png" alt="main-symbols-1"></p>
+<p>我们再来看对Test其他函数的引用。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/main-symbols-2.png" alt="main-symbols-2"></p>
+<p>我们可以看出来，这两个符号是不同的，因为Test::Func0的实现是在main.o的外部实现的，所以就没有后面的Section信息，而Test::Test则相反，是一个内部实现，在后续的Section中就可以看到其最后编译出的代码长度。</p>
+<p>在链接的时候，链接器会加载所有的.lib和.obj文件，然后在其中查找各自的符号和其对应的实现，最后将他们链接在一起并最终输出成可执行文件。</p>
+<p>当然，我们也可以使用link命令简单的来试着生成最后的可执行文件。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">link SimpleStaticLib.lib ../ExpandStaticLib/Debug/main.obj</span><br></pre></td></tr></table></figure>
+<h2 id="动态链接下的类扩展">3. 动态链接下的类扩展</h2>
+<p>那如果我们使用动态链接还可以实现这种效果吗？二话不说来试一试吧。</p>
+<p>首先，再建立两个工程：</p>
+<ul>
+<li>SimpleDynamicLib：和SimpleStaticLib一样，只是是一个DLL的工程。</li>
+<li>ExpandDynamicLib：和ExpandStaticLib一样，只是依赖于SimpleDynamicLib。</li>
+</ul>
+<p>最后样子如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-sln.png" alt="expand-dynamic-lib-sln"></p>
+<p>然后，我们将Test的代码复制到SimpleDynamicLib工程中，将Main的代码复制到ExpandDynamicLib工程中。</p>
+<p>接着，将两个工程中的Test类都加入__declspec(dllimport)，如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">__declspec</span>(dllimport) Test</span><br></pre></td></tr></table></figure>
+<p>最后，编译，执行。结果还是通过了！这里为了区分和上面的结果，我在输出中加入了”Dynamic”的文字。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-result.png" alt="expand-dynamic-lib-result"></p>
+<p>为什么呢？其实原因大家肯定都能猜个大概了。</p>
+<p>在dll中导出类的实现，实际上是将类的成员函数全部变成导出函数，在生成的lib中实际上只保存了类的大小信息和成员函数的符号定义。</p>
+<p>我们在<a target="_blank" rel="noopener" href="http://www.dependencywalker.com/">depends</a>中可以看到SimpleDynamicLib.dll的导出函数和导出变量。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/simple-dynamic-lib-exports.png" alt="simple-dynamic-lib-exports"></p>
+<p>所以，在链接的时候，链接器根据同名符号进行链接，就依然是成功的了。</p>
+<h2 id="成员变量的扩展">4. 成员变量的扩展</h2>
+<p>最后，我们在来想想，我们能否对Test类中间的成员变量进行扩展呢？我们来修改一下我们的程序，给Test类加入一个int型变量b。</p>
+<p>刚刚我们看到在动态链接和静态链接的时候，链接器做的事情本质上基本是一样的，所以为了方便观察和描述原理，我们这里修改动态链接的工程：ExpandDynamicLib中的Test类。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">__declspec</span>(dllimport) Test</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Test</span>();</span><br><span class="line">    ~<span class="built_in">Test</span>();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Func0</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Func1</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> a;</span><br><span class="line">    <span class="type">int</span> b;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Test::Func1</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    b = <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">printf_s</span>(<span class="string">&quot;Dynamic Test::Func1! a = %d, b = %d\n&quot;</span>, a, b);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译，运行，可以看到，这次也正常执行了！那这次实际上到底发生了什么事情呢？<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-var-result.png" alt="expand-dynamic-lib-var-result"></p>
+<p>我们上面说到链接器的工作原理实际上是链接相同名称的符号，换句话说，就是他并不会修改除了符号信息之外的代码，在编译的过程中，编译出来的最终代码主要是由编译器来生成的。我们刚刚也看到了SimpleDynamicLib的导出函数，其中我们并没有发现这样的一个导出函数：申请类的空间。通过查看汇编代码，我们可以从中看到C++是怎样来处理的。</p>
+<p><strong>为了更好的看到C++的行为，在这里请使用Release来编译工程，并且禁用堆栈检查，避免他们对最后汇编代码的影响。</strong><br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-19-implementing-objective-c-categories-in-c/expand-dynamic-lib-var-rt.png" alt="expand-dynamic-lib-var-rt"></p>
+<p>我们可以看到，C++实际上是在ExpandDynamicLib.exe中申请了8个字节的内存，然后对其调用在SimpleDynamicLib.dll中的Test类的构造函数。</p>
+<p>既然原理是这样，那么我们就可以想到扩展类成员变量的缺陷了：</p>
+<ul>
+<li>扩展的类成员变量无法进行正常的构造。</li>
+<li>如果我们在已有的类成员之前添加类成员，而不是添加到类成员的末尾，那么可能会引起对象构造/析构混乱。</li>
+<li>扩展类成员时，千万不可以删除原有的类成员，否则会造成构造/析构错误，操作对象以外的内存，造成更多的问题。</li>
+<li>无法扩展除了基本类型以外的类成员，因为这些对象是需要在构造函数中加入其成员变量的构造函数的调用的，而这些函数已经被编译进了动态/静态链接库中，无法修改了。</li>
+<li><a href>多重继承和虚继承会让对象的内存结构变得更加复杂</a>，所以在进行类成员扩展时，需要对类的内存分布有绝对的把握，否则很容易出问题。</li>
+</ul>
+<h2 id="总结">5. 总结</h2>
+<p>经过一番折腾，我们可以大致了解到一些C++编译器的一些工作原理，但是这个技术本身我们在平时写代码的时候最好不要使用。</p>
+<p>如果需要增强其他人提供的Lib，其实还有很多的方式可供我们选择，在<a href>《重构——改善既有代码的设计》</a>中，我们就可以找到两种较为简单的方式：</p>
+<ul>
+<li>Introduce Foreign Method：引入外加函数</li>
+<li>Introduce Local Extension：引入本地扩展</li>
+</ul>
+<p>当然一切都是TradeOff，具体用什么方法来增强外部的代码，在平时写代码时，只要符合工程的需要就行。</p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/implementing-objective-c-categories-in-c/" target="_blank">一次好玩的扯淡——在C++中实现Objective-C的categories</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/c/" rel="tag"># c++</a>
+              <a href="/tags/categories/" rel="tag"># categories</a>
+              <a href="/tags/My-Life/" rel="tag"># My Life</a>
+              <a href="/tags/objective-c/" rel="tag"># objective-c</a>
+              <a href="/tags/%E7%BC%96%E8%AF%91/" rel="tag"># 编译</a>
+              <a href="/tags/%E9%93%BE%E6%8E%A5/" rel="tag"># 链接</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-chrome-3-ui-and-skin-engine-controls/" rel="prev" title="Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库">
+                  <i class="fa fa-chevron-left"></i> Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/mirror-v0-1-preview/" rel="next" title="Mirror v0.1 Preview 发布 —— Windows开发辅助工具">
+                  Mirror v0.1 Preview 发布 —— Windows开发辅助工具 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

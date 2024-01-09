@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近在一次分布式系统的线上交流中，发现居然有那么多种不同的一致性模型，而且因为种类太多，大家理解上也有很多不同，看了一些资料，虽然很多讲的很好，但是过于复杂或者书面，难以理解，所以在这里尝试着为每一个模型做一句话总结，希望可以帮助大家理解。如果我的理解有误，也请大家指正～  1. 啥？啥一致性？ 一致性虽然是我们非常常用的一个词，但是非常不幸的是，这个词有太多的含义，在使用的非常容易混淆。所以在讨">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一致性模型一句话总结">
+<meta property="og:url" content="http://r12f.com/posts/summarizing-consistency-model/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="最近在一次分布式系统的线上交流中，发现居然有那么多种不同的一致性模型，而且因为种类太多，大家理解上也有很多不同，看了一些资料，虽然很多讲的很好，但是过于复杂或者书面，难以理解，所以在这里尝试着为每一个模型做一句话总结，希望可以帮助大家理解。如果我的理解有误，也请大家指正～  1. 啥？啥一致性？ 一致性虽然是我们非常常用的一个词，但是非常不幸的是，这个词有太多的含义，在使用的非常容易混淆。所以在讨">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-14-summarizing-consistency-model/consistency-model-family-tree.png">
+<meta property="article:published_time" content="2021-01-14T20:40:21.000Z">
+<meta property="article:modified_time" content="2021-01-15T04:40:21.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="后台">
+<meta property="article:tag" content="分布式系统">
+<meta property="article:tag" content="一致性模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-14-summarizing-consistency-model/consistency-model-family-tree.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/summarizing-consistency-model/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/summarizing-consistency-model/","path":"posts/summarizing-consistency-model/","title":"一致性模型一句话总结"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一致性模型一句话总结 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%95%A5%EF%BC%9F%E5%95%A5%E4%B8%80%E8%87%B4%E6%80%A7%EF%BC%9F"><span class="nav-text">1. 啥？啥一致性？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%BA%E4%B8%80%E8%87%B4%E6%A8%A1%E5%9E%8B%EF%BC%88Strict-Serializable%EF%BC%89"><span class="nav-text">2. 强一致模型（Strict Serializable）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E7%BA%BF%E6%80%A7%E5%8C%96-%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7%EF%BC%88Linearizable%EF%BC%89"><span class="nav-text">3. 可线性化 &#x2F; 数据一致性（Linearizable）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E4%B8%B2%E8%A1%8C%E5%8C%96-%E4%BA%8B%E5%8A%A1%E4%B8%80%E8%87%B4%E6%80%A7%EF%BC%88Serializable%EF%BC%89"><span class="nav-text">4. 可串行化 &#x2F; 事务一致性（Serializable）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E8%B5%84%E6%96%99"><span class="nav-text">5. 相关资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/summarizing-consistency-model/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一致性模型一句话总结 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一致性模型一句话总结
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-01-14 12:40:21 / Modified: 20:40:21" itemprop="dateCreated datePublished" datetime="2021-01-14T12:40:21-08:00">2021-01-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/summarizing-consistency-model/" class="post-meta-item leancloud_visitors" data-flag-title="一致性模型一句话总结" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/summarizing-consistency-model/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/summarizing-consistency-model/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近在一次分布式系统的线上交流中，发现居然有那么多种不同的一致性模型，而且因为种类太多，大家理解上也有很多不同，看了一些资料，虽然很多讲的很好，但是过于复杂或者书面，难以理解，所以在这里尝试着为每一个模型做一句话总结，希望可以帮助大家理解。如果我的理解有误，也请大家指正～</p>
+<hr>
+<h2 id="啥？啥一致性？">1. 啥？啥一致性？</h2>
+<p>一致性虽然是我们非常常用的一个词，但是非常不幸的是，这个词有太多的含义，在使用的非常容易混淆。所以在讨论一致性之前，我们需要先来看一下一致性的定义：</p>
+<p>首先是我们常说的<strong>Consistency</strong>。这个词经常在两个地方出现：分布式系统的<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CAP_theorem">CAP</a>和数据库的<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/ACID">ACID</a>。虽然其中“C”都叫一致性（Consistency），但是其含义却截然不同：</p>
+<ul>
+<li>ACID中的一致性：这里主要说的是一种数据上的约束，比如主键是否唯一，或者外键关系是否保持等等</li>
+<li>CAP中的一致性：这里主要说的是不同节点之间数据的同步状态，是不是能让客户端请求处理看上去像访问一个单体系统（Monolith）一样。</li>
+</ul>
+<p>然后是<strong>Coherence</strong>。这个词虽然也翻译成一致性，但是它和上面的一致性截然不同。Coherence指的是<strong>多实体或者多层级</strong>的数据之间是否一致，比如：缓存一致性（Cache Coherence，缓存中的内容是否和原始内容保持一致）。而Consistency指的是一个<strong>单实体</strong>本身是否一致，比如上面提到的同一个数据库里的外键关系或者同一个服务不同节点之间的同步状态。</p>
+<span id="more"></span>
+<hr>
+<h2 id="强一致模型（Strict-Serializable）">2. 强一致模型（Strict Serializable）</h2>
+<p>分布式系统中，我们说一致性的最高等级叫强一致模型（Strict serialiable或者Strong one-copy serialiability）。这个模型其实需要满足两个条件，而这也是我们非常容易混淆的两个条件：<strong>可串行性（Serializability）<strong>和</strong>线性一致性（Linearizability）</strong>，这也是两个分支领域的最高一致性等级：<strong>可串行化（Serializable）<strong>和</strong>可线性化（Linearizable）</strong>。</p>
+<ul>
+<li>可串行化（Serializable），又叫事务一致性，是一种事务隔离的级别，也就是ACID中的I（Isolation），它保证事务在并发执行时的执行顺序对数据的一致性没有影响。可串行化并不保证数据读写的时间顺序，比如数据库，执行SQL语句时，我们允许数据库<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/sql/relational-databases/performance/display-an-actual-execution-plan">对其子操作的执行顺序进行任意的重排</a>，只要最后要做的事情保持不变即可。</li>
+<li>可线性化（Linearizable），又叫数据一致性，它表示某个对象在写操作之后是否能马上读到这个最新的值，比如，我们更新了twitter上的昵称，那刷新页面之后是不是能不能马上看到这个变化，还是说在一段时间内，刷新页面可能还会看到老的昵称？</li>
+</ul>
+<p>为了方便大家捋清楚这两个大领域和各种一致性模型关系，这里<a target="_blank" rel="noopener" href="https://jepsen.io/consistency">从JEPSEN的网站上找来了一个总结图</a>：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-14-summarizing-consistency-model/consistency-model-family-tree.png" alt="Consistency model family tree"></p>
+<hr>
+<h2 id="可线性化-数据一致性（Linearizable）">3. 可线性化 / 数据一致性（Linearizable）</h2>
+<p>数据一致性分为两类：强一致性和弱一致性。简单的说，只有线性一致性属于强一致性，其他的都属于弱一致性。所谓强一致性，即数据的复制是同步的，弱一致性，即数据的复制是异步的，所以我们可能会看见部分数据不一致的情况。</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:200px">模型</div></th>
+<th><div style="width:500px">解释</div></th>
+<th><div style="width:300px">举例</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>线性一致性<br>Linearizability /<br>Linear Consistency</td>
+<td>经典的强一致性，每一个操作都会严格的按照真实时间序线性顺序发生</td>
+<td>给某个数据加个锁</td>
+</tr>
+<tr>
+<td>顺序一致性<br>Sequential Consistency</td>
+<td>允许延迟，但是数据的生效必须严格保持线性</td>
+<td>FIFO队列处理</td>
+</tr>
+<tr>
+<td>因果一致性<br>Casual Consistency</td>
+<td>对数据的操作有逻辑关系（事件B仅在条件A满足时才能发生），则数据的变化必须按顺序生效，但是不相关的数据之间可以乱序</td>
+<td>帖子管理，帖子的创建必须发生在回复帖子之前</td>
+</tr>
+<tr>
+<td>管道一致性<br>PRAM/FIFO Consistency</td>
+<td>某一个使用者完成的写操作可以被其他所有的使用者按照顺序的感知到，而从不同使用者中来的写操作则无需保证顺序，就像一个一个的管道一样</td>
+<td>PubSub</td>
+</tr>
+<tr>
+<td>最终一致性<br>Eventual consistency</td>
+<td>如果没有新的更新提交，最终所有的访问都将获得最后的更新，但是它并不保证所有修改导致的中间状态都能被观察到</td>
+<td>提交了修改，但是需要等待数据同步，异地灾备等等</td>
+</tr>
+</tbody>
+</table>
+<p>而其中，最终一致性又能被继续细分：</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:200px">模型</div></th>
+<th><div style="width:500px">解释</div></th>
+<th><div style="width:300px">举例</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>读不旧于写一致性<br>RYW (Read-your-writes) Consistency</td>
+<td>每个使用者读取到的数据，一定不老于自己的上一次写</td>
+<td>更新系统时生成时间戳，避免读取到此时间戳之前的缓存；数据库主从分离，拥有写权限的人，比如所有者，永远读写主库，其他人读从库</td>
+</tr>
+<tr>
+<td>单调读一致性<br>Monotonic-read (MR) Consistency</td>
+<td>如果一个用户从系统中读取出一个数据项的某个值后，那么系统对于该用户后续的所有数据访问都会返回更旧的值</td>
+<td>从从数据库读取数据</td>
+</tr>
+<tr>
+<td>单调写一致性<br>Monotonic-write (MW) Consistency</td>
+<td>来自同一个用户的写操作，会被顺序地执行</td>
+<td>允许合并操作的写队列</td>
+</tr>
+<tr>
+<td>写不旧于读一致性<br>Writes-follow-reads (WFR) Consistency</td>
+<td>来自同一个用户的写操作，一定不会作用于比其读出来的数据更早版本的数据</td>
+<td>还是帖子管理，如果看不见帖子，则没有办法回复帖子，但是只要能回复帖子，就一定需要保证帖子被创建</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="可串行化-事务一致性（Serializable）">4. 可串行化 / 事务一致性（Serializable）</h2>
+<p>同样的，可串行化也分为强一致性和弱一致性，其中我们最常说的强一致性指的就是可串行化中的最高等级：可串行性。其他的等级都有不同程度的弱化。</p>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Isolation_(database_systems)#Isolation_levels">ANSI对SQL的隔离等级做了很好的定义</a>，由弱至强依次如下：</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:200px">模型</div></th>
+<th><div style="width:500px">解释</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>未提交读<br>Read Uncommitted (RU)</td>
+<td>最低等级的一致性保证，在事务之中允许读取未提交的数据（Dirty Read）</td>
+</tr>
+<tr>
+<td>已提交读<br>Read Committed (RC)</td>
+<td>在事务中，读取到的数据一定是提交了的，但是不保证这些数据会不会在重复读时发生变化</td>
+</tr>
+<tr>
+<td>可重复读<br>Repeatable Read (RR)</td>
+<td>在已提交读的基础上，还保证在一个事务中，读取过的数据在重复读中保持不变，但是同样的查询可能会查到新的数据（Phantom Read）</td>
+</tr>
+<tr>
+<td>可串行性<br>Serializability (S) /<br>Serializable consistency</td>
+<td>最高等级的一致性保证，提供和SI同样的保证，但是一般是使用锁而不是快照来实现的，不会在合并修改时发生的错误</td>
+</tr>
+</tbody>
+</table>
+<p>除了标准等级以外，这里还有一些额外的等级，有些是论文里面的，有些是数据库厂商自己定义的：</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:200px">模型</div></th>
+<th><div style="width:200px">出处 / 数据库</div></th>
+<th><div style="width:400px">解释</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Item Cut Isolation (I-CI)</td>
+<td><a target="_blank" rel="noopener" href="http://www.vldb.org/pvldb/vol7/p181-bailis.pdf">HAT</a></td>
+<td>一种可重复读的弱化形式，在已提交读的基础上，同一个事务内，对相同的数据永远返回相同的结果，一般是利用快照来实现</td>
+</tr>
+<tr>
+<td>Predicate Cut Isolation (P-CI)</td>
+<td><a target="_blank" rel="noopener" href="http://www.vldb.org/pvldb/vol7/p181-bailis.pdf">HAT</a></td>
+<td>一种可重复读的弱化形式，在已提交读的基础上，同一个事务内，对相同的where clause永远返回相同的结果，一般是利用快照实现</td>
+</tr>
+<tr>
+<td>单调原子视图<br>Monotonic Atomic View (MAV)</td>
+<td><a target="_blank" rel="noopener" href="http://www.vldb.org/pvldb/vol7/p181-bailis.pdf">HAT</a></td>
+<td>在已提交读的基础上，添加一个额外的保证，如果某个事务读取的数据被其他的事务修改了，那么这个事务的所有修改都应该能被当前事务发现。MAV只负责数据生效的同步，但是它并不保证数据可重复读，如果读取的数据在事务进行中被多次提交，那么多次查询可能返回不同的结果</td>
+</tr>
+<tr>
+<td>稳定游标<br>Cursor Stability (CS)</td>
+<td>[IBM DB2][IBMDb2CS]</td>
+<td>在已提交读的基础上，如果事务内，某个数据行存在游标（Cursor）指向它，则会对该数据行加锁（Row Lock），保证其数据不变，但是重复查询会看到其他数据的变化或者读取到新的数据</td>
+</tr>
+<tr>
+<td>稳定读<br>Consistent Read (CR)</td>
+<td>[Oracle][OracleCR]</td>
+<td>一种可重复读的实现方法，在已提交读的基础上，通过对需要读取而正好被并发事务修改而且未提交的数据创建一份快照，保证其在事务内的重复读保持不变</td>
+</tr>
+<tr>
+<td>快照<br>Snapshot Isolation (SI)</td>
+<td>[SQL Server][MsSqlServerIsolations]</td>
+<td>在可重复读的基础上，保证重复读不会查询到新的数据，但是其内部实现不是通过加锁完成的，而是通过抓取快照</td>
+</tr>
+</tbody>
+</table>
+<p>这里可以看到好几个基于快照的隔离实现，比如SI，P-CI和I-CI，他们的等级都会要比相对应的非快照实现要低（S和RR），这个原因是由于并发事务可以对多个快照中的相同数据进行不同的修改，所以会导致<a target="_blank" rel="noopener" href="https://techcommunity.microsoft.com/t5/sql-server/serializable-vs-snapshot-isolation-level/ba-p/383281">合并数据修改结果时，发生错误或者时意料之外的情况</a>。</p>
+<p>这里还有一个很有意思的事情是，虽然很多数据库都号称他们实现了100% ACID，但是其实事实上并没有，这里<a target="_blank" rel="noopener" href="http://www.bailis.org/blog/when-is-acid-acid-rarely/">Peter Bailis对市面上的数据库做了一个总结</a>如下，Github上还有一个非常好的数据库隔离等级的测试项目<a target="_blank" rel="noopener" href="https://github.com/ept/hermitage">Hermitage</a>。</p>
+<table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Default Isolation</th>
+<th>Maximum Isolation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Actian Ingres 10.0/10S</td>
+<td>S</td>
+<td>S</td>
+</tr>
+<tr>
+<td>Aerospike</td>
+<td>RC</td>
+<td>RC</td>
+</tr>
+<tr>
+<td>Akiban Persistit</td>
+<td>SI</td>
+<td>SI</td>
+</tr>
+<tr>
+<td>Clustrix CLX 4100</td>
+<td>RR</td>
+<td>?</td>
+</tr>
+<tr>
+<td>Greenplum 4.1</td>
+<td>RC</td>
+<td>S</td>
+</tr>
+<tr>
+<td>IBM DB2 10 for z/OS</td>
+<td>CS</td>
+<td>S</td>
+</tr>
+<tr>
+<td>IBM Informix 11.50</td>
+<td>Depends</td>
+<td>RR</td>
+</tr>
+<tr>
+<td>MySQL 5.6</td>
+<td>RR</td>
+<td>S</td>
+</tr>
+<tr>
+<td>MemSQL 1b</td>
+<td>RC</td>
+<td>RC</td>
+</tr>
+<tr>
+<td>MS SQL Server 2012</td>
+<td>RC</td>
+<td>S</td>
+</tr>
+<tr>
+<td>NuoDB</td>
+<td>CR</td>
+<td>CR</td>
+</tr>
+<tr>
+<td>Oracle 11g</td>
+<td>RC</td>
+<td>SI</td>
+</tr>
+<tr>
+<td>Oracle Berkeley DB</td>
+<td>S</td>
+<td>S</td>
+</tr>
+<tr>
+<td>Oracle Berkeley DB JE</td>
+<td>RR</td>
+<td>S</td>
+</tr>
+<tr>
+<td>Postgres 9.2.2</td>
+<td>RC</td>
+<td>S</td>
+</tr>
+<tr>
+<td>SAP HANA</td>
+<td>RC</td>
+<td>SI</td>
+</tr>
+<tr>
+<td>ScaleDB 1.02</td>
+<td>RC</td>
+<td>RC</td>
+</tr>
+<tr>
+<td>VoltDB</td>
+<td>S</td>
+<td>S</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="相关资料">5. 相关资料</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Isolation_(database_systems)#Isolation_levels">SQL Isolation Levels</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.distributed-systems.net/index.php/books/ds3/">Distributed Systems 3rd edition (2017)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.vldb.org/pvldb/vol7/p181-bailis.pdf">Highly Available Transactions: Virtues and Limitations</a></li>
+<li><a target="_blank" rel="noopener" href="https://jepsen.io/consistency">JEPSEN - Consistency Models</a></li>
+<li><a target="_blank" rel="noopener" href="https://aphyr.com/posts/313-strong-consistency-models">Strong consistency models</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.oracle.com/cd/E17076_05/html/gsg_db_rep/C/rywc.html">Read-Your-Writes Consistency</a></li>
+<li>[Understanding isolation levels][MsSqlServerIsolations]</li>
+<li><a target="_blank" rel="noopener" href="http://www.bailis.org/blog/when-is-acid-acid-rarely/">Peter Bailis - When is “ACID” ACID? Rarely.</a></li>
+<li>[Oracle Database - Consistent (Read get|Buffer Mode) (CR)][OracleCR]</li>
+<li><a target="_blank" rel="noopener" href="https://jepsen.io/consistency/models/monotonic-atomic-view">Monotonic Atomic View</a></li>
+<li><a target="_blank" rel="noopener" href="https://techcommunity.microsoft.com/t5/sql-server/serializable-vs-snapshot-isolation-level/ba-p/383281">Serializable vs. Snapshot Isolation Level</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/ept/hermitage">Hermitage: Testing transaction isolation levels</a></li>
+<li><a target="_blank" rel="noopener" href="https://dsf.berkeley.edu/jmh/papers/ramp-tods2016.pdf">Scalable Atomic Visibility with RAMP Transactions</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.morganclaypool.com/doi/abs/10.2200/S00346ED1V01Y201104CAC016">A Primer on Memory Consistency and Cache Coherence</a></li>
+</ul>
+<p>[OracleCR]: <a target="_blank" rel="noopener" href="https://datacadamia.com/db/oracle/consistent_gets">https://datacadamia.com/db/oracle/consistent_gets</a>)<br>
+[IBMDb2CS]: <a target="_blank" rel="noopener" href="https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_74/db2/rbafzcursorstability.htm">https://www.ibm.com/support/knowledgecenter/ssw_ibm_i_74/db2/rbafzcursorstability.htm</a><br>
+[MsSqlServerIsolations]: <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/sql/connect/jdbc/understanding-isolation-levels">https://docs.microsoft.com/en-us/sql/connect/jdbc/understanding-isolation-levels</a></p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/summarizing-consistency-model/" target="_blank">一致性模型一句话总结</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%90%8E%E5%8F%B0/" rel="tag"># 后台</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag"># 分布式系统</a>
+              <a href="/tags/%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 一致性模型</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-object-model-struct/" rel="prev" title="Go语言学习笔记：深入对象模型之结构体">
+                  <i class="fa fa-chevron-left"></i> Go语言学习笔记：深入对象模型之结构体
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/make-tests-your-friends/" rel="next" title="测试，你写代码时最好的朋友（上篇）">
+                  测试，你写代码时最好的朋友（上篇） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

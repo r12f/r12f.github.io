@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="上篇中，我们主要讨论了写测试的理由，原则和如何写出易于测试的代码。这一篇里，我们会来真正讨论如何写出好的测试。 这里重要的事情再重复一遍：测试不是一剂万能药，加几个测试并不能帮我们改善多少代码质量，把代码本身写好才是根本。如果还没有读过上篇，这里强烈推荐先阅读上篇～  1. 好的测试 现在，我们终于可以开始写测试了！好的代码只是我们实现好测试的第一步，要写出好的测试我们还需要更多的一些技巧： 1.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="测试，你写代码时最好的朋友（中篇）">
+<meta property="og:url" content="http://r12f.com/posts/make-tests-your-friends-continue/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="上篇中，我们主要讨论了写测试的理由，原则和如何写出易于测试的代码。这一篇里，我们会来真正讨论如何写出好的测试。 这里重要的事情再重复一遍：测试不是一剂万能药，加几个测试并不能帮我们改善多少代码质量，把代码本身写好才是根本。如果还没有读过上篇，这里强烈推荐先阅读上篇～  1. 好的测试 现在，我们终于可以开始写测试了！好的代码只是我们实现好测试的第一步，要写出好的测试我们还需要更多的一些技巧： 1.">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-02-01T07:15:26.000Z">
+<meta property="article:modified_time" content="2021-02-01T07:15:26.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="测试">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/make-tests-your-friends-continue/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/make-tests-your-friends-continue/","path":"posts/make-tests-your-friends-continue/","title":"测试，你写代码时最好的朋友（中篇）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>测试，你写代码时最好的朋友（中篇） | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%BD%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-text">1. 好的测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E5%90%88%E7%90%86%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-text">1.1. 选择合理的测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E7%90%86%E7%9A%84%E6%8F%90%E7%A4%BA%E4%BF%A1%E6%81%AF"><span class="nav-text">1.2. 合理的提示信息</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B8%85%E6%99%B0%E7%9A%84%E6%B5%8B%E8%AF%95%E5%9C%BA%E6%99%AF"><span class="nav-text">1.2.1. 清晰的测试场景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%98%8E%E7%A1%AE%E7%9A%84%E9%94%99%E8%AF%AF%E4%BF%A1%E6%81%AF"><span class="nav-text">1.2.2. 明确的错误信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E7%9B%AE%E4%BA%86%E7%84%B6%E7%9A%84%E8%A1%8C%E4%B8%BA%E5%8F%98%E5%8C%96"><span class="nav-text">1.2.3. 一目了然的行为变化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E8%A7%86%E9%9C%80%E6%B1%82%E5%92%8C%E7%BC%BA%E9%99%B7%E7%9A%84%E8%A6%86%E7%9B%96%E7%8E%87"><span class="nav-text">1.3. 重视需求和缺陷的覆盖率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%93%E4%B8%9A%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6"><span class="nav-text">1.4. 专业的脚手架</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E9%A9%B1%E5%8A%A8%E6%B5%8B%E8%AF%95"><span class="nav-text">2. 数据驱动测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%A6%BB%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%B5%8B%E8%AF%95"><span class="nav-text">2.1. 分离数据与测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E5%9F%BA%E7%BA%BF%E6%95%B0%E6%8D%AE"><span class="nav-text">2.2. 生成基线数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E6%B5%8B%E8%AF%95%E5%A4%B1%E8%B4%A5%E7%9A%84%E5%AF%B9%E7%85%A7%E6%95%B0%E6%8D%AE"><span class="nav-text">2.3. 生成测试失败的对照数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%96%E4%B8%AA%E5%85%B3%E5%AD%90"><span class="nav-text">2.4. 卖个关子</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9C%E5%81%87%E2%80%9D%E6%B5%8B%E8%AF%95"><span class="nav-text">3. “假”测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E7%A8%B3%E5%AE%9A%E7%9A%84%E6%B5%8B%E8%AF%95%EF%BC%88Flaky-tests%EF%BC%89"><span class="nav-text">3.1. 不稳定的测试（Flaky tests）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%93%E6%85%A2%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-text">3.2. 缓慢的测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%85%E6%8E%A2%E9%92%88"><span class="nav-text">3.3. 浅探针</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%8D%E4%BC%91%E6%81%AF%E4%B8%80%E4%B8%8B%E5%90%A7"><span class="nav-text">4. 再休息一下吧</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/make-tests-your-friends-continue/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="测试，你写代码时最好的朋友（中篇） | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          测试，你写代码时最好的朋友（中篇）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-01-31 23:15:26" itemprop="dateCreated datePublished" datetime="2021-01-31T23:15:26-08:00">2021-01-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/make-tests-your-friends-continue/" class="post-meta-item leancloud_visitors" data-flag-title="测试，你写代码时最好的朋友（中篇）" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/make-tests-your-friends-continue/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/make-tests-your-friends-continue/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><a href="/posts/make-tests-your-friends/">上篇中，我们主要讨论了写测试的理由，原则和如何写出易于测试的代码</a>。这一篇里，我们会来真正讨论如何写出好的测试。</p>
+<p>这里重要的事情再重复一遍：测试不是一剂万能药，加几个测试并不能帮我们改善多少代码质量，把代码本身写好才是根本。如果还没有读过上篇，<a href="/posts/make-tests-your-friends/">这里强烈推荐先阅读上篇</a>～</p>
+<hr>
+<h2 id="好的测试">1. 好的测试</h2>
+<p>现在，我们终于可以开始写测试了！好的代码只是我们实现好测试的第一步，要写出好的测试我们还需要更多的一些技巧：</p>
+<h3 id="选择合理的测试">1.1. 选择合理的测试</h3>
+<p>我们知道测试的类型多种多样，有且不限于如下一些类型：</p>
+<ul>
+<li>单元测试：通过调用一些特定的函数（比如公开的成员函数）来测试一个类或者一个小的模块是否工作正常</li>
+<li>模块/服务测试：通过模拟一个模块或服务的上游服务和下游服务来测试它是否工作正常</li>
+<li>端到端测试（End-To-End Test / E2E Test）：通过模拟整个系统的上下游服务来测试这个完整的系统是否工作正常</li>
+<li>集成测试：将所有服务，甚至多个系统，按照要求组装起来，进行测试</li>
+<li>在线测试或探针测试：服务内部定时使用API对其服务状态进行测试</li>
+</ul>
+<span id="more"></span>
+<p>这些测试也各有利弊，大致如下：</p>
+<table>
+<thead>
+<tr>
+<th>测试类型</th>
+<th>实现难度</th>
+<th>本地测试？</th>
+<th>测试运行时间</th>
+<th>发现问题的时间</th>
+<th>发现问题的复杂度</th>
+<th>调试问题的难度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单元测试</td>
+<td>容易</td>
+<td>是</td>
+<td>快</td>
+<td>早</td>
+<td>简单</td>
+<td>简单</td>
+</tr>
+<tr>
+<td>模块/服务测试</td>
+<td>较为容易</td>
+<td>可以实现</td>
+<td>较快</td>
+<td>较早</td>
+<td>一般</td>
+<td>较为简单（如果可以本地调试）</td>
+</tr>
+<tr>
+<td>端到端测试</td>
+<td>一般</td>
+<td>可以实现</td>
+<td>一般</td>
+<td>一般</td>
+<td>较为复杂</td>
+<td>较为简单（如果可以本地调试）</td>
+</tr>
+<tr>
+<td>集成测试</td>
+<td>较难</td>
+<td>否</td>
+<td>长</td>
+<td>较晚</td>
+<td>复杂</td>
+<td>难</td>
+</tr>
+<tr>
+<td>探针测试</td>
+<td>一般</td>
+<td>否</td>
+<td>较快</td>
+<td>晚</td>
+<td>一般</td>
+<td>较难</td>
+</tr>
+</tbody>
+</table>
+<p>所以，在编写测试的时候，我们需要综合考虑我们要测试的内容，并选择合适的测试方式进行测试。</p>
+<p>选择测试时，我们一定要注意<a href="/posts/make-tests-your-friends#%E6%B5%8B%E8%AF%95%E7%9A%84%E5%8E%9F%E5%88%99">最短距离原则</a>。比如，我们会觉得集成测试中被测的对象最多，覆盖范围最广，所以我们应该大力推行集成测试。但正是因为其覆盖面大，如果真的这样做，我们可能会花费极大的工作量构造这些测试，并且最后可能什么问题都调试不出来。试着想象一下，几十个服务之间互相调用了好几百次之后，某个服务在一个很奇怪的地方抛了一个异常，最后要来查错的工作量吧。</p>
+<h3 id="合理的提示信息">1.2. 合理的提示信息</h3>
+<blockquote>
+<p>“Transparency is a passive quality. A program is transparent when it is possible to form a simple mental model of its behavior that is actually predictive for all or most cases, because you can see through the machinery to what is actually going on.”</p>
+<p>- Eric Steven Raymond, from “The Art of Unix Programming”</p>
+</blockquote>
+<p>虽然测试可以告诉我们有东西出错了，但是很多人往往忽略了一点：什么东西出错了，该检查什么更加重要。</p>
+<h4 id="清晰的测试场景">1.2.1. 清晰的测试场景</h4>
+<p>首先最容易被忽略的就是测试的名称，以下列出的这些名称都是我在真实项目里看到过的：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Test</span><br><span class="line">Test1/<span class="number">2</span>/<span class="number">3</span>/...</span><br><span class="line">TestSwitch</span><br><span class="line">TestBasic</span><br><span class="line">MyTest</span><br><span class="line">FooTest/TestFoo <span class="comment">// Foo是被测试的类的类名</span></span><br></pre></td></tr></table></figure>
+<p>这些测试名完全不能帮助我们理解它们的目的，所以出了错我们也不知道要看什么。这里更好的方式是<strong>描述好测试场景和使用断言式命名</strong>：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ScopeHandle_AfterDtor_UnderlyingHandleShouldBeClosed</span><br><span class="line">CrontabTimer_ParsingValidCrontabSyntax_ShouldSucceed</span><br><span class="line">DataProcessor_ProcessingDataWithUnexpectedFormat_ShouldFail</span><br><span class="line">HealthProber_ProbeUnresponsiveHttpTarget_ShouldFailWithTimeout</span><br></pre></td></tr></table></figure>
+<p>不要担心函数名长，有时候，长既是美。</p>
+<h4 id="明确的错误信息">1.2.2. 明确的错误信息</h4>
+<p>当测试失败时，错误信息一定要明确，或者说要能Actionable。</p>
+<p>比如：写断言时，不要就简单的写类似<code>Assert(a != 0);</code>，而最好能给出一些建议，比如：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Assert</span>(dataIterator != dataMap.<span class="built_in">end</span>(),</span><br><span class="line">       <span class="string">&quot;Data is not created while id still exists. It might be a leak on id. Please check CreateData/RemoveData functions.&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>由于错误明确且指向性非常强，调试这样的错误将会变得容易很多。</p>
+<h4 id="一目了然的行为变化">1.2.3. 一目了然的行为变化</h4>
+<p>我们上面提到，测试的作用之一是确认代码改动。其实不仅如此，为了保证高可观察性，这些改动导致的程序行为变化必须要一目了然。这些变化包括数据状态的变化，数据上报，甚至是调试辅助工具（比如，获取服务的状态）。</p>
+<p>这个想法很好，但这也导致了一个难题，如果我们要看到一个改动对于程序的所有行为变化，也就意味着，我们要对所有程序的行为进行测试。这让维护测试的工作量变得极其巨大！</p>
+<p>这里举一个简单的栗子，<a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/building-microservices/9781491950340/ch07.html#idp3960144">通过模拟服务上下游的方式来测试一个微服务</a>是一个非常常见的测试方法，所以相信大家都看过不少类似这样的测试：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">TEST_METHOD</span>(MyService_WhenReceivingValidRequest_DownstreamServicesShouldBeProgrammed)</span><br><span class="line">&#123;</span><br><span class="line">    std::shared_ptr&lt;MyService&gt; service = <span class="built_in">CreateMyService</span>();</span><br><span class="line"></span><br><span class="line">    MyServiceRequest mockRequest;</span><br><span class="line">    mockRequest.Foo = <span class="number">1</span>;</span><br><span class="line">    mockRequest.Bar = <span class="number">2</span>;</span><br><span class="line">    <span class="comment">// ... Update all fields here.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Simulating upstream service sending state to my service</span></span><br><span class="line">    service-&gt;<span class="built_in">SendRequestSync</span>(mockRequest);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Test service internal states</span></span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyServiceState&gt; serviceState = service-&gt;<span class="built_in">GetInternalState</span>()-&gt;<span class="built_in">GetPayload</span>&lt;MyServiceState&gt;();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, serviceState-&gt;Foo);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2</span>, serviceState-&gt;Bar);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate downstream services</span></span><br><span class="line">    ServiceDownstreamStates statesToDownstreamServices = service-&gt;<span class="built_in">GetStatesToDownStreamServices</span>();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2ull</span>, statesToDownstreamServices.<span class="built_in">size</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate states send to downstream service 1</span></span><br><span class="line">    Assert::<span class="built_in">IsTrue</span>(statesToDownstreamServices.<span class="built_in">find</span>(<span class="string">L&quot;MyDownstreamService1&quot;</span>) != statesToDownstreamServices.<span class="built_in">end</span>());</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1ull</span>, statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService1&quot;</span>].States.<span class="built_in">size</span>());</span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyDownstreamService1Request&gt; stateToDownstreamService1 = statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService1&quot;</span>].States[<span class="number">0</span>].<span class="built_in">GetPayload</span>&lt;MyDownstreamService1Request&gt;();</span><br><span class="line">    Assert::<span class="built_in">IsNotNull</span>(stateToDownstreamService1);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, stateToDownstreamService1-&gt;Foo);</span><br><span class="line">    <span class="comment">// ... Validate all other states</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate states send to downstream service 2</span></span><br><span class="line">    Assert::<span class="built_in">IsTrue</span>(statesToDownstreamServices.<span class="built_in">find</span>(<span class="string">L&quot;MyDownstreamService2&quot;</span>) != statesToDownstreamServices.<span class="built_in">end</span>());</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1ull</span>, statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService2&quot;</span>].States.<span class="built_in">size</span>());</span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyDownstreamService2Request&gt; stateToDownstreamService2 = statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService2&quot;</span>].States[<span class="number">0</span>].<span class="built_in">GetPayload</span>&lt;MyDownstreamService2Request&gt;();</span><br><span class="line">    Assert::<span class="built_in">IsNotNull</span>(stateToDownstreamService2);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2</span>, stateToDownstreamService2-&gt;Bar);</span><br><span class="line">    <span class="comment">// ... Validate all other states</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate metrics</span></span><br><span class="line">    MyServiceTrackedStats trackedStats = service-&gt;<span class="built_in">GetStatsTracker</span>()-&gt;<span class="built_in">GetTrackedStats</span>();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.RequestCount);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.Service1RequestSent);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.Service2RequestSent);</span><br><span class="line">    <span class="comment">// ... Validate all other stats</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，哪怕已经通过大量帮助函数简化代码，这种测试写起来依然是非常繁琐。而且一旦有任何改动，所有的测试都必须跟着一起改动。这导致了维护测试的工作量异常的大，让大家对测试充满了恐惧。有没有什么两全其美的方法呢？有！我们在下面将介绍面向数据的测试技巧来帮助大家解决这个问题。</p>
+<h3 id="重视需求和缺陷的覆盖率">1.3. 重视需求和缺陷的覆盖率</h3>
+<p>现在有很多测试工具都提供了代码覆盖率的检测，而覆盖率也是很多项目的强制规定，虽然这确实可以一定程度的起到督促的作用，但是也会在一定程度上产生误导，让大家过分看重那100%的数据而忽略了测试要做的真正要做的事情。</p>
+<p>为什么说代码覆盖率有误导呢？因为代码覆盖率100%并不代表所有情况都被测试到了。这听起来也许很奇怪，但是请看下面的代码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Access <span class="title">GetUserAccess</span><span class="params">(UserRole role)</span> </span>&#123;</span><br><span class="line">    Access access;</span><br><span class="line">    access.<span class="built_in">AddFlag</span>(Access::Read);       <span class="comment">// Anyone can read.</span></span><br><span class="line">    <span class="keyword">if</span> (role &gt;= UserRole.Reader) &#123;      <span class="comment">// Bug!!!</span></span><br><span class="line">        access.<span class="built_in">AddFlag</span>(Access::Write);  <span class="comment">// Only writers can write.</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> access;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码中的错误显而易见，但是如下代码覆盖率100%的测试却不能发现其中的问题：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Assert::<span class="built_in">AreEqual</span>(Access::Read | Access::Write, <span class="built_in">GetUserAccess</span>(UserRole.Writer));</span><br></pre></td></tr></table></figure>
+<p>所以仅仅追求代码覆盖率完全就是在舍本逐末。那什么才是真正的本呢？这个本永远都是我们的程序到底是用来做什么的，换句话说，也就是需求。这个需求小可以是某一个类的作用，大可以是我们产品的用户场景，写测试是为了保证我们的需求实现正确且不会变坏，这就是所谓的需求覆盖率。当然，达到高的需求覆盖率很难，这需要我们对代码对产品有了解，并且先知先觉才能做到。</p>
+<p>然后，就是同样重要，但却是后知后觉的缺陷覆盖率：以前出了错，加上测试，保证以后同样的错误不会再次发生。</p>
+<p>这两种覆盖率才是我们真正应该看重的东西。</p>
+<h3 id="专业的脚手架">1.4. 专业的脚手架</h3>
+<p>有些测试直接做起来会比较困难，比如微服务设计中，由于每一个服务足够的小，我们可以对某一个服务进行整体测试，这样的测试很难直接来做，这个时候我们就可以通过预先搭建一些通用的环境来帮助我们，这就是脚手架。它将我们要测试的东西先固定在我们想要的位置上，然后再进行测试。</p>
+<p>在测试微服务的这个例子中，我们可以使用mock模拟该服务的通信层，并且提供通用的上游服务和下游服务的mock，这样测试就简单了，我们只要通过上游服务发送我们想要的请求，并检查下游服务中的状态是否正常即可。</p>
+<p>脚手架在大型的回归测试，集成测试和端到端测试中也使用的特别频繁，这些测试通常需要搭建一定的环境，而无法直接进行，比如需要将所有的服务创建好之后，再模拟最终用户的请求并对整个系统做验证。这些工作异常繁琐，而拥有一套通用且方便使用的脚手架能让整个团队都效率倍增。</p>
+<p>如果你正好打算实现一个脚手架，请把它看成一个产品来对待，只不过用户是我们内部开发。这也意味着在实现之前我们需要认真的了解产品需求，时不时也需要收集用户反馈帮助我们改进，迭代。这里也列举一些实现好的脚手架的原则，也许会起到一定的帮助：</p>
+<ul>
+<li>使用脚手架的代价必须要比我们实现测试主逻辑的代价要低。
+<ul>
+<li>脚手架就是用来帮助我们简化测试的。</li>
+<li>如果使用了脚手架之后，还经常出现一个测试80%的代码都在初始化脚手架上，那么这个脚手架必然是失败的。</li>
+</ul>
+</li>
+<li>脚手架是框架，它有责任帮助大家简化测试，更有责任帮助大家避免犯错。
+<ul>
+<li>一个好的框架即是帮手也是约束。框架的实现者有责任先知先觉，帮助大家使用正确的方法进行测试。</li>
+<li>比如actor模型，如果我们使用了任何actor模型的框架，我们将很难在一个actor中直接获取另一个actor的数据，而必须要进行消息传递。这个有时候会给我们制造些麻烦，但是也正因为有了它，我们才很难犯错。（扩展阅读：<a target="_blank" rel="noopener" href="https://youtu.be/PAAkCSZUG1c">Go Proverbs: Don’t communicate by sharing memory, share memory by communicating.</a>）</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="数据驱动测试">2. 数据驱动测试</h2>
+<blockquote>
+<p>“Put Abstractions in Code, Details in Metadata” - Andy Hunt, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>在上面<a href="/posts/make-tests-your-friends-continue#%E4%B8%80%E7%9B%AE%E4%BA%86%E7%84%B6%E7%9A%84%E8%A1%8C%E4%B8%BA%E5%8F%98%E5%8C%96">一目了然的行为变化</a>中，我们遇到了一个难题，那就是测试越多，维护越复杂。这让我们最后对写测试望而却步。这里，我们可以通过面向数据测试来拯救我们。</p>
+<h3 id="分离数据与测试">2.1. 分离数据与测试</h3>
+<p>为了帮助我们简化测试，我推荐在测试中应用<a target="_blank" rel="noopener" href="https://www.artima.com/intv/metadata.html">程序与元数据分离的思想</a>，这也是<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Data-driven_testing">数据驱动测试（DDT）</a>的基本思想：把测试尽可能的进行抽象变成一个统一的脚手架，然后将变化的部分抽取成数据，并用<a target="_blank" rel="noopener" href="http://catb.org/~esr/writings/taoup/html/textualitychapter.html">文本储存</a>。这样如果需要编写新的测试用例，只需要添加一组新的测试数据即可，核心逻辑不需要任何变化，而文本化的数据都能被代码管理工具轻松管理，这样所有的变动也能使用diff工具一目了然的查看。</p>
+<p>比如，上面那段繁琐的代码，我们就可以使用如下方法进行简化：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">TEST_METHOD</span>(MyService_WhenReceivingValidRequest_DownstreamServicesShouldBeProgrammed)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">RunMyServiceStateHandlingTest</span>(<span class="string">L&quot;MyServiceTests\\ValidRequest-Input.json&quot;</span>, <span class="string">L&quot;MyServiceTests\\ValidRequest-ExpectedStatesAfterUpdate.json&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">StatesToTest</span></span><br><span class="line">&#123;</span><br><span class="line">    ServiceInternalState ServiceInternalState;</span><br><span class="line">    ServiceDownstreamStates StatesToDownstreamServices;</span><br><span class="line">    MyServiceTrackedStats TrackedStats;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunMyServiceStateHandlingTest</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; inputFilePath, _In_ <span class="type">const</span> std::wstring&amp; expectedStatesAfterUpdateFilePath)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::shared_ptr&lt;MyService&gt; service = <span class="built_in">CreateMyService</span>();</span><br><span class="line"></span><br><span class="line">    MyServiceRequest mockRequest;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(inputFilePath, mockRequest);</span><br><span class="line">    service-&gt;<span class="built_in">SendRequestSync</span>(mockRequest);</span><br><span class="line"></span><br><span class="line">    StatesToTest actualStatesAfterUpdate;</span><br><span class="line">    actionStatesAfterUpdate.ServiceInternalState = service-&gt;<span class="built_in">GetInternalState</span>();</span><br><span class="line">    actionStatesAfterUpdate.StatesToDownstreamServices = service-&gt;<span class="built_in">GetStatesToDownStreamServices</span>();</span><br><span class="line">    actualStatesAfterUpdate.TrackedStats = service-&gt;<span class="built_in">GetStatsTracker</span>()-&gt;<span class="built_in">GetTrackedStats</span>();</span><br><span class="line"></span><br><span class="line">    StatesToTest expectedStatesAfterUpdate;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedStatesAfterUpdateFilePath, expectedStatesAfterUpdate);</span><br><span class="line">    UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样修改之后，所有的变化都被分离成了数据，我们可以将其保存在Json文件之中，如下（如果你和我一样更喜欢ymal，也可以用yaml来存储）：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;ServiceInternalState&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Foo&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Bar&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;ServiceDownstreamStates&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;MyDownstreamService1&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Foo&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;MyDownstreamService2&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Bar&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;TrackedStats&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;RequestCount&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Service1RequestSent&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Service2RequestSent&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这样，不仅代码变短了，更好阅读了，添加测试变得极其简单了，并且如果我们改动了业务逻辑，测试的代码还不用进行任何的变化。</p>
+<h3 id="生成基线数据">2.2. 生成基线数据</h3>
+<p>这里，也许你会疑问，那工作量并没有减少啊，无非是从改代码，变成了改变Json的数据文件而已，这又什么本质区别吗？别着急，正是因为这个小小的变化，马上天翻地覆的变化就要开始了！</p>
+<p>这些测试数据，真的要我们自己手写吗？其实，根本不需要！因为当测试执行完成的时候，我们已经知道了当前的状态是什么了，将当前状态存下来，不就是我们用来测试的数据吗？所以，我们只需要进行小小的改动：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunMyServiceStateHandlingTest</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; inputFilePath, _In_ <span class="type">const</span> std::wstring&amp; expectedStatesAfterUpdateFilePath)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// Replacing UnitTestUtils::AssertEquality(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span></span><br><span class="line">    UnitTestUtils::<span class="built_in">GenerateBaselineOrAssertEquality</span>(expectedStatesAfterUpdateFilePath, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UnitTestUtils::GenerateBaselineOrAssertEquality</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; expectedDataFilePath, _In_ <span class="type">const</span> T&amp; actualData)</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (UnitTestUtils::<span class="built_in">IsBaselineGenerationEnabled</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        JsonConverter::<span class="built_in">ToJsonFile</span>(expectedDataFilePath, actualData);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    T expectedData;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedDataFilePath, expectedData);</span><br><span class="line">    UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，便完成了基准数据的生成。如果我们改变了服务的行为，我们只需要将基准数据生成的开关打开，再运行一次所有的测试，这样所有的测试数据便会被全部更新，而我们一行代码都不用写。</p>
+<h3 id="生成测试失败的对照数据">2.3. 生成测试失败的对照数据</h3>
+<p>这还没有结束，数据生成带来的另外一个好处是，调试也简单了！不知道你有没有过这种经历，一个测试失败在两个异常复杂的对象的比较上（如下）………所以到底是哪个元素出了问题？哪些字段出了问题？我是谁？我在哪？</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Assert::<span class="built_in">AreEqual</span>(longListWithDeeplyNestedStructs1, longListWithDeeplyNestedStructs2);</span><br></pre></td></tr></table></figure>
+<p>而对于面向数据的测试来说，这些问题都不是问题，因为我们还可以生成对照数据！</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UnitTestUtils::GenerateBaselineOrAssertEquality</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; expectedDataFilePath, _In_ <span class="type">const</span> T&amp; actualData)</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (UnitTestUtils::<span class="built_in">IsBaselineGenerationEnabled</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        JsonConverter::<span class="built_in">ToJsonFile</span>(expectedDataFilePath, actualData);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    T expectedData;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedDataFilePath, expectedData);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (...)</span><br><span class="line">    &#123;</span><br><span class="line">        UnitTestUtils::<span class="built_in">GenerateActualDataFileWhenTestFailed</span>(actualData, expectedDataFilePath);</span><br><span class="line">        <span class="keyword">throw</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，一旦测试失败，我们就会得到对照数据，两个文件用diff工具打开一看，有任何改动都一目了然。</p>
+<p>也许你会觉得奇怪，我们难道不可以直接生成基准数据，然后直接看diff吗？这个本地开发确实是可以的，但是有时候某些错误只发生在每日构建服务器上，这个测试失败的对照数据就变得相当有用了。这个极大的增加了测试失败的可观察性。</p>
+<h3 id="卖个关子">2.4. 卖个关子</h3>
+<p>我们项目组目前就是采用了这种测试模式，并非常有效的降低了测试的开发和维护成本。希望到此，你也会对数据驱动测试开始感兴趣，并开始慢慢的使用它。不过，如果它的威力并不仅仅止于此。由于篇幅的限制，我们就暂时讨论到这。下一篇（应该也是最后一篇），我们会来讨论它的进阶版本 —— 面向数据的测试，并演示如何使用其更好的帮助我们项目的开发。</p>
+<hr>
+<h2 id="“假”测试">3. “假”测试</h2>
+<p>在写测试时，我们要对几种测试特别小心，这些测试即便存在，也不会对我们有任何帮助。很多时候，这些测试还会拖慢我们开发的进度。</p>
+<h3 id="不稳定的测试（Flaky-tests）">3.1. 不稳定的测试（Flaky tests）</h3>
+<p>首先，也就是最臭名昭著的不稳定的测试了，这个我们在<a href="/posts/make-tests-your-friends#%E9%81%BF%E5%85%8D%E4%B8%8D%E7%A8%B3%E5%AE%9A%E7%9A%84%E4%BB%A3%E7%A0%81">上篇中也提到过</a>。对于这一种测试，我们应该尽快禁用，并将其当作高优先级开发任务处理，如果测试不修复，则新功能的开发必须停止。原因很简单，如果测试都不能通过，我们怎么知道这个问题不会在最终用户那边引起什么问题呢？</p>
+<p>发现这种错误的方法除了听到多个开发都在抱怨以外，都比较简单粗暴，因为只有把测试运行多次才能知道它是否稳定。所以，要么查看测试的历史数据（下一节会提及），要么就每隔一段时间触发一次测试稳定性测试，把每个测试都跑上很多次，找出不稳定的测试。</p>
+<p>我曾经被要求修复过这样一个测试，问题是这样的：“这个测试在一周前大概只有20%的机率会失败，但是这一周感觉上涨到了30%，你能看一下是怎么回事吗？”。对这个问题我真的无从下手，首先，我不知道是不是因为这一周你水逆，结果多挂了几次，然后，我也不知道我遇到的错误是已经存在的可以忽略的20%，还是我需要修复的10%？所以，最后，我的处理方法是：</p>
+<ol>
+<li>先把这个测试完全禁用，反正所有人遇到这个错误也都是直接重试，浪费编译和测试服务器的资源；</li>
+<li>把这个测试完全读懂；</li>
+<li>根据出现的错误创建新的测试，并稳定的将错误重现；</li>
+<li>修复新的测试并提交，再重复步骤3-4，直到所有的错误都修复完毕；</li>
+</ol>
+<p>最后，由于原测试自己写的就有问题，我又创建了一个新的稳定的测试用来测试原测试本身想要测试的场景，提交之后，我就把原测试删除了。</p>
+<h3 id="缓慢的测试">3.2. 缓慢的测试</h3>
+<p>测试是用来帮助我们快速找到问题的，也就是说我们应该尽可能的早测试，多测试，但是如果一个测试速度很慢的话，我们就无法做到这一点，久而久之就没有人会来运行这个测试了。像<a href="/posts/make-tests-your-friends/#%E5%A2%9E%E5%8A%A0%E5%8F%AF%E6%B5%8B%E8%AF%95%E9%9D%A2%EF%BC%9A%E9%AB%98%E5%86%85%E8%81%9A%EF%BC%8C%E4%BD%8E%E8%80%A6%E5%90%88">上篇中</a>那个动不动就盲目Sleep30秒的测试，在我们项目中几乎重来没有人会去运行它，那些测试一旦出了错，大家甚至连调试的欲望都没有，就直接把测试注释掉……所以千万不要忽视测试的性能。</p>
+<p>当然虽然我们不提倡盲目的追求测试的速度，但是对于不同类型的测试的速度，我们会有不同的的期望，比如大型的集成测试或者端到端测试，可能需要跑上几个小时，不过这种测试我们可能一天也就跑一次，用于衡量每日构建出来的版本的质量，所以就算花上一个小时也是没有什么太多影响的。但是，如果说这种测试一次要跑好几天，可能就不是很好了。比如，你需要一个版本做紧急修复一个线上问题，版本构建完毕之后，测试需要等上三天才能知道这个版本是不是能发布，这个时候最终用户估计就已经发狂了。</p>
+<p>另外，这里还有一个例外，就是性能测试。性能测试一般都需要将一个场景重复跑很多遍，所以花时间是理所当然的，但是同样的，这也导致了我们并不会频繁的运行它们。为了保证这些测试不拖累其他的测试，我们可以将性能测试单独放在一个测试类或者测试模块中，以起到隔离的作用。</p>
+<h3 id="浅探针">3.3. 浅探针</h3>
+<p>探针测试非常有用，一般用来检查线上服务运行是否正常。一旦出错，就触发报警，修复或者回滚。这个在自动化中相当重要，不然每次服务升级都必须要定时手动检查，或者手动修复，效率极其低下。</p>
+<p>很多服务治理的框架都提供了探针支持，比如，k8s的<a target="_blank" rel="noopener" href="https://cloud.google.com/blog/products/gcp/kubernetes-best-practices-setting-up-health-checks-with-readiness-and-liveness-probes">Readiness Probe和Liveness Probe</a>。这些探针提供了方便配置且多种多样的实现支持，比如，发起tcp连接，或者发送http请求，并检查连接和返回结果是否正确。这些探针本意在于提供一个方便和统一的机制来检查服务是否健康，但是这也导致了一个很常见的问题：<strong>探针测试检查的内容也过于简单</strong>。比如，只要服务启动成功就算是健康了。然而，要能正确的服务用户的请求，仅仅服务成功启动是远远不够的。这也就牵涉到了一个问题：**服务要多健康才算健康？**这也是实现正确实现探针测试的关键。</p>
+<p>这个问题，其实很难经的起仔细思考，因为我们很快就会发现一个很恐怖的事实：**一个服务要完全没有问题，才能说是健康！**这意味着一个错误数据都不能有，一个数据不一致都不能有！因为只有这样我们才能说，这个服务能够正确服务任何用户的请求。这也就是说探针测试应该检查服务中所有部分的运行状态是否正常，所有的配置和用户数据是否正确。我把这种探针实现叫做深探针（Deep Probe）。</p>
+<p>不过，深探针也会带来一个问题：它的执行时间太长了，根本没办法在一个探针请求中完成。所以，一般深探针的实现会和普通的探针有所不同：</p>
+<ul>
+<li><strong>利用定时器和主动上报</strong>：有些服务治理框架对于健康检查的模型不是拉模型（定时探针），而是推模型（健康上报），比如<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-health-introduction#health-reporting">Service Fabric</a>。所以我们可以使用定时器定时检查服务中的状态，如果发现问题就进行错误上报，或者停止心跳，从而报告服务健康状况。</li>
+<li><strong>创建专用的深探针服务</strong>：如果需要测试的数据量太大，我们还可以创建专用的深探针服务来进行测试。深探针服务可以将相关的信息从其他服务中读取过来，并运行测试和上报错误。这样做可以非常方便的控制整体的测试频率，避免对正常服务造成太大压力。当然这也需要我们的服务有着非常良好和统一的服务发现和状态发现机制，以支持探针服务的运行。</li>
+</ul>
+<hr>
+<h2 id="再休息一下吧">4. 再休息一下吧</h2>
+<p>好了，感觉写的又有点长了，我们就当这是中篇的结束吧，这里继续总结一下：</p>
+<ol>
+<li>首先，我们讨论了如何写出好的测试：
+<ol>
+<li>选择合理的测试类型；</li>
+<li>对测试错误给出合理的提示信息，其中包括断言式的测试名，明确的错误信息和一目了然的行为变化；</li>
+<li>追求需求覆盖率和缺陷覆盖率，而不是代码覆盖率；</li>
+<li>搭建专业的脚手架帮助我们简化测试工作量。</li>
+</ol>
+</li>
+<li>为了达到一目了然的行为变化，维护测试的代价变得极其高昂，所以，我们讨论了面向数据的测试，并演示了如何其大大地降低测试维护的成本，提高测试失败的可观察性和加快我们调试错误失败的速度。</li>
+<li>最后，我们讨论了几种虚假的测试：不稳定的测试，缓慢的测试和浅探针，这些测试都没有办法起到测试应有的作用；</li>
+</ol>
+<p>下一篇，我们来继续讨论更多关于面向数据测试的问题。</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends-final/">测试，你写代码时最好的朋友（下篇）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends-continue/">测试，你写代码时最好的朋友（中篇）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/make-tests-your-friends/">测试，你写代码时最好的朋友（上篇）</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/make-tests-your-friends-continue/" target="_blank">测试，你写代码时最好的朋友（中篇）</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag"># 测试</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/make-tests-your-friends/" rel="prev" title="测试，你写代码时最好的朋友（上篇）">
+                  <i class="fa fa-chevron-left"></i> 测试，你写代码时最好的朋友（上篇）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/pragmatic-testing-part-1/" rel="next" title="Pragmatic testing (P1: Problems, principles and test-friendly code)">
+                  Pragmatic testing (P1: Problems, principles and test-friendly code) <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

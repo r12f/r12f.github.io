@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Spotlight是一个让人又爱又恨的东西，一方面他确实相当好用，但是另外一方面，他也确实占用了不少系统资源，在进行大量文件操作的时候，经常将CPU占满，可以将我可怜的macbook pro烧到80度左右，所以不能不好好的折腾他一下了，这里总结一些这两天摸索出来的Spotlight调优的方法，希望能对大家也有些帮助。 本人使用Mac现在总时间还不超过一周，所以很多东西理解的可能是不对的（什么可能啊">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mac OS X Lion Spotlight 优化指南">
+<meta property="og:url" content="http://r12f.com/posts/mac-os-x-lion-spotlight-optimazations/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="Spotlight是一个让人又爱又恨的东西，一方面他确实相当好用，但是另外一方面，他也确实占用了不少系统资源，在进行大量文件操作的时候，经常将CPU占满，可以将我可怜的macbook pro烧到80度左右，所以不能不好好的折腾他一下了，这里总结一些这两天摸索出来的Spotlight调优的方法，希望能对大家也有些帮助。 本人使用Mac现在总时间还不超过一周，所以很多东西理解的可能是不对的（什么可能啊">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-11-mac-os-x-lion-spotlight-optimazations/spotlight_search_result.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-11-mac-os-x-lion-spotlight-optimazations/spotlight_privacy1.png">
+<meta property="article:published_time" content="2012-02-11T05:55:59.000Z">
+<meta property="article:modified_time" content="2012-02-11T13:55:59.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="mac os x">
+<meta property="article:tag" content="spotlight">
+<meta property="article:tag" content="优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-11-mac-os-x-lion-spotlight-optimazations/spotlight_search_result.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/mac-os-x-lion-spotlight-optimazations/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/mac-os-x-lion-spotlight-optimazations/","path":"posts/mac-os-x-lion-spotlight-optimazations/","title":"Mac OS X Lion Spotlight 优化指南"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Mac OS X Lion Spotlight 优化指南 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Spotlight%E7%AE%80%E4%BB%8B"><span class="nav-text">1. Spotlight简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88%EF%BC%9A%E5%87%8F%E5%B0%91%E9%9C%80%E8%A6%81%E7%B4%A2%E5%BC%95%E7%9A%84%E5%86%85%E5%AE%B9"><span class="nav-text">2. 基本优化方案：减少需要索引的内容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%BF%E6%8D%A2%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88-I%EF%BC%9A%E6%9B%BF%E6%8D%A2Spotlight%E7%9A%84%E5%89%8D%E7%AB%AF%E9%83%A8%E5%88%86"><span class="nav-text">3. 替换优化方案 I：替换Spotlight的前端部分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%BF%E6%8D%A2%E4%BC%98%E5%8C%96%E6%96%B9%E6%A1%88-II%EF%BC%9A%E6%9B%BF%E6%8D%A2%E6%95%B4%E4%B8%AASpotlight"><span class="nav-text">4. 替换优化方案 II：替换整个Spotlight</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8C%E5%85%A8%E5%81%9C%E6%AD%A2Spotlight%E5%90%8E%E5%8F%B0%E7%B4%A2%E5%BC%95"><span class="nav-text">4.1. 完全停止Spotlight后台索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E6%9B%BF%E4%BB%A3%E8%BD%AF%E4%BB%B6"><span class="nav-text">4.2. 安装替代软件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">5. 总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/mac-os-x-lion-spotlight-optimazations/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Mac OS X Lion Spotlight 优化指南 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Mac OS X Lion Spotlight 优化指南
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2012-02-10 21:55:59" itemprop="dateCreated datePublished" datetime="2012-02-10T21:55:59-08:00">2012-02-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2012-02-11 05:55:59" itemprop="dateModified" datetime="2012-02-11T05:55:59-08:00">2012-02-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/mac-os-x-lion-spotlight-optimazations/" class="post-meta-item leancloud_visitors" data-flag-title="Mac OS X Lion Spotlight 优化指南" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/mac-os-x-lion-spotlight-optimazations/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/mac-os-x-lion-spotlight-optimazations/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Spotlight是一个让人又爱又恨的东西，一方面他确实相当好用，但是另外一方面，他也确实占用了不少系统资源，在进行大量文件操作的时候，经常将CPU占满，可以将我可怜的macbook pro烧到80度左右，所以不能不好好的折腾他一下了，这里总结一些这两天摸索出来的Spotlight调优的方法，希望能对大家也有些帮助。</p>
+<p>本人使用Mac现在总时间还不超过一周，所以很多东西理解的可能是不对的（什么可能啊，是应该吧），有不正确的地方，还请大家多多指正。</p>
+<p><strong>以下优化是在Mac OS X Lion 10.7.2 的系统上实践出来的，其他版本的系统可能有一些不一样，大家可以Google一下具体的方法，但是基本步骤应该是差不多的。</strong></p>
+<p>如果没有大量的文件操作，Spotlight对系统的影响还是不大的，占用CPU一般是3% - 5%左右，没有太大必要进行优化。但是如果发现最近电脑温度很高，或者电池消耗很快，就可以检查一下Spotlight，参照这篇文章进行优化了。</p>
+<span id="more"></span>
+<h2 id="Spotlight简介">1. Spotlight简介</h2>
+<p>Spotlight是Mac系统中的查找服务，为了能使查找更加的迅速，Mac系统会在后台运行一个索引服务，在有文件操作或者资料更新，如iTunes，Mail等，就会为他们建立一个索引，用于加速Spotlight的查找。</p>
+<p>**所以，Spotlight其实分为两个部分：前台Spotlight的查找服务Search.bundle，和后台的索引服务mds。**优化Spotlight，其实就是优化这两个服务。</p>
+<h2 id="基本优化方案：减少需要索引的内容">2. 基本优化方案：减少需要索引的内容</h2>
+<p>根据上面的介绍，那么我们可以想到，最简单的优化就是减少需要索引的内容。</p>
+<p><strong>首先，在Spotlight的设置中选择我们需要索引的内容。</strong></p>
+<p>打开系统偏好设置-&gt;Spotlight，在搜索结果这个Tab栏内，我们把所有我们不关心的内容全部勾选掉。</p>
+<p>我只勾选了：应用程序，系统偏好设置，通讯录和音乐。这些对我来说够用了。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-11-mac-os-x-lion-spotlight-optimazations/spotlight_search_result.png" alt="spotlight_search_result"></p>
+<p><strong>然后，将我们不需要索引的文件夹都加入Spotlight的黑名单。</strong></p>
+<p>在系统偏好设置-&gt;Spotlight中的隐私Tab中，我们可以选择那些目录是Spotlight不用去索引的，我们可以利用这个目录来大大减少我们需要索引的文件量。</p>
+<p>打开Finder，点击菜单中的前往-&gt;前往文件夹，转到根目录/， 将文件夹中除了应用程序和用户的目录，全部放入黑名单。</p>
+<p>**需要注意的是：**其实用户目录也可以放入黑名单，Spotlight中显示的音乐，联系人和邮件，其实是靠和这些软件数据库直接联系来建立索引的，所以和文件夹的索引没有太大的联系，也可以放入黑名单。这里看大家的喜好，我全放进去了。</p>
+<p>**另外还需要注意的是：**这里需要在Finder里面显示所有隐藏文件，因为一些和系统相关的目录，如/usr，其实都没有索引的必要，都可以放入黑名单。如果显示文件的方法不会的话，大家可以去Google一下。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-11-mac-os-x-lion-spotlight-optimazations/spotlight_privacy1.png" alt="spotlight_privacy"></p>
+<p><strong>最后，我们还需要再设置一下Spotlight需要索引的硬盘，一些移动硬盘和U盘什么的，其实就不需要索引了。</strong></p>
+<p>打开终端，输入下面的命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## 关闭所有磁盘的索引服务</span></span><br><span class="line"></span><br><span class="line">sudo mdutil -a -i off</span><br><span class="line"></span><br><span class="line"><span class="comment">## 只打开主硬盘的索引服务，我的主硬盘被挂载到/Volumes/Macintosh HD目录下（默认设置），大家可以根据具体情况修改。</span></span><br><span class="line"></span><br><span class="line">sudo mdutil -i on <span class="string">&quot;/Volumes/Macintosh HD&quot;</span></span><br></pre></td></tr></table></figure>
+<p>如果上面的指令执行错误，可以使用如下命令来恢复对所有磁盘的索引。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mdutil -a -i on</span><br></pre></td></tr></table></figure>
+<p>好，到此我们已经完成了第一步优化了。</p>
+<p>此时大家可以看到Spotlight在重建索引了，在我的机器上，原来完全建立一次索引需要2小时，现在只需要几分钟了。</p>
+<h2 id="替换优化方案-I：替换Spotlight的前端部分">3. 替换优化方案 I：替换Spotlight的前端部分</h2>
+<p>OK，在完成基本优化方案之后，既然我们已经将Spotlight阉割成了这般田地。那我们干脆换掉Spotlight使用其他的软件替代好了。</p>
+<p>这里有一个不错的免费软件推荐：<a target="_blank" rel="noopener" href="http://www.alfredapp.com/">Alfred</a>。大家也可以直接在App Store中搜索安装即可，过程就不赘述了。</p>
+<p><strong>隐藏任务栏中的Spotlight图标</strong></p>
+<p>这个方案问题的关键在于：既然Spotlight都不需要了，我们也就不需要显示它了。</p>
+<p>关闭它的方法很简单，在终端里面输入如下指令即可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mv</span> /System/Library/CoreServices/Search.bundle /System/Library/CoreServices/Search2.bundle</span><br><span class="line">ps aux | grep SystemUIServer | grep -v grep | awk <span class="string">&#x27;&#123;print $2&#125;&#x27;</span> | xargs <span class="built_in">kill</span></span><br></pre></td></tr></table></figure>
+<p>现在我们就会发现桌面上的Spotlight图标不见了，这一步优化也就宣告完成了。</p>
+<p>当然想要恢复也很简单，输入如下命令即可恢复：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo <span class="built_in">mv</span> /System/Library/CoreServices/Search2.bundle /System/Library/CoreServices/Search.bundle</span><br><span class="line">ps aux | grep SystemUIServer | grep -v grep | awk <span class="string">&#x27;&#123;print $2&#125;&#x27;</span> | xargs <span class="built_in">kill</span></span><br></pre></td></tr></table></figure>
+<h2 id="替换优化方案-II：替换整个Spotlight">4. 替换优化方案 II：替换整个Spotlight</h2>
+<p>完全停止Spotlight的意思是不仅仅关闭掉Spotlight的桌面搜索，还停止掉Spotlight的后台索引服务。</p>
+<p>**所以友情提醒：前方有怪兽！**将Spotlight关闭之后，依赖于Spotlight的索引服务的软件将无法正常运行，如Alfred将无法显示搜索结果（依赖于Spotlight索引服务mds），请小心处理，如果引起诡异的问题，与笔者无关。</p>
+<p>这个方案是我暂时最喜欢的，因为在系统中Spotlight的索引服务还是随时在运行的，所以它依然会占用我们的系统资源，而我们又无法控制，完全替换他，才是我们最好的选择。</p>
+<p>好，让我们开始吧。</p>
+<h3 id="完全停止Spotlight后台索引">4.1. 完全停止Spotlight后台索引</h3>
+<p>在完成替换优化方案I之后，我们可以输入如下命令来完全停止Spotlight的索引。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo launchctl unload -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist</span><br></pre></td></tr></table></figure>
+<p>在输入完这条指令之后，大家可以查看一下当前系统内是否还存在mds和mdsworker的进程。他们应该都退出了。</p>
+<p>至此，Spotlight算是基本被我们给干掉了。</p>
+<p>当然，如果我们后悔了，我们也可以通过如下命令来恢复。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.metadata.mds.plist</span><br></pre></td></tr></table></figure>
+<p>恢复完成之后，不要忘了检查基本优化方案里面的内容哦，因为停止后台索引服务后，索引工作也停止了。</p>
+<h3 id="安装替代软件">4.2. 安装替代软件</h3>
+<p>那在没有后台索引服务的情况下，我们还能不能享受到和Spotlight这种类似的功能呢？</p>
+<p>这里再推荐一个小软件：<a target="_blank" rel="noopener" href="http://www.blacktree.com/">QuickSilver</a>。</p>
+<p>这款软件里面会建立自己的索引，虽然就功能而言，不及Alfred强大，但也已经相差无几，对于图片，视频的索引是否有必要，个人还是持保留态度的，原因相信大家都懂的，所以基本上对我来说已经够用了。</p>
+<p>在这个软件里面，我们可以自己设定软件的索引范围，或者禁止它自动更新索引，这样，就可以让我们最大程度上的控制这个后台服务了。</p>
+<h2 id="总结">5. 总结</h2>
+<p>到此为止，整个Spotlight的优化算是完成了，我可怜的mbp温度终于降低一些了，而且也不会因为大量文件操作导致温度飙升了。总的来说，折腾还是有些效果的，希望能对大家也有些帮助吧。</p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/mac-os-x-lion-spotlight-optimazations/" target="_blank">Mac OS X Lion Spotlight 优化指南</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/mac-os-x/" rel="tag"># mac os x</a>
+              <a href="/tags/spotlight/" rel="tag"># spotlight</a>
+              <a href="/tags/%E4%BC%98%E5%8C%96/" rel="tag"># 优化</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/fix-qt-chinese-code-page-in-vs/" rel="prev" title="解决QT在VS下中文乱码的问题">
+                  <i class="fa fa-chevron-left"></i> 解决QT在VS下中文乱码的问题
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/fix-chromium-compile-error-dom-css-related-files-not-found/" rel="next" title="解决Chromium编译出现无法找到DOM和CSS相关文件的问题">
+                  解决Chromium编译出现无法找到DOM和CSS相关文件的问题 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

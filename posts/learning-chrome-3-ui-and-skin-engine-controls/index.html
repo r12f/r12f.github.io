@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="这篇文章是接着上篇文章继续聊的，Chrome的代码实在太多，每一个东西单拿出来都可以说很很多，单就一个breakpad都说了两篇。恩，不过也许是我太啰嗦了。 1. UI控件库（Control）简介 我们知道Chrome做这一套皮肤引擎是为了替换掉Windows原生的控制UI的方式，所以这个皮肤引擎上怎么能没有控件呢？所以在建立好各种基础的UI元素和默认处理之后，Chrome在上面开始封装各种基础的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库">
+<meta property="og:url" content="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="这篇文章是接着上篇文章继续聊的，Chrome的代码实在太多，每一个东西单拿出来都可以说很很多，单就一个breakpad都说了两篇。恩，不过也许是我太啰嗦了。 1. UI控件库（Control）简介 我们知道Chrome做这一套皮肤引擎是为了替换掉Windows原生的控制UI的方式，所以这个皮肤引擎上怎么能没有控件呢？所以在建立好各种基础的UI元素和默认处理之后，Chrome在上面开始封装各种基础的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-ui-control-tree.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-ui-native-control.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-add-ui-proj.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-view-hierarchy.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui-with-button.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui-with-tab.png">
+<meta property="article:published_time" content="2012-03-04T21:49:02.000Z">
+<meta property="article:modified_time" content="2012-03-05T05:49:02.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="chrome">
+<meta property="article:tag" content="DirectUI">
+<meta property="article:tag" content="ui">
+<meta property="article:tag" content="皮肤引擎">
+<meta property="article:tag" content="控件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-ui-control-tree.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/","path":"posts/learning-chrome-3-ui-and-skin-engine-controls/","title":"Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#UI%E6%8E%A7%E4%BB%B6%E5%BA%93%EF%BC%88Control%EF%BC%89%E7%AE%80%E4%BB%8B"><span class="nav-text">1. UI控件库（Control）简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="nav-text">2. 实现方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E7%BB%98%E6%8E%A7%E4%BB%B6%E5%AE%9E%E7%8E%B0"><span class="nav-text">2.1. 自绘控件实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8E%E5%8E%9F%E7%94%9F%E6%8E%A7%E4%BB%B6%E7%9A%84%E5%85%BC%E5%AE%B9"><span class="nav-text">2.2. 与原生控件的兼容</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E8%8C%83%E4%BE%8B"><span class="nav-text">3. 使用范例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E5%B7%A5%E7%A8%8B"><span class="nav-text">3.1. 建立一个工程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E7%A8%8B"><span class="nav-text">3.2. 准备工程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E7%AA%97%E5%8F%A3"><span class="nav-text">3.3. 实现一个简单的窗口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA%E6%8C%89%E9%92%AE%E5%90%A7"><span class="nav-text">3.4. 添加一个按钮吧</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E4%B8%80%E4%B8%AA%E5%8E%9F%E7%94%9F%E6%8E%A7%E4%BB%B6"><span class="nav-text">3.5. 添加一个原生控件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E4%BB%B6%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-text">3.6. 控件的生命周期</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">4. 写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2012-03-04 13:49:02 / Modified: 21:49:02" itemprop="dateCreated datePublished" datetime="2012-03-04T13:49:02-08:00">2012-03-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-chrome-3-ui-and-skin-engine-controls/" class="post-meta-item leancloud_visitors" data-flag-title="Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-chrome-3-ui-and-skin-engine-controls/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-chrome-3-ui-and-skin-engine-controls/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>这篇文章是接着上篇文章继续聊的，Chrome的代码实在太多，每一个东西单拿出来都可以说很很多，<a href="http://r12f.com/tags/breakpad">单就一个breakpad都说了两篇</a>。恩，不过也许是我太啰嗦了。</p>
+<h2 id="UI控件库（Control）简介">1. UI控件库（Control）简介</h2>
+<p>我们知道Chrome做这一套皮肤引擎是为了替换掉Windows原生的控制UI的方式，所以这个皮肤引擎上怎么能没有控件呢？所以在建立好各种基础的UI元素和默认处理之后，Chrome在上面开始封装各种基础的控件，比如button等等。</p>
+<p>其相关代码主要分布在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/control/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=src/ui/views/control">src/ui/views/control</a>目录下。</p>
+<p>为了进一步的方便开发，Chrome的UI控件库中包括了很多基础的控件，这些控件现在包括如下几种：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/button/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">button</a>：基本的按钮控件和其常用的变种，类似于CButton。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/combobox/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">combobox</a>：下拉列表和原生的下拉列表，类似于CComboBox。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/menu/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">menu</a>：菜单。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/scrollbar/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">scrollbar</a>：滚动条。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tabbed_pane/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">tabbed_pane</a>：封装了自绘的和系统原生的Tab分页控件，类似于CTabCtrl。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/table/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">table</a>：封装列表控件，类似于CListCtrl。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/textfield/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">textfield</a>：封装输入控件，类似于CEdit。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">tree</a>：树形控件，类似于CTreeCtrl。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">其他</a>：Label，进度条，分栏等等等等。</li>
+</ul>
+<p>这些控件中有一些并不一定是全部自绘的，而是使用系统原生的控件，比如tabbed_pane，tree和table。按照Chrome的文档来看，<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/chromeviews#Other_Approaches">Chrome团队应该并不喜欢使用系统原生的控件</a>，所以从长远来看，这些代码应该是中间代码，毕竟很好的实现一个这样的控件还是比较复杂的，所以Chrome就暂时使用着原生的控件。</p>
+<p><strong>另外还有一种我们在控件库中找不到，但是却十分重要的控件：容器。</strong></p>
+<p>Chrome的皮肤引擎有一个特点：万物皆容器。所有的控件都继承于一个同一个基类：View，所以所有的控件都可以有子元素。在Chrome里面，你可以建立一个其他什么都不做的View，只用它来排布他的子元素。用过<a target="_blank" rel="noopener" href="http://www.gtk.org/">GTK</a>的朋友们肯定对<a target="_blank" rel="noopener" href="http://developer.gnome.org/gtk/2.24/GtkHBox.html">GtkHBox</a>和<a target="_blank" rel="noopener" href="http://developer.gnome.org/gtk/2.24/GtkVBox.html">GtkVBox</a>这个类有一定的印象，<a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-gtk/part1/">这两个类对辅助控件的布局是很有帮助的</a>。在Chrome里面，你也可以使用类似的用法来辅助控件的布局，而且在<a href="http://r12f.com/post/Chrome%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-2-UI%E7%BB%84%E4%BB%B6%EF%BC%8C%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E-%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E7%AF%87/#%E5%B8%83%E5%B1%80%E7%AD%96%E7%95%A5%EF%BC%9ALayoutManager">UI里面还提供了几种基础的布局方法</a>来帮助大家开发。</p>
+<span id="more"></span>
+<h2 id="实现方式">2. 实现方式</h2>
+<p>提供的控件确实比较全面，那么为了更好的帮助我们理解和使用这些控件，在使用这些控件之前，先让我们来看一下Chrome的UI控件的实现方法。</p>
+<h3 id="自绘控件实现">2.1. 自绘控件实现</h3>
+<p>我们知道自绘控件的关键是三个方面：绘制、数据提供和事件回调。所以Chrome在代码里面也就是针对着这样三个方面来实现他的封装。</p>
+<p>真是熟悉的三个方面啊，想必很多朋友已经能对Chrome控件的实现方式猜个大概了，如果还对于<a href="http://r12f.com/post/Chrome%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-2-UI%E7%BB%84%E4%BB%B6%EF%BC%8C%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E-%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD%E7%AF%87/#%E7%BB%98%E5%88%B6%E5%B0%81%E8%A3%85%EF%BC%9Agfx">Chrome UI绘制机制</a>有一定了解，那么代码估计自己也能写出个大概了。</p>
+<p>没错，就是<a target="_blank" rel="noopener" href="http://zh.wikipedia.org/wiki/MVC">MVC模型</a>：</p>
+<ul>
+<li>使用<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/canvas.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Canvas">Canvas</a>来实现绘制的接口，在控件的OnPaint回调中进行自绘。</li>
+<li>采用MVC的设计思想，对于复杂的控件，如<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/tree_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Tree">Tree</a>，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/table/table_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Table">Table</a>等等，提取出Model接口和Controller接口，分别用于管理数据和处理事件回调并控制控件行为。</li>
+</ul>
+<p>我们拿Tree来举例，Chrome将一个Tree分为三个部分：<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/tree_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=TreeView">TreeView</a>，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/models/tree_model.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=TreeModel">TreeModel</a>，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/tree_view_controller.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=TreeViewController">TreeViewController</a>。</p>
+<ul>
+<li>TreeView主要用于绘制。现在TreeView已经被系统原生控件接管，但是在Chrome代码里面，我们依然能找到自绘的<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/tree_view_views.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=TreeView">TreeView</a>。</li>
+<li>TreeModel主要用于管理数据。</li>
+<li>TreeViewController主要用于处理事件回调，控制控件行为，如：控制树中某一项能不能被编辑。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-ui-control-tree.png" alt="chrome-ui-control-tree"></li>
+</ul>
+<p>这样Chrome就实现了自绘控件。</p>
+<h3 id="与原生控件的兼容">2.2. 与原生控件的兼容</h3>
+<p>由于Chrome的控件还有一部分控件是直接使用的系统原生的控件，所以就会牵涉到自绘控件和原生控件如何在View控件树兼容的问题。</p>
+<p>一个很自然的解决方法就是<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/native-controls#TOC-Historic-Abstraction">建立一个继承自View的原生控件基类</a>，而具体的控件和逻辑则放入他的子类。这个基类就是NativeControl，通过继承他，来将原生控件纳入Views的层次结构中。在Chrome的代码中，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/tree/tree_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Tree">Tree</a>就是这样来实现的。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-ui-native-control.png" alt="chrome-ui-native-control"></p>
+<p>但是Chrome认为这样做存在问题，于是Chrome<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/native-controls#TOC-Proposed-Design">对其结构进行了改进</a>，以求更好的支持跨平台和代码复用。</p>
+<p>所以现在更多的控件的实现是建立一个Wrapper封装NativeControl，Wrapper的实现则继承自<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/native_control_win.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeControlWin">NativeControlWin</a>，以便更加方便的控制控件，或者使用View进行替换，如<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/controls/combobox/combobox.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Combobox">Combobox</a>。</p>
+<h2 id="使用范例">3. 使用范例</h2>
+<p>好了，扯了这么多，我们来看一下如何使用这个皮肤引擎吧。</p>
+<h3 id="建立一个工程">3.1. 建立一个工程</h3>
+<p>由于Chrome UI库和其他工程关联太紧，所以我们如果要建立一个测试工程其实并没有那么容易，我们可以在view_example_exe这个工程上直接进行修改，或者利用<a target="_blank" rel="noopener" href="http://code.google.com/p/gclient/">gclient</a>生成一个测试工程。</p>
+<ol>
+<li>打开src/ui/views/views.gyp，将views_examples_exe的描述段复制一份，粘贴在# target_name: views_examples_lib之后。</li>
+<li>修改其工程名为你想要的工程名，如：view_test。</li>
+<li>删除其source区域下<strong>除了.rc文件以外</strong>的所有源代码。</li>
+<li>在dependencies中加入一项：views。</li>
+<li>打开<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/how-tos/install-depot-tools">配置好的cygwin或者命令行</a>，进入chromium源代码根目录，也就是存放.gclient文件的目录，输入gclient runhooks。</li>
+<li>重新打开src/ui/views/views.sln，我们就可以在(views)目录下，看到view_test的工程了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-add-ui-proj.png" alt="chrome-add-ui-proj"></li>
+</ol>
+<h3 id="准备工程">3.2. 准备工程</h3>
+<p>为了能让这个UI工程运行起来，我们需要写一些准备的代码：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;base/at_exit.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;base/command_line.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;base/message_loop.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;base/i18n/icu_util.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/base/ui_base_paths.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/base/resource/resource_bundle.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/views/widget/widget.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/views/widget/widget_delegate.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> views;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">test</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>** argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 以下内容必不可少，如果不添加会导致程序无法运行</span></span><br><span class="line">    <span class="built_in">OleInitialize</span>(<span class="literal">NULL</span>);                                        <span class="comment">// Windows上必备，OLE初始化</span></span><br><span class="line">    CommandLine::<span class="built_in">Init</span>(argc, argv);                              <span class="comment">// 初始化命令行参数</span></span><br><span class="line">    base::AtExitManager at_exit;                                <span class="comment">// 为MessageLoop所使用的，用于在退出时清理对象的工具类</span></span><br><span class="line">    ui::<span class="built_in">RegisterPathProvider</span>();                                 <span class="comment">// 注册UI组件所需要的路径，不然会出现资源找不到的问题</span></span><br><span class="line">    <span class="type">bool</span> icu_result = icu_util::<span class="built_in">Initialize</span>();                   <span class="comment">// 注册ICU，用于国际化</span></span><br><span class="line">    <span class="built_in">CHECK</span>(icu_result);</span><br><span class="line">    ui::ResourceBundle::<span class="built_in">InitSharedInstanceWithLocale</span>(<span class="string">&quot;en-US&quot;</span>);  <span class="comment">// 初始化国际化资源包</span></span><br><span class="line">    <span class="comment">// 以上内容必不可少，如果不添加会导致程序无法运行</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化消息循环</span></span><br><span class="line">    MessageLoopForUI msg_loop;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">test</span>();</span><br><span class="line"></span><br><span class="line">    msg_loop.<span class="built_in">Run</span>();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">OleUninitialize</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后我们把测试代码都加载test()这个函数中就可以了，另外这里之后的代码可能会泄漏的问题，这里我们先暂时不去理会他，后面会单独聊。</p>
+<h3 id="实现一个简单的窗口">3.3. 实现一个简单的窗口</h3>
+<p>建立好了工程之后，我们就可以添加代码了，先让我们来建立一个最简单的窗口：一个空白的Widget。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">test</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 创建窗口并显示</span></span><br><span class="line">    Widget::<span class="built_in">CreateWindowWithBounds</span>(<span class="literal">NULL</span>, gfx::<span class="built_in">Rect</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">320</span>, <span class="number">240</span>))-&amp;gt;<span class="built_in">Show</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>短短几行我们就创建了一个最基本的窗口了，但是这个窗口实在是。。。有点难看啊。。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui.png" alt="chrome-base-ui"></p>
+<h3 id="添加一个按钮吧">3.4. 添加一个按钮吧</h3>
+<p>既然难看，我们就来添加一些小控件到里面吧，先加一个小按钮吧。</p>
+<p>首先，让我们来回想一下Chrome UI的元素结构，还记得这幅图么：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-view-hierarchy.png" alt="chrome-view-hierarchy"></p>
+<p>所以为了增加按钮，我们需要创建一个按钮的控件，并且为Widget的ClientView生成一个ContentsView来保存我们的这个按钮。</p>
+<p>首先我们先添加几个头文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/views/controls/button/text_button.h&quot;</span></span></span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/views/layout/fill_layout.h&quot;</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>另外我们添加了一个TestWidgetDelegate的类，用于设置Widget样式并且提供ContentsView。另外我们还给它添加了一个FillLayout，让按钮与窗口保持一样的大小。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">TestWidgetDelegate</span> : <span class="keyword">public</span> WidgetDelegateView, <span class="keyword">public</span> ButtonListener</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">TestWidgetDelegate</span>() &#123;</span><br><span class="line">        <span class="comment">// 设置窗口背景，让其不为黑色</span></span><br><span class="line">        <span class="built_in">set_background</span>(Background::<span class="built_in">CreateStandardPanelBackground</span>());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 添加子按钮</span></span><br><span class="line">        Button *button = <span class="keyword">new</span> <span class="built_in">TextButton</span>(<span class="keyword">this</span>, <span class="string">L&quot;test&quot;</span>);</span><br><span class="line">        button-&amp;gt;<span class="built_in">set_tag</span>(<span class="number">1</span>);    <span class="comment">// Button的tag是用于区分按钮的，在回调时，通过这个tag来区分不同的按钮</span></span><br><span class="line">        <span class="built_in">AddChildView</span>(button);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置子按钮保持和窗口一样大小的布局方式</span></span><br><span class="line">        <span class="built_in">SetLayoutManager</span>(<span class="keyword">new</span> FillLayout);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">TestWidgetDelegate</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 可以变化大小</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">CanResize</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="literal">true</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 可以最大化</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">bool</span> <span class="title">CanMaximize</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> <span class="literal">true</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化焦点</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> View* <span class="title">GetInitiallyFocusedView</span><span class="params">()</span> OVERRIDE </span>&#123; <span class="keyword">return</span> <span class="keyword">this</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 提供ContentsView</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> View* <span class="title">GetContentsView</span><span class="params">()</span> OVERRIDE </span>&#123; <span class="keyword">return</span> <span class="keyword">this</span>; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 窗口关闭是退出消息循环</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">WindowClosing</span><span class="params">()</span> OVERRIDE </span>&#123; MessageLoopForUI::<span class="built_in">current</span>()-&amp;gt;<span class="built_in">Quit</span>(); &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果按钮发生点击，则回调此事件</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">ButtonPressed</span><span class="params">(Button* sender, <span class="type">const</span> views::Event&amp; event)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(sender-&amp;gt;<span class="built_in">tag</span>() == <span class="number">1</span>) &#123;  <span class="comment">// 回调时，通过这个tag来区分不同的按钮</span></span><br><span class="line">            <span class="comment">// .....</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>另外生成Widget的代码也要做少许的改动：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">test</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 创建窗口并显示</span></span><br><span class="line">    Widget::<span class="built_in">CreateWindowWithBounds</span>(<span class="keyword">new</span> TestWidgetDelegate, gfx::<span class="built_in">Rect</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">320</span>, <span class="number">240</span>))-&amp;gt;<span class="built_in">Show</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译运行，可以看到一个按钮已经出现啦~</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui-with-button.png" alt="chrome-base-ui-with-button"></p>
+<h3 id="添加一个原生控件">3.5. 添加一个原生控件</h3>
+<p>好，我们已经可以添加一个自绘的控件了，现在让我们来试着添加一个系统原生的控件吧。</p>
+<p>由于Chrome是在View的基础上封装的原生控件，所以添加原生控件也并非难事。比如我们现在来添加一个Tab栏，我们只需要添加一个头文件，再稍稍修改一下TestWidgetDelegate的构造函数就可以了。</p>
+<p>添加头文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">include</span> <span class="string">&quot;ui/views/controls/tabbed_pane/tabbed_pane.h&quot;</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>修改TestWidgetDelegate的构造函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">TestWidgetDelegate</span>() &#123;</span><br><span class="line">    <span class="comment">// 设置窗口背景，让其不为黑色</span></span><br><span class="line">    <span class="built_in">set_background</span>(Background::<span class="built_in">CreateStandardPanelBackground</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 添加Tab栏</span></span><br><span class="line">    TabbedPane *tabbedpane = <span class="keyword">new</span> <span class="built_in">TabbedPane</span>();</span><br><span class="line">    <span class="built_in">AddChildView</span>(tabbedpane);   <span class="comment">// 此处创建完成需要立刻添加到View中，因为其后端实现是在此时被创建的，如果不添加，调用AddTab接口会发生崩溃。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 添加子按钮</span></span><br><span class="line">    Button *button = <span class="keyword">new</span> <span class="built_in">TextButton</span>(<span class="keyword">this</span>, <span class="string">L&quot;test&quot;</span>);</span><br><span class="line">    button-&gt;<span class="built_in">set_tag</span>(<span class="number">1</span>);    <span class="comment">// Button的tag是用于区分按钮的，在回调时，通过这个tag来区分不同的按钮</span></span><br><span class="line">    tabbedpane-&gt;<span class="built_in">AddTab</span>(<span class="string">L&quot;Tab1&quot;</span>, button);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置子按钮保持和窗口一样大小的布局方式</span></span><br><span class="line">    <span class="built_in">SetLayoutManager</span>(<span class="keyword">new</span> FillLayout);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里需要注意的一点是：Chrome很多原生控件的真实实现类都是在View层次关系发生改变的时候创建的，所以在Tab等原生控件创建完成之后，需要马上将其加入View中，不然后续调用其接口就会发生崩溃。</p>
+<p>让我们来看看最终的效果：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-03-04-learning-chrome-3-ui-and-skin-engine-controls/chrome-base-ui-with-tab.png" alt="chrome-base-ui-with-tab"></p>
+<h3 id="控件的生命周期">3.6. 控件的生命周期</h3>
+<p>Chrome控件的生命周期是比较晦涩的，在上面的代码，我们可以看见我们new出来了很多对象，但是从未调用过delete，那中间会有内存泄漏么？</p>
+<p>**答案是：不会。**这些的对象都会在窗口接收到最后一个消息的时候把所有在View树中的对象都释放掉。在Windows下，也就是在<a target="_blank" rel="noopener" href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms632636(v=vs.85).aspx">WM_NCDESTROY</a>消息中的处理中，主动释放所有的对象的。</p>
+<p>所以我们在使用中，只需要保存好这些对象的裸指针，并且在合适的时机将其置空即可。对于置空的时机，Widget和View也有对应的回调，如<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=Widget%3A%3ADeleteDelegate&amp;origq=Widget%3A%3ADeleteDelegate">Widget::DeleteDelegate</a>，或者在析构函数里面来进行。</p>
+<h2 id="写在最后">4. 写在最后</h2>
+<p>对于Chrome UI控件库，这里只是做了写简要的记录。对于各种控件的使用，在Chrome的代码里面也提供了非常详细的实例程序，大家可以在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/examples/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views/examples</a>下找到这些代码。在VS中也提供了相应的工程：views_examples_exe，供大家参考。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/">Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/">Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-1-threading-model-and-messageloop/">Chrome学习笔记（一）：线程模型，消息循环</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/" target="_blank">Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/chrome/" rel="tag"># chrome</a>
+              <a href="/tags/DirectUI/" rel="tag"># DirectUI</a>
+              <a href="/tags/ui/" rel="tag"># ui</a>
+              <a href="/tags/%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E/" rel="tag"># 皮肤引擎</a>
+              <a href="/tags/%E6%8E%A7%E4%BB%B6/" rel="tag"># 控件</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/" rel="prev" title="Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇">
+                  <i class="fa fa-chevron-left"></i> Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/implementing-objective-c-categories-in-c/" rel="next" title="一次好玩的扯淡——在C++中实现Objective-C的categories">
+                  一次好玩的扯淡——在C++中实现Objective-C的categories <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

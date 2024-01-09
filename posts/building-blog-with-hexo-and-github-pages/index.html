@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="终于把博客搬迁了个大概，虽然已经有不少文章在说怎么用github和hexo搭建博客了，但是真正在做的时候还是依然觉得走了不少弯路，所以决定还是写一篇文章做个记录吧。 1. 事先准备 要使用Hexo，在开始之前，我们需要安装nodejs和git。如何安装这里就不再赘述了，我比较推荐使用chocolatey。至于为什么？方便啊！ chocolatey的工程在这里：https:&#x2F;&#x2F;chocolatey.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用github pages和hexo搭建静态博客">
+<meta property="og:url" content="http://r12f.com/posts/building-blog-with-hexo-and-github-pages/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="终于把博客搬迁了个大概，虽然已经有不少文章在说怎么用github和hexo搭建博客了，但是真正在做的时候还是依然觉得走了不少弯路，所以决定还是写一篇文章做个记录吧。 1. 事先准备 要使用Hexo，在开始之前，我们需要安装nodejs和git。如何安装这里就不再赘述了，我比较推荐使用chocolatey。至于为什么？方便啊！ chocolatey的工程在这里：https:&#x2F;&#x2F;chocolatey.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/hexo-first-blog.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/dns-settings.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/github-cname.png">
+<meta property="article:published_time" content="2017-02-05T15:50:10.000Z">
+<meta property="article:modified_time" content="2017-02-05T23:50:10.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="github">
+<meta property="article:tag" content="hexo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/hexo-first-blog.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/building-blog-with-hexo-and-github-pages/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/building-blog-with-hexo-and-github-pages/","path":"posts/building-blog-with-hexo-and-github-pages/","title":"使用github pages和hexo搭建静态博客"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>使用github pages和hexo搭建静态博客 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%85%88%E5%87%86%E5%A4%87"><span class="nav-text">1. 事先准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E6%8E%A2Hexo"><span class="nav-text">2. 初探Hexo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Hexo"><span class="nav-text">2.1. 安装Hexo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%88%91%E4%BB%AC%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%8D%9A%E5%AE%A2"><span class="nav-text">2.2. 创建我们的第一个博客</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90%E9%9D%99%E6%80%81%E5%8D%9A%E5%AE%A2"><span class="nav-text">2.3. 生成静态博客</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%8D%9A%E5%AE%A2%E9%85%8D%E7%BD%AE"><span class="nav-text">2.4. 常用博客配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%A4%E4%B8%AA-config-yml%EF%BC%9F"><span class="nav-text">2.4.1. 两个_config.yml？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%91%E5%B8%83%E6%88%91%E4%BB%AC%E7%9A%84%E5%8D%9A%E5%AE%A2"><span class="nav-text">3. 发布我们的博客</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAgithub-pages%E5%B7%A5%E7%A8%8B"><span class="nav-text">3.1. 创建github pages工程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%B9%B6%E5%8F%91%E5%B8%83%E6%88%91%E4%BB%AC%E7%9A%84%E5%8D%9A%E5%AE%A2"><span class="nav-text">3.2. 配置并发布我们的博客</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%8D%E6%8E%A2Hexo"><span class="nav-text">4. 再探Hexo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%A6%E5%86%99%E5%8D%9A%E5%AE%A2"><span class="nav-text">4.1. 书写博客</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E6%AD%A3%E5%8D%9A%E5%AE%A2%E5%9B%BE%E7%89%87%E7%9A%84%E9%93%BE%E6%8E%A5"><span class="nav-text">4.1.1. 修正博客图片的链接</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%8D%A2%E4%B8%BB%E9%A2%98"><span class="nav-text">4.2. 更换主题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E8%AF%84%E8%AE%BA"><span class="nav-text">4.3. 添加评论</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0google-analytics%E6%88%96%E8%80%85%E5%85%B6%E4%BB%96%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90"><span class="nav-text">4.4. 添加google analytics或者其他流量分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0Feed%EF%BC%8Csitemap"><span class="nav-text">4.5. 添加Feed，sitemap</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E5%8A%9F%E8%83%BD"><span class="nav-text">5. 高级功能</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E5%9F%9F%E5%90%8D"><span class="nav-text">5.1. 自定域名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CDN"><span class="nav-text">5.2. CDN</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/building-blog-with-hexo-and-github-pages/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="使用github pages和hexo搭建静态博客 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用github pages和hexo搭建静态博客
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2017-02-05 07:50:10 / Modified: 15:50:10" itemprop="dateCreated datePublished" datetime="2017-02-05T07:50:10-08:00">2017-02-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/building-blog-with-hexo-and-github-pages/" class="post-meta-item leancloud_visitors" data-flag-title="使用github pages和hexo搭建静态博客" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/building-blog-with-hexo-and-github-pages/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/building-blog-with-hexo-and-github-pages/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>终于把博客搬迁了个大概，虽然已经有不少文章在说怎么用github和hexo搭建博客了，但是真正在做的时候还是依然觉得走了不少弯路，所以决定还是写一篇文章做个记录吧。</p>
+<h2 id="事先准备">1. 事先准备</h2>
+<p>要使用Hexo，在开始之前，我们需要安装nodejs和git。如何安装这里就不再赘述了，我比较推荐使用chocolatey。至于为什么？方便啊！</p>
+<p>chocolatey的工程在这里：<a target="_blank" rel="noopener" href="https://chocolatey.org/">https://chocolatey.org/</a>，安装需要在powershell下，但是安装完之后就可以在cmd下执行了。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">:: 安装git</span><br><span class="line">choco install git</span><br><span class="line"></span><br><span class="line">:: 安装nodejs</span><br><span class="line">choco install nodejs</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h2 id="初探Hexo">2. 初探Hexo</h2>
+<p>Hexo (<a target="_blank" rel="noopener" href="https://hexo.io">https://hexo.io</a>) 是一个快速而简单的静态博客引擎，他提供github的markdown语法来写文章，并生成静态html页面以供部署。可能大家现在会有疑问，博客可是有很多东西是动态的，比如评论，浏览次数等等，用静态网页要如何支持呢？请大家先别着急，我们会在后面慢慢道来。</p>
+<h3 id="安装Hexo">2.1. 安装Hexo</h3>
+<p>我们可以通过如下命令将Hexo的命令行客户端安装进系统。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-cli -g</span><br></pre></td></tr></table></figure>
+<h3 id="创建我们的第一个博客">2.2. 创建我们的第一个博客</h3>
+<p>首先我们需要做的是创建一个目录来放我们的博客，比如&quot;D:\Code\testsite&quot;。然后我们打开命令行，进入这个文件夹后执行如下命令来创建我们的博客。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">:: 初始化博客</span><br><span class="line">hexo init</span><br></pre></td></tr></table></figure>
+<p>运行完成之后，我们就可以看到我们博客的原型了。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├─node_modules</span><br><span class="line">├─scaffolds</span><br><span class="line">├─source</span><br><span class="line">│  └─_posts</span><br><span class="line">└─themes</span><br><span class="line">    └─landscape</span><br></pre></td></tr></table></figure>
+<p>这里我们能看到如下几个目录：</p>
+<ul>
+<li>node_modules: nodejs模块所在的目录，比如hexo相关的模块</li>
+<li>scaffolds: 新文件模板目录</li>
+<li>source: 博客主要的源码目录
+<ul>
+<li>_posts: 文章目录，我们现在在里面能看到一个hello-world.md的文件，这就是我们的第一篇文章</li>
+<li>_drafts: 草稿目录（这里还未生成）</li>
+<li>_data: 博客的数据目录（这里还未生成，但是有些Hexo的插件会使用）</li>
+</ul>
+</li>
+<li>themes: 博客的主题目录</li>
+</ul>
+<p>好，让我们来看一下现在博客的样子吧！运行如下命令后打开：<a target="_blank" rel="noopener" href="http://localhost:4000">http://localhost:4000</a>，我们就可以看到我们的第一个博客了。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo server :: 或者我们可以缩写命令: hexo s</span><br></pre></td></tr></table></figure>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/hexo-first-blog.png" alt="hexo-first-blog"></p>
+<h3 id="生成静态博客">2.3. 生成静态博客</h3>
+<p>看起来我们的博客似乎一切OK，那么我们来真正生成一个静态博客吧：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo generate :: 或者我们可以缩写命令: hexo g</span><br></pre></td></tr></table></figure>
+<p>现在我们博客的目录结构发生了一些变化，其中大家看到多出来了一个叫做public的目录，这个目录就是我们真正的静态博客了。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├─node_modules</span><br><span class="line">├─public</span><br><span class="line">│  ├─<span class="number">2017</span></span><br><span class="line">│  │  └─<span class="number">02</span></span><br><span class="line">│  │      └─<span class="number">05</span></span><br><span class="line">│  │          └─hello-world</span><br><span class="line">│  ├─archives</span><br><span class="line">│  │  └─<span class="number">2017</span></span><br><span class="line">│  │      └─<span class="number">02</span></span><br><span class="line">│  ├─css</span><br><span class="line">│  │  ├─fonts</span><br><span class="line">│  │  └─images</span><br><span class="line">│  ├─fancybox</span><br><span class="line">│  │  └─helpers</span><br><span class="line">│  └─js</span><br><span class="line">├─scaffolds</span><br><span class="line">├─source</span><br><span class="line">│  └─_posts</span><br><span class="line">└─themes</span><br><span class="line">    └─landscape</span><br></pre></td></tr></table></figure>
+<h3 id="常用博客配置">2.4. 常用博客配置</h3>
+<p>我们在博客的目录下可以看到一个叫做_config.yml的文件，这个文件就是我们博客的配置文件，打开他我们就可以看到很多非常常用的配置。在修改之前有一个小地方请大家一定注意：在yaml文件中，冒号后面一定要留一个空格，不然加载的时候会报语法错误。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">## Site</span><br><span class="line"></span><br><span class="line">title: Hexo</span><br><span class="line">subtitle:</span><br><span class="line">description:</span><br><span class="line">author: John Doe</span><br><span class="line">language:</span><br><span class="line">timezone:</span><br><span class="line"></span><br><span class="line">## URL</span><br><span class="line"></span><br><span class="line">### If your site is put in a subdirectory, set url as &#x27;http://yoursite.com/child&#x27; and root as &#x27;/child/&#x27;</span><br><span class="line"></span><br><span class="line">url: http://yoursite.com</span><br><span class="line">root: /</span><br><span class="line">permalink: :year/:month/:day/:title/</span><br><span class="line">permalink_defaults:</span><br></pre></td></tr></table></figure>
+<h4 id="两个-config-yml？">2.4.1. 两个_config.yml？</h4>
+<p>这里如果我们留意，我们可以在博客目录里面找到两个_config.yml文件，一个是在博客的根目录下，一个是在皮肤的目录下（theme/landscape），那么这两个配置文件有什么区别呢？</p>
+<p>这里一般来说，如果一个设置或者功能是由皮肤提供的支持，那么就会被放在皮肤目录下的配置文件中，反之，如果是整个博客的设置，那么就会被放在根目录的配置文件中。不过这个分界现在非常的模糊，比如：友情链接。按道理来说友情链接应该在整个博客的配置中，但是现在却是由每个皮肤自己提供的支持。</p>
+<h2 id="发布我们的博客">3. 发布我们的博客</h2>
+<h3 id="创建github-pages工程">3.1. 创建github pages工程</h3>
+<p><a target="_blank" rel="noopener" href="https://pages.github.com/">Github pages</a>原本的目的是提供给开发者一个网站来介绍自己在Github上的项目，虽然它只支持静态网页，但是它够稳定并且提供了CDN。这些功能对于搭建一个小型博客来说，其实已经非常足够了。现在github每个用户都可以在上面创建一个github<br>
+pages的项目，而这个项目的名字必须叫做<username>.github.io，比如我在github上的用户名叫做r12f，那么我的github <a target="_blank" rel="noopener" href="http://xn--pagesr12f-ul8o714ec0j1q8eohbe15z9a.github.io">pages的项目就必须叫r12f.github.io</a>，而我们就可以用<a target="_blank" rel="noopener" href="http://r12f.github.io">http://r12f.github.io</a>来访问这个网站。</username></p>
+<h3 id="配置并发布我们的博客">3.2. 配置并发布我们的博客</h3>
+<p>在真正发布我们的博客之前，我们现在要修改一下根目录下的配置文件_config.yaml，把我们刚创建的github项目信息放在deploy的配置里：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/r12f/r12f.github.io.git</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<p>配置完成后我们就可以使用hexo的deploy命令直接部署我们的博客了：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo deploy :: 或者我们可以缩写命令: hexo d</span><br></pre></td></tr></table></figure>
+<p>部署完成后，我们最多大概等15分钟就能通过<username>.github.io看到我们的网站了。</username></p>
+<h2 id="再探Hexo">4. 再探Hexo</h2>
+<p>虽然我们的博客现在跑起来了，但是相信大家现在有一堆问题，比如到底怎么写博客，怎么换主题，怎么换域名等等等等，所以我们再回来重新看看Hexo。</p>
+<h3 id="书写博客">4.1. 书写博客</h3>
+<p>添加博客其实非常简单，我们只需要在source/_posts目录下创建一个markdown的文件就行了。不过为了我们更加方便创建和管理所有的文章，hexo还提供了一个命令来完成这件事情：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new post :: 或者我们可以缩写命令: hexo n post</span><br></pre></td></tr></table></figure>
+<p>并且在_config.yml中还提供了一个配置来设置新文章的文件名字。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">new_post_name:</span> <span class="string">:year-:month-:day-:title.md</span></span><br></pre></td></tr></table></figure>
+<h4 id="修正博客图片的链接">4.1.1. 修正博客图片的链接</h4>
+<p>由于我们在博客里面插入图片的时候使用的一般使用的相对链接，所以在一些页面上这些图片可能不能正常显示。</p>
+<p>比如，我们插入一张test.png如下，那么他在主页上的地址就会变成/test.png，而在文章页中就可能会变成/<post-name>/test.png。</post-name></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">![<span class="string">test</span>](<span class="link">./test.png</span>)</span><br></pre></td></tr></table></figure>
+<p>为了避免这个问题，我们可以使用绝对地址。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">![<span class="string">test</span>](<span class="link">/&lt;asset-folder&gt;/test.png</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="更换主题">4.2. 更换主题</h3>
+<p>Hexo基本所有的主题安装流程都差不多，我现在用的主题是hexo-theme-next（<a target="_blank" rel="noopener" href="https://github.com/iissnan/hexo-theme-next">https://github.com/iissnan/hexo-theme-next</a>），安装它只有几步：</p>
+<ol>
+<li>
+<p>在博客根目录下执行如下命令</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/iissnan/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>修改根目录下的_config.yml，即可。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">theme:</span> <span class="string">next</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>关于这个主题提供的更多功能，请移步：<a target="_blank" rel="noopener" href="http://theme-next.iissnan.com/getting-started.html">http://theme-next.iissnan.com/getting-started.html</a></p>
+<h3 id="添加评论">4.3. 添加评论</h3>
+<p>由于静态博客没有数据库的支持，所以默认是没有评论功能的，那评论是怎么支持的呢？答案就是第三方评论平台！</p>
+<p>现在比较常见的评论平台主要有：</p>
+<ul>
+<li>Disqus：<a target="_blank" rel="noopener" href="https://disqus.com/">https://disqus.com/</a></li>
+<li>HyperComments: <a target="_blank" rel="noopener" href="https://www.hypercomments.com/">https://www.hypercomments.com/</a></li>
+<li>多说：<a target="_blank" rel="noopener" href="http://duoshuo.com/">http://duoshuo.com/</a></li>
+<li>友言：[<a target="_blank" rel="noopener" href="http://www.uyan.cc/">http://www.uyan.cc/</a>][(<a target="_blank" rel="noopener" href="http://www.uyan.cc/">http://www.uyan.cc/</a>)</li>
+</ul>
+<p>由于不同平台的评论框不同，评论之后我们的界面需要做相应的调整，所以现在评论的功能几乎都是由皮肤来提供的（虽然这个其实并不合理）。所以我们需要去皮肤的配置文件_config.yml中找一找，看看它都支持哪些评论平台。</p>
+<p>这里我们去hexo-theme-next的皮肤下打开_config.yml，我们就可以看到很多相关的设置了，我们只需要申请好对应的服务，并把key或者是shortname填写在这里就可以使用了。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Duoshuo ShortName</span></span><br><span class="line"></span><br><span class="line"><span class="comment">##duoshuo_shortname:</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">## Disqus</span></span><br><span class="line"></span><br><span class="line"><span class="comment">##disqus_shortname:</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">## Hypercomments</span></span><br><span class="line"></span><br><span class="line"><span class="comment">##hypercomments_id:</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="添加google-analytics或者其他流量分析">4.4. 添加google analytics或者其他流量分析</h3>
+<p>这个和评论一样，现在主要也是皮肤提供的支持，我们同样是去皮肤下的_config.yml中查找相关的设置，比如hexo-theme-next的设置：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Google Analytics</span></span><br><span class="line"></span><br><span class="line"><span class="comment">##google_analytics:</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">## CNZZ count</span></span><br><span class="line"></span><br><span class="line"><span class="comment">##cnzz_siteid:</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="添加Feed，sitemap">4.5. 添加Feed，sitemap</h3>
+<p>在博客的根目录下执行如下命令即可：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-generator-feed --save</span><br><span class="line">npm install hexo-generator-sitemap --save</span><br></pre></td></tr></table></figure>
+<h2 id="高级功能">5. 高级功能</h2>
+<h3 id="自定域名">5.1. 自定域名</h3>
+<p>我们可以通过如下几步给github pages添加自定域名：</p>
+<ol>
+<li>
+<p>首先我们需要一个域名，这里我们可以使用<a target="_blank" rel="noopener" href="http://godaddy.com">godaddy.com</a>。</p>
+</li>
+<li>
+<p>申请好域名后，我们可以把github pages的ip地址添加到域名解析中。这里我们可以使用<a target="_blank" rel="noopener" href="https://www.dnspod.cn">dnspod</a>，因为稳定而且速度快。<br>
+在这里我们需要给dns添加两条A记录，一条CNAME记录，如下：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/dns-settings.png" alt="dns-settings"><br>
+大家可以到github pages给出的官方文档中找到现在最新的ip地址：<a target="_blank" rel="noopener" href="https://help.github.com/articles/setting-up-an-apex-domain/#configuring-a-records-with-your-dns-provider">https://help.github.com/articles/setting-up-an-apex-domain/#configuring-a-records-with-your-dns-provider</a></p>
+</li>
+<li>
+<p>最后我们需要告诉github pages我们的域名是什么，这个只需要在github pages项目的根目录中提交一个名叫CNAME并且中间只包含这个域名的文件即可。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-02-05-building-blog-with-hexo-and-github-pages/github-cname.png" alt="github-cname"></p>
+</li>
+</ol>
+<h3 id="CDN">5.2. CDN</h3>
+<p>虽然github pages已经给我们提供了CDN的支持，但是<a target="_blank" rel="noopener" href="https://help.github.com/articles/what-is-github-pages/#usage-limits">它有很多限制</a>，虽然一般情况下不太可能超过这个限制。如果你担心你的博客会超过这个限制，那么你可以把你的图片放在其他的CDN上：</p>
+<ul>
+<li>七牛云存储：<a target="_blank" rel="noopener" href="https://www.qiniu.com/">https://www.qiniu.com/</a></li>
+<li>Azure：<a target="_blank" rel="noopener" href="https://portal.azure.com/">https://portal.azure.com/</a></li>
+</ul>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/building-blog-with-hexo-and-github-pages/" target="_blank">使用github pages和hexo搭建静态博客</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/github/" rel="tag"># github</a>
+              <a href="/tags/hexo/" rel="tag"># hexo</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/hello-world/" rel="prev" title="Hello World">
+                  <i class="fa fa-chevron-left"></i> Hello World
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/adding-post-link-to-your-posts-with-hexo-tag-post-link/" rel="next" title="为Hexo博客添加文章链接：hexo-tag-post-link">
+                  为Hexo博客添加文章链接：hexo-tag-post-link <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

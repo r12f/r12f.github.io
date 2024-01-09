@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在大概了解了各个服务和源码仓库之后，相信大家已经对可以开始自如的浏览SONiC的源码了，所以这一篇文章中，我们就来看看SONiC中最常用的组件 - 通信机制。 SONiC中主要的通信机制有两种：与内核的通信和基于Redis的服务间的通信。所有的实现都在sonic-swss-common这个repo中的common目录下。我们这里就来看看这两种通信机制的实现吧！">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SONiC学习笔记（四）：通信机制">
+<meta property="og:url" content="http://r12f.com/posts/sonic-4-communication/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在大概了解了各个服务和源码仓库之后，相信大家已经对可以开始自如的浏览SONiC的源码了，所以这一篇文章中，我们就来看看SONiC中最常用的组件 - 通信机制。 SONiC中主要的通信机制有两种：与内核的通信和基于Redis的服务间的通信。所有的实现都在sonic-swss-common这个repo中的common目录下。我们这里就来看看这两种通信机制的实现吧！">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/netlink.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/redis-ops.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/table-abstraction.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/subscriber-state-table.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/notification-producer-consumer.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/producer-consumer-table.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/producer-consumer-state-table.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/orch.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/event-polling.png">
+<meta property="article:published_time" content="2023-05-09T14:55:00.000Z">
+<meta property="article:modified_time" content="2023-05-09T21:55:00.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="network">
+<meta property="article:tag" content="nos">
+<meta property="article:tag" content="sonic">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/netlink.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/sonic-4-communication/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/sonic-4-communication/","path":"posts/sonic-4-communication/","title":"SONiC学习笔记（四）：通信机制"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>SONiC学习笔记（四）：通信机制 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8E%E5%86%85%E6%A0%B8%E7%9A%84%E9%80%9A%E4%BF%A1"><span class="nav-text">1. 与内核的通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%B0%83%E7%94%A8"><span class="nav-text">1.1. 命令行调用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Netlink"><span class="nav-text">1.2. Netlink</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8ERedis%E7%9A%84%E6%9C%8D%E5%8A%A1%E9%97%B4%E9%80%9A%E4%BF%A1"><span class="nav-text">2. 基于Redis的服务间通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis%E6%95%B0%E6%8D%AE%E5%BA%93%E6%93%8D%E4%BD%9C%E5%B1%82"><span class="nav-text">2.1. Redis数据库操作层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A8%EF%BC%88Table%EF%BC%89%E6%8A%BD%E8%B1%A1%E5%B1%82"><span class="nav-text">2.2. 表（Table）抽象层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E4%BF%A1%E5%B1%82"><span class="nav-text">2.3. 通信层</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SubscriberStateTable"><span class="nav-text">2.3.1. SubscriberStateTable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NotificationProducer-NotificationConsumer"><span class="nav-text">2.3.2. NotificationProducer &#x2F; NotificationConsumer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ProducerTable-ConsumerTable"><span class="nav-text">2.3.3. ProducerTable &#x2F; ConsumerTable</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ProducerStateTable-ConsumerStateTable"><span class="nav-text">2.3.4. ProducerStateTable &#x2F; ConsumerStateTable</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%B1%82%EF%BC%9AOrch"><span class="nav-text">2.4. 服务层：Orch</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8Eepoll%E7%9A%84%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6"><span class="nav-text">3. 基于epoll的事件分发机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86"><span class="nav-text">4. 错误处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">5. 总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">6. 参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/sonic-4-communication/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="SONiC学习笔记（四）：通信机制 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SONiC学习笔记（四）：通信机制
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-05-09 07:55:00 / Modified: 14:55:00" itemprop="dateCreated datePublished" datetime="2023-05-09T07:55:00-07:00">2023-05-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/sonic-4-communication/" class="post-meta-item leancloud_visitors" data-flag-title="SONiC学习笔记（四）：通信机制" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/sonic-4-communication/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/sonic-4-communication/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在大概了解了<a href="/posts/sonic-2-key-components/">各个服务</a>和<a href="/posts/sonic-3-code-repos/">源码仓库</a>之后，相信大家已经对可以开始自如的浏览SONiC的源码了，所以这一篇文章中，我们就来看看SONiC中最常用的组件 - 通信机制。</p>
+<p>SONiC中主要的通信机制有两种：与内核的通信和基于Redis的服务间的通信。所有的实现都在<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common">sonic-swss-common</a>这个repo中的<code>common</code>目录下。我们这里就来看看这两种通信机制的实现吧！</p>
+<span id="more"></span>
+<h2 id="与内核的通信">1. 与内核的通信</h2>
+<h3 id="命令行调用">1.1. 命令行调用</h3>
+<p>SONiC中的与内核通信最简单的方式就是命令行调用了，其实现放在<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/exec.h">common/exec.h</a>文件下，且十分简单，接口如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: common/exec.h</span></span><br><span class="line"><span class="comment">// Namespace: swss</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">exec</span><span class="params">(<span class="type">const</span> std::string &amp;cmd, std::string &amp;stdout)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>其中，<code>cmd</code>是要执行的命令，<code>stdout</code>是命令执行的输出。这里的<code>exec</code>函数是一个同步调用，调用者会一直阻塞，直到命令执行完毕。其内部通过调用<code>popen</code>函数来创建子进程，并且通过<code>fgets</code>函数来获取输出。不过，<strong>虽然这个函数返回了输出，但是基本上并没有人使用</strong>，而只是通过返回值来判断是否成功，甚至连错误log中都不会写入输出的结果。</p>
+<p>这个函数虽然粗暴，但是使用广泛，特别是在各个<code>*mgrd</code>服务中，比如<code>portmgrd</code>中就用它来设置每一个Port的状态等等。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss - cfgmgr/portmgr.cpp</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">PortMgr::setPortAdminStatus</span><span class="params">(<span class="type">const</span> string &amp;alias, <span class="type">const</span> <span class="type">bool</span> up)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    stringstream cmd;</span><br><span class="line">    string res, cmd_str;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ip link set dev &lt;port_name&gt; [up|down]</span></span><br><span class="line">    cmd &lt;&lt; IP_CMD &lt;&lt; <span class="string">&quot; link set dev &quot;</span> &lt;&lt; <span class="built_in">shellquote</span>(alias) &lt;&lt; (up ? <span class="string">&quot; up&quot;</span> : <span class="string">&quot; down&quot;</span>);</span><br><span class="line">    cmd_str = cmd.<span class="built_in">str</span>();</span><br><span class="line">    <span class="type">int</span> ret = swss::<span class="built_in">exec</span>(cmd_str, res);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+<p><strong>为什么说命令行调用是一种通信机制呢</strong>？原因是当<code>*mgrd</code>服务调用<code>exec</code>函数对系统进行的修改，会触发下面马上会提到的netlink事件，从而通知其他服务进行相应的修改，比如<code>*syncd</code>，这样就间接的构成了一种通信。所以这里我们把命令行调用看作一种通信机制能帮助我们以后更好的理解SONiC的各种工作流。</p>
+<h3 id="Netlink">1.2. Netlink</h3>
+<p>Netlink是Linux内核中用于内核与用户空间进程之间的一种基于消息的通信机制。它通过套接字接口和自定义的协议族来实现，可以用来传递各种类型的内核消息，包括网络设备状态、路由表更新、防火墙规则变化、系统资源使用情况等等。而SONiC的<code>*sync</code>服务就大量使用了Netlink的机制来监听系统中网络设备的变化，并将最新的状态同步到Redis中，并通知其他服务进行相应的修改。</p>
+<p>Netlink的实现主要在这几个文件中：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/netmsg.h">common/netmsg.*</a>、<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/netlink.h">common/netlink.*</a> 和 <a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/netdispatcher.h">common/netdispatcher.*</a>，具体类图如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/netlink.png" alt></p>
+<p>其中：</p>
+<ul>
+<li><strong>Netlink</strong>：封装了Netlink的套接字接口，提供了Netlink消息的接口和接收消息的回调。</li>
+<li><strong>NetDispatcher</strong>：它是一个单例，提供了Handler注册的接口。当Netlink类接收到原始的消息后，就会调用NetDispatcher将其解析成nl_onject，并根据消息的类型调用相应的Handler。</li>
+<li><strong>NetMsg</strong>：Netlink消息Handler的基类，仅提供了onMsg的接口，其中没有实现。</li>
+</ul>
+<p>举一个例子，当<code>portsyncd</code>启动的时候，它会创建一个Netlink对象，用来监听Link相关的状态变化，并且会实现NetMsg的接口，对Link相关的消息进行处理。具体的实现如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss - portsyncd/portsyncd.cpp</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create Netlink object to listen to link messages</span></span><br><span class="line">    NetLink netlink;</span><br><span class="line">    netlink.<span class="built_in">registerGroup</span>(RTNLGRP_LINK);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Here SONiC request a fulldump of current state, so that it can get the current state of all links</span></span><br><span class="line">    netlink.<span class="built_in">dumpRequest</span>(RTM_GETLINK);      </span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;Listen to link messages...&quot;</span> &lt;&lt; endl;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register handler for link messages</span></span><br><span class="line">    <span class="function">LinkSync <span class="title">sync</span><span class="params">(&amp;appl_db, &amp;state_db)</span></span>;</span><br><span class="line">    NetDispatcher::<span class="built_in">getInstance</span>().<span class="built_in">registerMessageHandler</span>(RTM_NEWLINK, &amp;sync);</span><br><span class="line">    NetDispatcher::<span class="built_in">getInstance</span>().<span class="built_in">registerMessageHandler</span>(RTM_DELLINK, &amp;sync);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的LinkSync，就是一个NetMsg的实现，它实现了onMsg接口，用来处理Link相关的消息：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss - portsyncd/linksync.h</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LinkSync</span> : <span class="keyword">public</span> NetMsg</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">LinkSync</span>(DBConnector *appl_db, DBConnector *state_db);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// NetMsg interface</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">onMsg</span><span class="params">(<span class="type">int</span> nlmsg_type, <span class="keyword">struct</span> nl_object *obj)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// File: sonic-swss - portsyncd/linksync.cpp</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">LinkSync::onMsg</span><span class="params">(<span class="type">int</span> nlmsg_type, <span class="keyword">struct</span> nl_object *obj)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Write link state to Redis DB</span></span><br><span class="line">    <span class="function">FieldValueTuple <span class="title">fv</span><span class="params">(<span class="string">&quot;oper_status&quot;</span>, oper ? <span class="string">&quot;up&quot;</span> : <span class="string">&quot;down&quot;</span>)</span></span>;</span><br><span class="line">    vector&lt;FieldValueTuple&gt; fvs;</span><br><span class="line">    fvs.<span class="built_in">push_back</span>(fv);</span><br><span class="line">    m_stateMgmtPortTable.<span class="built_in">set</span>(key, fvs);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="基于Redis的服务间通信">2. 基于Redis的服务间通信</h2>
+<p>除了和内核的通信接口，SONiC还在Redis的基础上提供了一组PubSub的服务间通信的接口，我们这里就自底向上的来看看这些接口的实现吧！</p>
+<p>（虽然SONiC的repo中并没有将以下的代码放在不同的目录下，但是为了方便建立一个清晰的模型，这里我还是会将他们按照层次分开来描述。）</p>
+<h3 id="Redis数据库操作层">2.1. Redis数据库操作层</h3>
+<p>第一层，也是最底层，是Redis的数据库操作层，封装了各种基本命令，比如，DB的连接，命令的执行，事件通知的回调接口等等。具体的类图如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/redis-ops.png" alt></p>
+<p>其中：</p>
+<ul>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/dbconnector.h">RedisContext</a></strong>：封装并保持着与Redis的连接，当其销毁时会将其连接关闭。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/dbconnector.h">DBConnector</a></strong>：封装了所有的底层使用到的Redis的命令，比如<code>SET</code>、<code>GET</code>、<code>DEL</code>等等。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/redistran.h">RedisTransactioner</a></strong>：封装了Redis的事务操作，用于在一个事务中执行多个命令，比如<code>MULTI</code>、<code>EXEC</code>等等。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/redispipeline.h">RedisPipeline</a></strong>：封装了hiredis的redisAppendFormattedCommand API，提供了一个类似队列的异步的执行Redis命令的接口（虽然大部分使用方法依然是同步的）。它也是少有的对<code>SCRIPT LOAD</code>命令进行了封装的类，用于在Redis中加载Lua脚本实现存储过程。SONiC中绝大部分需要执行Lua脚本的类，都会使用这个类来进行加载和调用。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/redisselect.h">RedisSelect</a></strong>：它实现了Selectable的接口，用来支持基于epoll的事件通知机制（Event Polling）。主要是在我们收到了Redis的回复，用来触发epoll进行回调（我们最后会更详细的介绍）。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/dbconnector.h">SonicDBConfig</a></strong>：这个类是一个“静态类”，它主要实现了SONiC DB的配置文件的读取和解析。其他的数据库操作类，如果需要任何的配置信息，都会通过这个类来获取。</li>
+</ul>
+<h3 id="表（Table）抽象层">2.2. 表（Table）抽象层</h3>
+<p>在Redis数据库操作层之上，便是SONiC自己利用Redis中间的Key建立的表（Table）的抽象了，因为每一个Redis的Key的格式都是<code>&lt;table-name&gt;&lt;separator&gt;&lt;key-name&gt;</code>，所以SONiC在访问数据库时需要对其进行一次转换（没有印象的小伙伴可以移步<a href="/posts/sonic-2-key-components/#%E6%95%B0%E6%8D%AE%E5%BA%93">我之前的博客了解更多的信息</a>）。</p>
+<p>相关类的主要类图如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/table-abstraction.png" alt></p>
+<p>其中关键的类有三个：</p>
+<ul>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/table.h">TableBase</a></strong>：这个类是所有表的基类，它主要封装了表的基本信息，如表的名字，Redis Key的打包，每个表发生修改时用于通信的Channel的名字，等等。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/table.h">Table</a></strong>：这个类就是对于每个表增删改查的封装了，里面包含了表的名称和分隔符，这样就可以在调用时构造最终的key了。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/consumertablebase.h">ConsumerTableBase</a></strong>：这个类是各种SubscriptionTable的基类，里面主要是封装了一个简单的队列和其pop操作（对，只有pop，没有push），用来给上层调用。</li>
+</ul>
+<h3 id="通信层">2.3. 通信层</h3>
+<p>在表抽象层之上，便是SONiC的通信层了，由于需求的不同，这一层中提供了四种不同的PubSub的封装，用于服务间的通信。</p>
+<h4 id="SubscriberStateTable">2.3.1. SubscriberStateTable</h4>
+<p>最直接的就是<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/subscriberstatetable.h">SubscriberStateTable</a>了。</p>
+<p>它的原理是利用Redis数据库中自带的keyspace消息通知机制 <a target="_blank" rel="noopener" href="https://redis.io/docs/manual/keyspace-notifications/">[6]</a> —— 当数据库中的任何一个key对应的值发生了变化，就会触发Redis发送两个keyspace的事件通知，一个是<code>__keyspace@&lt;db-id&gt;__:&lt;key&gt;</code>下的<code>&lt;op&gt;</code>事件，一个是<code>__keyspace@&lt;db-id&gt;__:&lt;op&gt;</code>下的<code>&lt;key&gt;&gt;</code>事件，比如，在数据库0中删除了一个key，那么就会触发两个事件通知：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">PUBLISH __keyspace@0__:foo del</span><br><span class="line">PUBLISH __keyevent@0__:del foo</span><br></pre></td></tr></table></figure>
+<p>而SubscriberStateTable就是监听了第一个事件通知，然后调用相应的回调函数。和其直接相关的主要的类的类图如下，这里可以看到它继承了ConsumerTableBase，因为它是Redis的消息的Consumer：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/subscriber-state-table.png" alt></p>
+<p>在初始化时，我们可以看到它是如何订阅Redis的事件通知的：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss-common - common/subscriberstatetable.cpp</span></span><br><span class="line">SubscriberStateTable::<span class="built_in">SubscriberStateTable</span>(DBConnector *db, <span class="type">const</span> string &amp;tableName, <span class="type">int</span> popBatchSize, <span class="type">int</span> pri)</span><br><span class="line">    : <span class="built_in">ConsumerTableBase</span>(db, tableName, popBatchSize, pri), <span class="built_in">m_table</span>(db, tableName)</span><br><span class="line">&#123;</span><br><span class="line">    m_keyspace = <span class="string">&quot;__keyspace@&quot;</span>;</span><br><span class="line">    m_keyspace += <span class="built_in">to_string</span>(db-&gt;<span class="built_in">getDbId</span>()) + <span class="string">&quot;__:&quot;</span> + tableName + m_table.<span class="built_in">getTableNameSeparator</span>() + <span class="string">&quot;*&quot;</span>;</span><br><span class="line">    <span class="built_in">psubscribe</span>(m_db, m_keyspace);</span><br><span class="line">    <span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+<p>其事件接收和分发主要由两个函数负责：</p>
+<ul>
+<li><code>readData()</code>负责将redis中待读取的事件读取出来，并放入ConsumerTableBase中的队列中</li>
+<li><code>pops()</code>：负责将队列中的原始事件取出来，并且进行解析，然后通过函数参数传递给调用方</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss-common - common/subscriberstatetable.cpp</span></span><br><span class="line"><span class="function"><span class="type">uint64_t</span> <span class="title">SubscriberStateTable::readData</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    reply = <span class="literal">nullptr</span>;</span><br><span class="line">    <span class="type">int</span> status;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        status = <span class="built_in">redisGetReplyFromReader</span>(m_subscribe-&gt;<span class="built_in">getContext</span>(), <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>**&gt;(&amp;reply));</span><br><span class="line">        <span class="keyword">if</span>(reply != <span class="literal">nullptr</span> &amp;&amp; status == REDIS_OK) &#123;</span><br><span class="line">            m_keyspace_event_buffer.<span class="built_in">emplace_back</span>(<span class="built_in">make_shared</span>&lt;RedisReply&gt;(reply));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span>(reply != <span class="literal">nullptr</span> &amp;&amp; status == REDIS_OK);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">SubscriberStateTable::pops</span><span class="params">(deque&lt;KeyOpFieldsValuesTuple&gt; &amp;vkco, <span class="type">const</span> string&amp; <span class="comment">/*prefix*/</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vkco.<span class="built_in">clear</span>();</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Pop from m_keyspace_event_buffer, which is filled by readData()</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">auto</span> event = <span class="built_in">popEventBuffer</span>()) &#123;</span><br><span class="line">        KeyOpFieldsValuesTuple kco;</span><br><span class="line">        <span class="comment">// Parsing here ...</span></span><br><span class="line">        vkco.<span class="built_in">push_back</span>(kco);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    m_keyspace_event_buffer.<span class="built_in">clear</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="NotificationProducer-NotificationConsumer">2.3.2. NotificationProducer / NotificationConsumer</h4>
+<p>既然说到消息通信，我们很容易就会联想到消息队列，而这就是我们的第二种通信方式 —— <a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/notificationproducer.h">NotificationProducer</a>和<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/notificationconsumer.h">NotificationConsumer</a>。</p>
+<p>这种通信方式通过Redis的自带的PubSub来实现，主要是对<code>PUBLISH</code>和<code>SUBSCRIBE</code>命令的包装，很有限的应用在最简单的通知型的场景中，比如orchagent中的timeout check, restart check之类，非传递用户配置和数据的场景：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/notification-producer-consumer.png" alt></p>
+<p>这种通信模式下，消息的发送方Producer，主要会做两件事情：一是将消息打包成JSON格式，二是调用Redis的<code>PUBLISH</code>命令将消息发送出去。而且由于<code>PUBLISH</code>命令只能携带一个消息，所以请求中的<code>op</code>和<code>data</code>字段会被放在<code>values</code>的最前面，然后再调用<code>buildJson</code>函数将其打包成一个JSON数组的格式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int64_t</span> swss::NotificationProducer::<span class="built_in">send</span>(<span class="type">const</span> std::string &amp;op, <span class="type">const</span> std::string &amp;data, std::vector&lt;FieldValueTuple&gt; &amp;values)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Pack the op and data into values array, then pack everything into a JSON string as the message</span></span><br><span class="line">    <span class="function">FieldValueTuple <span class="title">opdata</span><span class="params">(op, data)</span></span>;</span><br><span class="line">    values.<span class="built_in">insert</span>(values.<span class="built_in">begin</span>(), opdata);</span><br><span class="line">    std::string msg = JSon::<span class="built_in">buildJson</span>(values);</span><br><span class="line">    values.<span class="built_in">erase</span>(values.<span class="built_in">begin</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Publish message to Redis channel</span></span><br><span class="line">    RedisCommand command;</span><br><span class="line">    command.format(<span class="string">&quot;PUBLISH %s %s&quot;</span>, m_channel.<span class="built_in">c_str</span>(), msg.<span class="built_in">c_str</span>());</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    RedisReply reply = m_pipe-&gt;<span class="built_in">push</span>(command);</span><br><span class="line">    reply.<span class="built_in">checkReplyType</span>(REDIS_REPLY_INTEGER);</span><br><span class="line">    <span class="keyword">return</span> reply.<span class="built_in">getReply</span>&lt;<span class="type">long</span> <span class="type">long</span> <span class="type">int</span>&gt;();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接收方则是利用<code>SUBSCRIBE</code>命令来接收所有的通知：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> swss::NotificationConsumer::<span class="built_in">subscribe</span>()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    m_subscribe = <span class="keyword">new</span> <span class="built_in">DBConnector</span>(m_db-&gt;<span class="built_in">getDbId</span>(),</span><br><span class="line">                                    m_db-&gt;<span class="built_in">getContext</span>()-&gt;unix_sock.path,</span><br><span class="line">                                    NOTIFICATION_SUBSCRIBE_TIMEOUT);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Subscribe to Redis channel</span></span><br><span class="line">    std::string s = <span class="string">&quot;SUBSCRIBE &quot;</span> + m_channel;</span><br><span class="line">    <span class="function">RedisReply <span class="title">r</span><span class="params">(m_subscribe, s, REDIS_REPLY_ARRAY)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ProducerTable-ConsumerTable">2.3.3. ProducerTable / ConsumerTable</h4>
+<p>我们可以看到NotificationProducer/Consumer实现简单粗暴，但是由于API的限制 <a target="_blank" rel="noopener" href="https://redis.io/docs/reference/clients/">[8]</a>，它并不适合用来传递数据，所以，SONiC中提供了一种和它非常接近的另外一种基于消息队列的通信机制 —— <a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/producertable.h">ProducerTable</a>和<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/consumertable.h">ConsumerTable</a>。</p>
+<p>这种通信方式通过Redis的List来实现，和Notification不同的地方在于，发布给Channel中的消息非常的简单（单字符&quot;G&quot;），所有的数据都存储在List中，从而解决了Notification中消息大小限制的问题。在SONiC中，它主要用在FlexCounter，<code>syncd</code>服务和<code>ASIC_DB</code>中：</p>
+<ol>
+<li>
+<p><strong>消息格式</strong>：每条消息都是一个（Key, FieldValuePairs, Op）的三元组，如果用JSON来表达这个消息，那么它的格式如下：（这里的Key是Table中数据的Key，被操作的数据是<a target="_blank" rel="noopener" href="https://redis.io/docs/data-types/hashes/">Hash</a>，所以Field就是Hash中的Field，Value就是Hash中的Value了，也就是说一个消息可以对很多个Field进行操作）</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span> <span class="string">&quot;Key&quot;</span><span class="punctuation">,</span> <span class="string">&quot;[\&quot;Field1\&quot;, \&quot;Value1\&quot;, \&quot;Field2&quot;</span><span class="punctuation">,</span> \<span class="string">&quot;Value2\&quot;, ...]&quot;</span><span class="punctuation">,</span> <span class="string">&quot;Op&quot;</span> <span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>Enqueue</strong>：ProducerTable通过Lua脚本将消息三元组原子的写入消息队列中（Key = <code>&lt;table-name&gt;_KEY_VALUE_OP_QUEUE</code>，并且发布更新通知到特定的Channel（Key = <code>&lt;table-name&gt;_CHANNEL</code>）中。</p>
+</li>
+<li>
+<p><strong>Pop</strong>：ConsumerTable也通过Lua脚本从消息队列中原子的读取消息三元组，并<strong>在读取过程中</strong>将其中请求的改动真正的写入到数据库中。</p>
+</li>
+</ol>
+<blockquote>
+<p><strong>注意</strong>：Redis中Lua脚本和MULTI/EXEC的原子性和通常说的数据库ACID中的原子性（Atomicity）不同，Redis中的原子性其实更接近于ACID中的隔离性（Isolation），他保证Lua脚本中所有的命令在执行的时候不会有其他的命令执行，但是并不保证Lua脚本中的所有命令都会执行成功，比如，如果Lua脚本中的第二个命令执行失败了，那么第一个命令依然会被提交，只是后面的命令就不会继续执行了。更多的细节可以参考Redis官方文档 <a target="_blank" rel="noopener" href="https://developer.redis.com/develop/java/spring/rate-limiting/fixed-window/reactive-lua/">[4]</a> <a target="_blank" rel="noopener" href="https://redis.io/docs/manual/transactions/">[5]</a>。</p>
+</blockquote>
+<p>其主要类图如下，这里我们可以看到在ProducerTable中的<code>m_shaEnqueue</code>和ConsumerTable中的<code>m_shaPop</code>，它们就是上面我们提到的这两个Lua脚本在加载时获得的SHA了，而之后我们就可以使用Redis的<code>EVALSHA</code>命令对他们进行原子的调用了：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/producer-consumer-table.png" alt></p>
+<p>ProducerTable的核心逻辑如下，我们可以看到对Values的JSON打包，和使用<code>EVALSHA</code>来进行Lua脚本的调用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss-common - common/producertable.cpp</span></span><br><span class="line">ProducerTable::<span class="built_in">ProducerTable</span>(RedisPipeline *pipeline, <span class="type">const</span> string &amp;tableName, <span class="type">bool</span> buffered)</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#123;</span><br><span class="line">    string luaEnque =</span><br><span class="line">        <span class="string">&quot;redis.call(&#x27;LPUSH&#x27;, KEYS[1], ARGV[1], ARGV[2], ARGV[3]);&quot;</span></span><br><span class="line">        <span class="string">&quot;redis.call(&#x27;PUBLISH&#x27;, KEYS[2], ARGV[4]);&quot;</span>;</span><br><span class="line"></span><br><span class="line">    m_shaEnque = m_pipe-&gt;<span class="built_in">loadRedisScript</span>(luaEnque);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProducerTable::set</span><span class="params">(<span class="type">const</span> string &amp;key, <span class="type">const</span> vector&lt;FieldValueTuple&gt; &amp;values, <span class="type">const</span> string &amp;op, <span class="type">const</span> string &amp;prefix)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">enqueueDbChange</span>(key, JSon::<span class="built_in">buildJson</span>(values), <span class="string">&quot;S&quot;</span> + op, prefix);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProducerTable::del</span><span class="params">(<span class="type">const</span> string &amp;key, <span class="type">const</span> string &amp;op, <span class="type">const</span> string &amp;prefix)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">enqueueDbChange</span>(key, <span class="string">&quot;&#123;&#125;&quot;</span>, <span class="string">&quot;D&quot;</span> + op, prefix);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ProducerTable::enqueueDbChange</span><span class="params">(<span class="type">const</span> string &amp;key, <span class="type">const</span> string &amp;value, <span class="type">const</span> string &amp;op, <span class="type">const</span> string&amp; <span class="comment">/* prefix */</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    RedisCommand command;</span><br><span class="line"></span><br><span class="line">    command.format(</span><br><span class="line">        <span class="string">&quot;EVALSHA %s 2 %s %s %s %s %s %s&quot;</span>,</span><br><span class="line">        m_shaEnque.<span class="built_in">c_str</span>(),</span><br><span class="line">        <span class="built_in">getKeyValueOpQueueTableName</span>().<span class="built_in">c_str</span>(),</span><br><span class="line">        <span class="built_in">getChannelName</span>(m_pipe-&gt;<span class="built_in">getDbId</span>()).<span class="built_in">c_str</span>(),</span><br><span class="line">        key.<span class="built_in">c_str</span>(),</span><br><span class="line">        value.<span class="built_in">c_str</span>(),</span><br><span class="line">        op.<span class="built_in">c_str</span>(),</span><br><span class="line">        <span class="string">&quot;G&quot;</span>);</span><br><span class="line"></span><br><span class="line">    m_pipe-&gt;<span class="built_in">push</span>(command, REDIS_REPLY_NIL);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而另一侧的ConsumerTable就稍稍复杂一点，因为其支持的op类型很多，所以逻辑都写在了一个单独的文件中（<code>common/consumer_table_pops.lua</code>），我们这里就不贴代码了，有兴趣的同学可以自己去看看。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss-common - common/consumertable.cpp</span></span><br><span class="line">ConsumerTable::<span class="built_in">ConsumerTable</span>(DBConnector *db, <span class="type">const</span> string &amp;tableName, <span class="type">int</span> popBatchSize, <span class="type">int</span> pri)</span><br><span class="line">    : <span class="built_in">ConsumerTableBase</span>(db, tableName, popBatchSize, pri)</span><br><span class="line">    , <span class="built_in">TableName_KeyValueOpQueues</span>(tableName)</span><br><span class="line">    , <span class="built_in">m_modifyRedis</span>(<span class="literal">true</span>)</span><br><span class="line">&#123;</span><br><span class="line">    std::string luaScript = <span class="built_in">loadLuaScript</span>(<span class="string">&quot;consumer_table_pops.lua&quot;</span>);</span><br><span class="line">    m_shaPop = <span class="built_in">loadRedisScript</span>(db, luaScript);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ConsumerTable::pops</span><span class="params">(deque&lt;KeyOpFieldsValuesTuple&gt; &amp;vkco, <span class="type">const</span> string &amp;prefix)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Note that here we are processing the messages in bulk with POP_BATCH_SIZE!</span></span><br><span class="line">    RedisCommand command;</span><br><span class="line">    command.format(</span><br><span class="line">        <span class="string">&quot;EVALSHA %s 2 %s %s %d %d&quot;</span>,</span><br><span class="line">        m_shaPop.<span class="built_in">c_str</span>(),</span><br><span class="line">        <span class="built_in">getKeyValueOpQueueTableName</span>().<span class="built_in">c_str</span>(),</span><br><span class="line">        (prefix+<span class="built_in">getTableName</span>()).<span class="built_in">c_str</span>(),</span><br><span class="line">        POP_BATCH_SIZE,</span><br><span class="line"></span><br><span class="line">    RedisReply <span class="built_in">r</span>(m_db, command, REDIS_REPLY_ARRAY);</span><br><span class="line">    vkco.<span class="built_in">clear</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Parse and pack the messages in bulk</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="ProducerStateTable-ConsumerStateTable">2.3.4. ProducerStateTable / ConsumerStateTable</h4>
+<p>Producer/ConsumerTable虽然直观，而且保序，但是它一个消息只能处理一个Key，并且还需要JSON的序列化，然而很多时候我们并用不到保序的功能，反而更需要更大的吞吐量，所以为了优化性能，SONiC就引入了第四种通信方式，也是最常用的通信方式：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/producerstatetable.h">ProducerStateTable</a>和<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common/blob/master/common/consumertatetable.h">ConsumerStateTable</a>。</p>
+<p>与ProducerTable不同，ProducerStateTable使用Hash的方式来存储消息，而不是List。这样虽然不能保证消息的顺序，但是却可以很好的提升性能！首先，我们省下了JSON的序列化的开销，其次，对于同一个Key下的相同的Field如果被变更多次，那么只需要保留最后一次的变更，这样就将关于这个Key的所有变更消息就合并成了一条，减少了很多不必要的消息处理。</p>
+<p>Producer/ConsumerStateTable的底层实现相比于Producer/ConsumerTable也更加复杂一些。其相关联的类的主要类图如下，这里我们依然可以看到它的实现是通过<code>EVALSHA</code>调用Lua脚本来实现的，<code>m_shaSet</code>和<code>m_shaDel</code>就是用来存放修改和发送消息的，而另一边<code>m_shaPop</code>就是用来获取消息的：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/producer-consumer-state-table.png" alt></p>
+<p>在传递消息时：</p>
+<ul>
+<li>
+<p>首先，每个消息会被存放成两个部分：一个是KEY_SET，用来保存当前有哪些Key发生了修改，它以Set的形式存放在<code>&lt;table-name_KEY_SET&gt;</code>的key下，另一个是所有被修改的Key的内容，它以Hash的形式存放在<code>_&lt;redis-key-name&gt;</code>的key下。</p>
+</li>
+<li>
+<p>然后，消息存放之后Producer如果发现是新的Key，那么就是调用<code>PUBLISH</code>命令，来通知<code>&lt;table-name&gt;_CHANNEL@&lt;db-id&gt;</code>Channel，有新的Key出现了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// File: sonic-swss-common - common/producerstatetable.cpp</span></span><br><span class="line">ProducerStateTable::<span class="built_in">ProducerStateTable</span>(RedisPipeline *pipeline, <span class="type">const</span> string &amp;tableName, <span class="type">bool</span> buffered)</span><br><span class="line">    : <span class="built_in">TableBase</span>(tableName, SonicDBConfig::<span class="built_in">getSeparator</span>(pipeline-&gt;<span class="built_in">getDBConnector</span>()))</span><br><span class="line">    , <span class="built_in">TableName_KeySet</span>(tableName)</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#123;</span><br><span class="line">    string luaSet =</span><br><span class="line">        <span class="string">&quot;local added = redis.call(&#x27;SADD&#x27;, KEYS[2], ARGV[2])\n&quot;</span></span><br><span class="line">        <span class="string">&quot;for i = 0, #KEYS - 3 do\n&quot;</span></span><br><span class="line">        <span class="string">&quot;    redis.call(&#x27;HSET&#x27;, KEYS[3 + i], ARGV[3 + i * 2], ARGV[4 + i * 2])\n&quot;</span></span><br><span class="line">        <span class="string">&quot;end\n&quot;</span></span><br><span class="line">        <span class="string">&quot; if added &gt; 0 then \n&quot;</span></span><br><span class="line">        <span class="string">&quot;    redis.call(&#x27;PUBLISH&#x27;, KEYS[1], ARGV[1])\n&quot;</span></span><br><span class="line">        <span class="string">&quot;end\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    m_shaSet = m_pipe-&gt;<span class="built_in">loadRedisScript</span>(luaSet);</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>最后，Consumer会通过<code>SUBSCRIBE</code>命令来订阅<code>&lt;table-name&gt;_CHANNEL@&lt;db-id&gt;</code>Channel，一旦有新的消息到来，就会使用Lua脚本调用<code>HGETALL</code>命令来获取所有的Key，并将其中的值读取出来并真正的写入到数据库中去。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ConsumerStateTable::<span class="built_in">ConsumerStateTable</span>(DBConnector *db, <span class="type">const</span> std::string &amp;tableName, <span class="type">int</span> popBatchSize, <span class="type">int</span> pri)</span><br><span class="line">    : <span class="built_in">ConsumerTableBase</span>(db, tableName, popBatchSize, pri)</span><br><span class="line">    , <span class="built_in">TableName_KeySet</span>(tableName)</span><br><span class="line">&#123;</span><br><span class="line">    std::string luaScript = <span class="built_in">loadLuaScript</span>(<span class="string">&quot;consumer_state_table_pops.lua&quot;</span>);</span><br><span class="line">    m_shaPop = <span class="built_in">loadRedisScript</span>(db, luaScript);</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">subscribe</span>(m_db, <span class="built_in">getChannelName</span>(m_db-&gt;<span class="built_in">getDbId</span>()));</span><br><span class="line">    <span class="comment">// ...</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>为了方便理解，我们这里举一个例子：启用Port Ethernet0：</p>
+<ul>
+<li>
+<p>首先，我们在命令行下调用<code>config interface startup Ethernet0</code>来启用Ethernet0，这会导致<code>portmgrd</code>通过ProducerStateTable向APP_DB发送状态更新消息，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">EVALSHA &quot;&lt;hash-of-set-lua&gt;&quot; &quot;6&quot; &quot;PORT_TABLE_CHANNEL@0&quot; &quot;PORT_TABLE_KEY_SET&quot; </span><br><span class="line">    &quot;_PORT_TABLE:Ethernet0&quot; &quot;_PORT_TABLE:Ethernet0&quot; &quot;_PORT_TABLE:Ethernet0&quot; &quot;_PORT_TABLE:Ethernet0&quot; &quot;G&quot;</span><br><span class="line">    &quot;Ethernet0&quot; &quot;alias&quot; &quot;Ethernet5/1&quot; &quot;index&quot; &quot;5&quot; &quot;lanes&quot; &quot;9,10,11,12&quot; &quot;speed&quot; &quot;40000&quot;</span><br></pre></td></tr></table></figure>
+<p>这个命令会在其中调用如下的命令来创建和发布消息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">SADD &quot;PORT_TABLE_KEY_SET&quot; &quot;_PORT_TABLE:Ethernet0&quot;</span><br><span class="line">HSET &quot;_PORT_TABLE:Ethernet0&quot; &quot;alias&quot; &quot;Ethernet5/1&quot;</span><br><span class="line">HSET &quot;_PORT_TABLE:Ethernet0&quot; &quot;index&quot; &quot;5&quot;</span><br><span class="line">HSET &quot;_PORT_TABLE:Ethernet0&quot; &quot;lanes&quot; &quot;9,10,11,12&quot;</span><br><span class="line">HSET &quot;_PORT_TABLE:Ethernet0&quot; &quot;speed&quot; &quot;40000&quot;</span><br><span class="line">PUBLISH &quot;PORT_TABLE_CHANNEL@0&quot; &quot;_PORT_TABLE:Ethernet0&quot;</span><br></pre></td></tr></table></figure>
+<p>所以最终这个消息会在APPL_DB中被存放成如下的形式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">PORT_TABLE_KEY_SET:</span><br><span class="line">  _PORT_TABLE:Ethernet0</span><br><span class="line"></span><br><span class="line">_PORT_TABLE:Ethernet0:</span><br><span class="line">  alias: Ethernet5/1</span><br><span class="line">  index: 5</span><br><span class="line">  lanes: 9,10,11,12</span><br><span class="line">  speed: 40000</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>当ConsumerStateTable收到消息后，也会调用<code>EVALSHA</code>命令来执行Lua脚本，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EVALSHA &quot;&lt;hash-of-pop-lua&gt;&quot; &quot;3&quot; &quot;PORT_TABLE_KEY_SET&quot; &quot;PORT_TABLE:&quot; &quot;PORT_TABLE_DEL_SET&quot; &quot;8192&quot; &quot;_&quot;</span><br></pre></td></tr></table></figure>
+<p>和Producer类似，这个脚本会执行如下命令，将<code>PORT_TABLE_KEY_SET</code>中的key，也就是<code>_PORT_TABLE:Ethernet0</code>读取出来，然后再将其对应的Hash读取出来，并更新到<code>PORT_TABLE:Ethernet0</code>去，同时将<code>_PORT_TABLE:Ethernet0</code>从数据库和<code>PORT_TABLE_KEY_SET</code>中删除。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SPOP &quot;PORT_TABLE_KEY_SET&quot; &quot;_PORT_TABLE:Ethernet0&quot;</span><br><span class="line">HGETALL &quot;_PORT_TABLE:Ethernet0&quot;</span><br><span class="line">HSET &quot;PORT_TABLE:Ethernet0&quot; &quot;alias&quot; &quot;Ethernet5/1&quot;</span><br><span class="line">HSET &quot;PORT_TABLE:Ethernet0&quot; &quot;index&quot; &quot;5&quot;</span><br><span class="line">HSET &quot;PORT_TABLE:Ethernet0&quot; &quot;lanes&quot; &quot;9,10,11,12&quot;</span><br><span class="line">HSET &quot;PORT_TABLE:Ethernet0&quot; &quot;speed&quot; &quot;40000&quot;</span><br><span class="line">DEL &quot;_PORT_TABLE:Ethernet0&quot;</span><br></pre></td></tr></table></figure>
+<p>到这里，数据的更新才算是完成了。</p>
+</li>
+</ul>
+<h3 id="服务层：Orch">2.4. 服务层：Orch</h3>
+<p>最后，为了方便各个服务使用，SONiC还在通信层上进行了更进一步的封装，为各个服务提供了一个基类：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss/blob/master/src/orchagent/orch.hcommon/consumertatetable.h">Orch</a>。</p>
+<p>由于有了上面这些封装，Orch中关于消息通信的封装就相对简单了，主要的类图如下：</p>
+<blockquote>
+<p>注意：由于这一层是服务层，所以其代码是在<code>sonic-swss</code>的仓库中，而不是<code>sonic-swss</code>。这个类中除了消息通信的封装以外，还提供了很多和服务实现相关的公共函数，比如，日志文件等等。</p>
+</blockquote>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/orch.png" alt></p>
+<p>可以看到，Orch主要是封装了<code>SubscriberStateTable</code>和<code>ConsumerStateTable</code>来简化和统一消息的订阅，核心代码非常简单，就是根据不同的数据库创建不同的Consumer，如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">Orch::addConsumer</span><span class="params">(DBConnector *db, string tableName, <span class="type">int</span> pri)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (db-&gt;<span class="built_in">getDbId</span>() == CONFIG_DB || db-&gt;<span class="built_in">getDbId</span>() == STATE_DB || db-&gt;<span class="built_in">getDbId</span>() == CHASSIS_APP_DB) &#123;</span><br><span class="line">        <span class="built_in">addExecutor</span>(<span class="keyword">new</span> <span class="built_in">Consumer</span>(<span class="keyword">new</span> <span class="built_in">SubscriberStateTable</span>(db, tableName, TableConsumable::DEFAULT_POP_BATCH_SIZE, pri), <span class="keyword">this</span>, tableName));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">addExecutor</span>(<span class="keyword">new</span> <span class="built_in">Consumer</span>(<span class="keyword">new</span> <span class="built_in">ConsumerStateTable</span>(db, tableName, gBatchSize, pri), <span class="keyword">this</span>, tableName));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="基于epoll的事件分发机制">3. 基于epoll的事件分发机制</h2>
+<p>好了，我们现在已经了解了所有关于消息通信机制的上层封装了，关于消息通信，还有一个很重要的就是消息的检测和分发，我们这里就也来看看吧！</p>
+<p>和很多的Linux服务一样，SONiC底层使用了epoll作为事件分发机制：</p>
+<ul>
+<li>所有需要支持事件分发的类都需要继承<code>Selectable</code>类，并实现两个最核心的函数：<code>int getFd();</code>（用于返回epoll能用来监听事件的fd）和<code>uint64_t readData()</code>（用于在监听到事件到来之后进行读取）。而对于一般服务而言，这个fd就是redis通信使用的fd，所以<code>getFd()</code>函数的调用，都会被最终转发到Redis的库中。</li>
+<li>所有需要参与事件分发的对象，都需要注册到<code>Select</code>类中，这个类会将所有的<code>Selectable</code>对象的fd注册到epoll中，并在事件到来时调用<code>Selectable</code>的<code>readData()</code>函数。</li>
+</ul>
+<p>其类图如下：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-09-sonic-4-communication/event-polling.png" alt></p>
+<p>在Select类中，我们可以很容易的找到其最核心的代码，实现也非常的简单：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">Select::poll_descriptors</span><span class="params">(Selectable **c, <span class="type">unsigned</span> <span class="type">int</span> timeout, <span class="type">bool</span> interrupt_on_signal = <span class="literal">false</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> sz_selectables = <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(m_objects.<span class="built_in">size</span>());</span><br><span class="line">    <span class="function">std::vector&lt;<span class="keyword">struct</span> epoll_event&gt; <span class="title">events</span><span class="params">(sz_selectables)</span></span>;</span><br><span class="line">    <span class="type">int</span> ret;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">        ret = ::<span class="built_in">epoll_wait</span>(m_epoll_fd, events.<span class="built_in">data</span>(), sz_selectables, timeout);</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; ret; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> fd = events[i].data.fd;</span><br><span class="line">        Selectable* sel = m_objects[fd];</span><br><span class="line"></span><br><span class="line">        sel-&gt;<span class="built_in">readData</span>();</span><br><span class="line">        <span class="comment">// error handling here ...</span></span><br><span class="line"></span><br><span class="line">        m_ready.<span class="built_in">insert</span>(sel);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!m_ready.<span class="built_in">empty</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">auto</span> sel = *m_ready.<span class="built_in">begin</span>();</span><br><span class="line">        m_ready.<span class="built_in">erase</span>(sel);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// After update callback ...</span></span><br><span class="line">        <span class="keyword">return</span> Select::OBJECT;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Select::TIMEOUT;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然而，问题来了…… 回调呢？我们上面提过，<code>readData()</code>只是把消息读出来放在一个待处理队列中，并不会真正的处理消息，真正的消息处理需要调用<code>pops()</code>函数，将消息拿出来处理，所以什么地方会调用每一个上层封装的消息处理呢？</p>
+<p>这里我们还是找到我们的老朋友<code>portmgrd</code>的<code>main</code>函数，从下面简化的代码中，我们可以看到和一般的Event Loop实现不同，SONiC中，最后的事件处理不是通过回调来实现的，而是需要最外层的Event Loop来主动调用完成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create PortMgr, which implements Orch interface.</span></span><br><span class="line">    <span class="function">PortMgr <span class="title">portmgr</span><span class="params">(&amp;cfgDb, &amp;appDb, &amp;stateDb, cfg_port_tables)</span></span>;</span><br><span class="line">    vector&lt;Orch *&gt; cfgOrchList = &#123;&amp;portmgr&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create Select object for event loop and add PortMgr to it.</span></span><br><span class="line">    swss::Select s;</span><br><span class="line">    <span class="keyword">for</span> (Orch *o : cfgOrchList) &#123;</span><br><span class="line">        s.<span class="built_in">addSelectables</span>(o-&gt;<span class="built_in">getSelectables</span>());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Event loop</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        Selectable *sel;</span><br><span class="line">        <span class="type">int</span> ret;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// When anyone of the selectables gets signaled, select() will call</span></span><br><span class="line">        <span class="comment">// into readData() and fetch all events, then return.</span></span><br><span class="line">        ret = s.<span class="built_in">select</span>(&amp;sel, SELECT_TIMEOUT);</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// Then, we call into execute() explicitly to process all events.</span></span><br><span class="line">        <span class="keyword">auto</span> *c = (Executor *)sel;</span><br><span class="line">        c-&gt;<span class="built_in">execute</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="错误处理">4. 错误处理</h2>
+<p>关于Event Loop我们还有最后一个问题，那就是错误处理，比如，如果Redis的命令执行出错了，连接断开了，故障了等等的情况下，我们的服务会发生什么呢？</p>
+<p>从代码上来看，SONiC中的错误处理是非常简单的，就是直接抛出异常（比如，获取命令执行结果的代码，如下），然后在Event Loop中捕获异常，打印日志，接着继续执行。关于异常和错误的种类及其原因，在代码里面并没有看到用于统计和Telemetry的代码，所以监控上说是比较薄弱的。另外还需要考虑数据出错的场景，比如数据库写到一半突然断开导致的脏数据，不过简单的重启相关的<code>*syncd</code>和<code>*mgrd</code>服务可能可以解决此类问题，因为启动时会进行全量同步。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">RedisReply::<span class="built_in">RedisReply</span>(RedisContext *ctx, <span class="type">const</span> RedisCommand&amp; command)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> rc = <span class="built_in">redisAppendFormattedCommand</span>(ctx-&gt;<span class="built_in">getContext</span>(), command.<span class="built_in">c_str</span>(), command.<span class="built_in">length</span>());</span><br><span class="line">    <span class="keyword">if</span> (rc != REDIS_OK)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// The only reason of error is REDIS_ERR_OOM (Out of memory)</span></span><br><span class="line">        <span class="comment">// ref: https://github.com/redis/hiredis/blob/master/hiredis.c</span></span><br><span class="line">        <span class="keyword">throw</span> <span class="built_in">bad_alloc</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    rc = <span class="built_in">redisGetReply</span>(ctx-&gt;<span class="built_in">getContext</span>(), (<span class="type">void</span>**)&amp;m_reply);</span><br><span class="line">    <span class="keyword">if</span> (rc != REDIS_OK)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="built_in">RedisError</span>(<span class="string">&quot;Failed to redisGetReply with &quot;</span> + <span class="built_in">string</span>(command.<span class="built_in">c_str</span>()), ctx-&gt;<span class="built_in">getContext</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">guard</span>([&amp;]&#123;<span class="built_in">checkReply</span>();&#125;, command.<span class="built_in">c_str</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="总结">5. 总结</h2>
+<p>好了，这就是所有和SONiC中内核和服务间通信相关的所有内容了，之后有时间，我们再来深入的看看一些有特色的工作流或者模块吧！</p>
+<h2 id="参考资料">6. 参考资料</h2>
+<ul>
+<li>[1] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/wiki/Architecture">SONiC Architecture</a></li>
+<li>[2] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss">SONiC SWSS Code Repo</a></li>
+<li>[3] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common">SONiC SWSS Common Code Repo</a></li>
+<li>[4] <a target="_blank" rel="noopener" href="https://developer.redis.com/develop/java/spring/rate-limiting/fixed-window/reactive-lua/">Redis - Atomicity with Lua</a></li>
+<li>[5] <a target="_blank" rel="noopener" href="https://redis.io/docs/manual/transactions/">Redis - Transactions</a></li>
+<li>[6] <a target="_blank" rel="noopener" href="https://redis.io/docs/manual/keyspace-notifications/">Redis - Keyspace Notifications</a></li>
+<li>[7] <a target="_blank" rel="noopener" href="https://redis.io/docs/data-types/hashes/">Redis - Hashes</a></li>
+<li>[8] <a target="_blank" rel="noopener" href="https://redis.io/docs/reference/clients/">Redis - Client Handling</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-7-bgp-workflow-part-2/">SONiC学习笔记（七）：BGP工作流（下）—— BGP路由变更下发</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-6-bgp-workflow-part-1/">SONiC学习笔记（六）：BGP工作流（上）—— 命令实现与FRR</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-5-syncd-sai-workflow/">SONiC学习笔记（五）：Syncd-SAI工作流</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-4-communication/">SONiC学习笔记（四）：通信机制</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-3-code-repos/">SONiC学习笔记（三）：代码仓库</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-2-key-components/">SONiC学习笔记（二）：核心组件</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-1-intro/">SONiC学习笔记（一）：概述与安装</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/sonic-4-communication/" target="_blank">SONiC学习笔记（四）：通信机制</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+              <a href="/tags/nos/" rel="tag"># nos</a>
+              <a href="/tags/sonic/" rel="tag"># sonic</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/sonic-3-code-repos/" rel="prev" title="SONiC学习笔记（三）：代码仓库">
+                  <i class="fa fa-chevron-left"></i> SONiC学习笔记（三）：代码仓库
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/use-wavedrom-in-hexo/" rel="next" title="在Hexo中使用WaveDrom">
+                  在Hexo中使用WaveDrom <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

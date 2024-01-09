@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="2013年10月20日，WPT终于迎来了新一轮的更新，在这次更新之后，我们在WPT的目录下已经找不到xperfview的身影了，而WPA则添加了多项新的功能。由于平时用WPA还算用的比较多，而且这工具实在相当好用，所以在这里打算写一些文章介绍一下它。 1. WPT简介 WPT的全名是Windows Performance Toolkit，是Windows下用来进行性能分析的一套工具，它的功能非常强">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WPA入门（一） —— 到底为什么这么慢？">
+<meta property="og:url" content="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="2013年10月20日，WPT终于迎来了新一轮的更新，在这次更新之后，我们在WPT的目录下已经找不到xperfview的身影了，而WPA则添加了多项新的功能。由于平时用WPA还算用的比较多，而且这工具实在相当好用，所以在这里打算写一些文章介绍一下它。 1. WPT简介 WPT的全名是Windows Performance Toolkit，是Windows下用来进行性能分析的一套工具，它的功能非常强">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/etw-overview.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/windows-kernel-trace.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/kernel-sessions.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/system-provider-in-trace.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-test-txt.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-wpr.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpr-cmd-profiles.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpr-cmd-profiledetails.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/xperf-cmd-providers-kg.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-wpa.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-ui-delay.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-diskio.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-symbol.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-cpu.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-multi-graph.png">
+<meta property="article:published_time" content="2013-11-24T04:14:13.000Z">
+<meta property="article:modified_time" content="2013-11-24T12:14:13.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="wpa">
+<meta property="article:tag" content="wpr">
+<meta property="article:tag" content="wpt">
+<meta property="article:tag" content="性能分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/etw-overview.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/","path":"posts/introduction-to-wpa-1-why-it-is-slow/","title":"WPA入门（一） —— 到底为什么这么慢？"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>WPA入门（一） —— 到底为什么这么慢？ | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#WPT%E7%AE%80%E4%BB%8B"><span class="nav-text">1. WPT简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%B8%9C%E8%A5%BF%E6%80%8E%E4%B9%88%E5%81%9A%E5%88%B0%E7%9A%84%EF%BC%9F"><span class="nav-text">2. 这东西怎么做到的？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Event-Tracing-for-Windows-ETW"><span class="nav-text">2.1. Event Tracing for Windows (ETW)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#System-Kernel-vs-User"><span class="nav-text">2.2. System&#x2F;Kernel vs User</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#System-Provider-Kernel-Session-Kernel-Event"><span class="nav-text">2.2.1. System Provider, Kernel Session, Kernel Event</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#User-Provider-User-Session-User-Event"><span class="nav-text">2.2.2. User Provider, User Session, User Event</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Keywords-System-Keywords"><span class="nav-text">2.2.3. Keywords, System Keywords</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%80%81%E6%9D%BF%EF%BC%8C%E6%9D%A5%E7%82%B9%E6%A0%97%E5%AD%90%E5%90%A7%EF%BC%8C%E9%83%BD%E9%A5%BF%E4%BA%86"><span class="nav-text">3. 老板，来点栗子吧，都饿了</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%9F%E6%88%90Trace%E6%96%87%E4%BB%B6"><span class="nav-text">3.1. 生成Trace文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8WPRUI%E7%94%9F%E6%88%90Trace%E6%96%87%E4%BB%B6"><span class="nav-text">3.1.1. 使用WPRUI生成Trace文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8WPR%E7%94%9F%E6%88%90Trace%E6%96%87%E4%BB%B6"><span class="nav-text">3.1.2. 使用WPR生成Trace文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8xperf%E7%94%9F%E6%88%90Trace%E6%96%87%E4%BB%B6"><span class="nav-text">3.1.3. 使用xperf生成Trace文件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8WPA%E5%88%86%E6%9E%90Trace%E6%96%87%E4%BB%B6"><span class="nav-text">3.2. 使用WPA分析Trace文件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#UI-Delay-Graph"><span class="nav-text">3.2.1. UI Delay Graph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Disk-IO-Graph"><span class="nav-text">3.2.2. Disk IO Graph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD%E7%AC%A6%E5%8F%B7%E6%96%87%E4%BB%B6"><span class="nav-text">3.2.3. 加载符号文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CPU-Usage-Sampled-Graph"><span class="nav-text">3.2.4. CPU Usage (Sampled) Graph</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E5%9B%BE%E6%9F%A5%E7%9C%8B"><span class="nav-text">3.2.5. 多图查看</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">4. 总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="WPA入门（一） —— 到底为什么这么慢？ | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          WPA入门（一） —— 到底为什么这么慢？
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2013-11-23 20:14:13" itemprop="dateCreated datePublished" datetime="2013-11-23T20:14:13-08:00">2013-11-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2013-11-24 04:14:13" itemprop="dateModified" datetime="2013-11-24T04:14:13-08:00">2013-11-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/introduction-to-wpa-1-why-it-is-slow/" class="post-meta-item leancloud_visitors" data-flag-title="WPA入门（一） —— 到底为什么这么慢？" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/introduction-to-wpa-1-why-it-is-slow/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/introduction-to-wpa-1-why-it-is-slow/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>2013年10月20日，WPT终于迎来了新一轮的更新，在这次更新之后，我们在WPT的目录下已经找不到xperfview的身影了，而WPA则<a target="_blank" rel="noopener" href="http://msdn.microsoft.com/en-us/library/hh162962.aspx">添加了多项新的功能</a>。由于平时用WPA还算用的比较多，而且这工具实在相当好用，所以在这里打算写一些文章介绍一下它。</p>
+<h2 id="WPT简介">1. WPT简介</h2>
+<p>WPT的全名是Windows Performance Toolkit，是Windows下用来进行性能分析的一套工具，它的功能非常强大，你可以使用它来监控CPU，内存，磁盘和网络等等的活动，从而来确定当前系统的性能瓶颈。虽然它功能强大，但是却完全免费。它包含在Windows Assessment and Deployment Kit (Windows ADK)中，最新的版本是8.1，你可以通过MSDN来下载并随意使用它：<a target="_blank" rel="noopener" href="http://www.microsoft.com/en-US/download/details.aspx?id=39982">http://www.microsoft.com/en-US/download/details.aspx?id=39982</a>。</p>
+<p>WPT主要包含两个部分：Windows Performance Recorder (WPR)和Windows Performance Analyzer (WPA)。从名字我们就很容易看出来，前者是用来记录性能数据的，后者是用来分析性能数据的了，后面我们会更加详细的介绍这两个工具。</p>
+<h2 id="这东西怎么做到的？">2. 这东西怎么做到的？</h2>
+<p>原理，我们喜欢原理。和其他的性能分析工具不同，它是由Windows本身的事件机制来提供支持的——Event Tracing for Windows (ETW)。</p>
+<h3 id="Event-Tracing-for-Windows-ETW">2.1. Event Tracing for Windows (ETW)</h3>
+<p>ETW是从Windows 2000开始就引入的一种高速的事件记录机制，而在Vista之后，Windows又对其进行了完善，使其可以记录比之前多的多的信息，比如系统CPU上正在运行的堆栈，而现在它已经成为Windows中最主要的一种分析性能问题的方法了。</p>
+<p>下面这张图来自MSDN，展现了ETW的主要基本架构，主要分成4个部分：Session，Controller，Provider和Consumer。</p>
+<ul>
+<li>Provider：ETW的事件提供者，我们在最后的记录文件中看到的事件就是来自于他们。</li>
+<li>Consumer：ETW的事件接收者，比如我们实现一个实时的Consumer来查看系统中当前有那些事件正在发生。</li>
+<li>Controller：用于开关ETW的事件。</li>
+<li>Session：它存在在内核中，用于表示一个ETW事件记录会话。系统中可以存在多个Session，每个Session都可以接收来自于多个Provider的事件，最后我们可以将多个Session中的事件写入一个日志文件中，这个日志文件就叫做Trace。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/etw-overview.png" alt="etw-overview"></li>
+</ul>
+<p>通过ETW，我们可以将系统所有关键的地方都加入事件，记录其行为和堆栈，比如CPU执行，线程切换和读写磁盘，这样我们就可以利用这些信息来进行分析了。</p>
+<span id="more"></span>
+<h3 id="System-Kernel-vs-User">2.2. System/Kernel vs User</h3>
+<p>这一小节大家可以选择跳过，因为在实际分析Trace的时候并用不上，只是ETW中有几个概念特别容易混淆，导致有时候交流上可能会产生误解而已。如果你决定跳过，那么就<strong>请把System Keywords简单理解成系统内核的Providers，只是用了一个不同的名称而已</strong>，这样之后在WPT的配置中看到这个词就不会觉得太奇怪了。</p>
+<p>在ETW里面我们经常会看到System/User Provider, System/User Keywords，Kernel/User Session, Kernel/User Event之类的词汇，他们之间到底有什么区别和联系呢？</p>
+<h4 id="System-Provider-Kernel-Session-Kernel-Event">2.2.1. System Provider, Kernel Session, Kernel Event</h4>
+<p>System Provider的真名叫做&quot;Windows Kernel Trace&quot;，他被内核非常多的模块公用，他产生的事件被称为Kernel Event，但是这个Provider产生的事件只能被一种Session接收，这种Session也被称作Kernel Session。我们可以通过logman来查看System Provider的详情：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/windows-kernel-trace.png" alt="windows-kernel-trace"></p>
+<p>我们在系统里面最常见的Kernel Session有两个：“NT Kernel Logger&quot;和&quot;Circular Kernel Context Logger”，我们可以通过logman来查看当前所有的ETW Session。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/kernel-sessions.png" alt="kernel-sessions"></p>
+<h4 id="User-Provider-User-Session-User-Event">2.2.2. User Provider, User Session, User Event</h4>
+<p>理解了System Provider之后，就好理解User Provider了：除了&quot;Windows Kernel Trace&quot;以外的Provider被统称为User Provider，即便他运行在内核里。这些Provider发出来的事件可以被发送到任何非Kernel Session的Session中，这些Session统称为User Session，而这些事件就被称为User Event。</p>
+<h4 id="Keywords-System-Keywords">2.2.3. Keywords, System Keywords</h4>
+<p>通常一个Provider里面会有很多总不同类型的事件，所以如果我们所有事件都记录在Trace中，Trace会变的非常的大，所以ETW通过Keyword提供一种过滤事件的方法。Keywords本质上就是一个64位的整数，当某个Keyword被启用，那么它对应的位就会被置1。记录事件时如果某个Keyword对应的位不是1，那么ETW就不记录该事件。那为什么我们这里System Keywords要单独拿出来说呢？因为System Keywords在本质上和在Trace中看到的样子是不一样的，而User Event的Keywords看到的是一样的。</p>
+<p>我们在上面已经用logman查看过Windows Kernel Trace Provider了，我们可以看到他包括了很多不同的Keywords，覆盖了从进程，线程到磁盘，文件各个不同的方面，那么在Trace里面看这些Keyword是个什么样子的呢？我们去WPA中看一看吧：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/system-provider-in-trace.png" alt="system-provider-in-trace"></p>
+<p>这里我们可以看到这些System Keywords在Trace里面的Provider Id并不是Windows Kernel Trace的Provider Id，而他们在Trace里面的Keywords都是0。而且我们可以看到比如DiskIO和FileIO从2个Keyword被转换成了2个Provider，而Thread和Context Switch被放在一个Provider下面，但是变成两个不同的Task。所以System Keywords的行为并没有想象中的那么好理解。而在真正分析Trace的时候，我们只需要把它看成来自内核的Provider，只不过名字不同而已就好了。</p>
+<h2 id="老板，来点栗子吧，都饿了">3. 老板，来点栗子吧，都饿了</h2>
+<p>好了，让我们来看个例子吧，我们都知道notepad打开大文件的时候非常的慢，到底为什么呢？首先我们生成一个180M的文本文件，如下图所示，然后让我们来抓个Trace试一试吧。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-test-txt.png" alt="wpt-test-txt"></p>
+<h3 id="生成Trace文件">3.1. 生成Trace文件</h3>
+<h4 id="使用WPRUI生成Trace文件">3.1.1. 使用WPRUI生成Trace文件</h4>
+<p>我们打开Windows Performance Recorder (WPRUI.exe)，然后将我们关心的数据选中：CPU Usage, Disk I/O activity和File I/O activity，然后按Start，这样我们开始录制了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-wpr.png" alt="wpt-wpr"></p>
+<p>让我们用记事本打开test.txt，很快记事本就失去响应了，现在我们大概等上半分钟左右，文件打开完之后，我们就可以停止记录并生成Trace了。</p>
+<h4 id="使用WPR生成Trace文件">3.1.2. 使用WPR生成Trace文件</h4>
+<p>当然我们也可以使用命令行来是抓取Trace。在命令行下主要有两种抓Trace的方法：xperf和wpr，由于后者比较简单，所以我们先来看看后者：Windows Performance Recorder (WPR.exe)。</p>
+<p>在WPR中，我们通过如下命令便可以查看到所有的Profile列表。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wpr -profiles</span><br></pre></td></tr></table></figure>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpr-cmd-profiles.png" alt="wpr-cmd-profiles"></p>
+<p>如果我们想知道每个Profile都开启了那些Provider，那么我们可以使用profiledetails来查看，比如CPU Usage。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wpr -profiledetails CPU</span><br></pre></td></tr></table></figure>
+<p>下图中，System Keywords就是来自内核的Provider，而System Stacks就是开启抓取堆栈的开关了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpr-cmd-profiledetails.png" alt="wpr-cmd-profiledetails"></p>
+<p>选好了Profile，我们便可以通过如下命令启动和生成Trace了。这里需要注意：启动和停止Trace是需要管理员权限的。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wpr -<span class="built_in">start</span> CPU</span><br><span class="line">wpr -stop <span class="number">1</span>.etl</span><br></pre></td></tr></table></figure>
+<h4 id="使用xperf生成Trace文件">3.1.3. 使用xperf生成Trace文件</h4>
+<p>最后，我们来看看xperf。由于使用它，你可以对每个Provider和Stackwalk进行单独的控制，所以它的能力是最强的，当然使用起来也最难。我们可以通过如下的语句来查看当前都支持那些Provider和Stackwalk。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">xperf -providers</span><br><span class="line">xperf -<span class="built_in">help</span> stackwalk</span><br></pre></td></tr></table></figure>
+<p>选择好需要的Provider和Stackwalk，我们就可以通过如下基本语法来启动和生成Trace：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">xperf -<span class="built_in">start</span> -on [provider1+provider2+…+providern] -stackwalk [stackwalk1+stackwalk2+…+stackwalkn]</span><br><span class="line">xperf -stop -d [file.etl]</span><br></pre></td></tr></table></figure>
+<p>不过我们刚刚看到wpr中CPU Usage的Profile里面包含着这么多Provider，难道我们要一个一个的填？xperf为了简化我们的操作，提出了一个叫做组（Group）的概念，我们可以通过如下命令来查看所有的组。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xperf -providers -KG</span><br></pre></td></tr></table></figure>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/xperf-cmd-providers-kg.png" alt="xperf-cmd-providers-kg"></p>
+<p>由于我们可以把组当作普通的Provider一样的用，所以有了这个，我们启动Trace就方便多了，一般我们都可以使用Base和Diag来简化我们的命令，比如，我们可以使用如下命令来记录一些基本的CPU和Disk信息。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xperf -<span class="built_in">start</span> -on Diag+FileIO -stackwalk CSwitch+ReadyThread+Profile</span><br></pre></td></tr></table></figure>
+<p>另外，你还可以通过帮助来了解更多的命令。</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xperf -<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
+<h3 id="使用WPA分析Trace文件">3.2. 使用WPA分析Trace文件</h3>
+<p>现在终于轮到我们祭出大杀器——WPA了！让我们用WPA打开这个Trace文件吧。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpt-wpa.png" alt="wpt-wpa"></p>
+<p>打开之后我们会发现WPA的左侧有很多的图，并且他们被分为几类：</p>
+<ul>
+<li>System Activity：系统活动，里面主要是进程线程的生命周期，原始事件等等内容。</li>
+<li>Computation：记录了CPU的各项活动。</li>
+<li>Storage：记录了磁盘的活动和文件的操作。</li>
+<li>Memory：记录了系统内存的变化。</li>
+<li>Power：记录了电源相关的各种信息。</li>
+</ul>
+<h4 id="UI-Delay-Graph">3.2.1. UI Delay Graph</h4>
+<p>我们知道打开这个文本文件的时候记事本失去响应了一段时间，所以让我们先查看System Activity下的UI Delay图，通过双击我们可以在右侧的Analysis中查看这个图中的具体内容。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-ui-delay.png" alt="wpa-ui-delay"></p>
+<p>通过名字，我们很容易猜出来，UI Delay Graph记录着UI上的卡顿。通过上图，我们可以看到在notepad.exe上存在着一个28s长的MsgCheck Delay，这个应该就是我们当时观察到的记事本失去响应的那段时间了。我们选中这一个Delay，WPA会自动选中左侧所有的图中的同一个时间区域，让我们对这段时间系统都在做什么有一个最直观的感觉。从上图中，我们可以看到这段时间内，前10%的时间磁盘非常的忙，但是CPU相对空闲，而后90%的时间CPU则很忙，而磁盘的消耗却近乎为0，看来这个问题很可能主要是由于CPU消耗过高导致的。为了更清楚的查看这段时间发生的事情，我们可以在UI Delay的图上点击右键，使用Zoom功能，只查看这一段时间内发生的事件。</p>
+<h4 id="Disk-IO-Graph">3.2.2. Disk IO Graph</h4>
+<p>Disk IO Graph中记录了系统在这段时间内所有的磁盘操作，我们现在先打开它，看看磁盘在这次Delay中到底做了什么事情。打开这个图之后，我们需要重新调整一下列的位置，对当前所有的IO重新分组，如下图所示。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-diskio.png" alt="wpa-diskio"></p>
+<p>我们可以看到notepad在这段时间之内发起了173个1M的IO，这些IO总共花费了2.5s的时间。这应该就是前10%的时间所主要做的事情了，接下来让我们来看看CPU在这段时间内做了什么吧。</p>
+<h4 id="加载符号文件">3.2.3. 加载符号文件</h4>
+<p>对了，在查看更详细的内容之前，我们需要加载系统文件的符号文件，这样能更好的帮助我们理解系统内部到底在执行哪些东西。我们可以通过Trace -&gt; Configurate Symbol Paths可以设置好符号文件的地址，如下图：</p>
+<ul>
+<li>Symbol Path: SRV<em>d:\symbols</em><a target="_blank" rel="noopener" href="http://msdl.microsoft.com/download/symbols">http://msdl.microsoft.com/download/symbols</a></li>
+<li>SymCache Path: d:\symcache<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-symbol.png" alt="wpa-symbol"></li>
+</ul>
+<p>这里需要提到的问题有两个：</p>
+<ul>
+<li>第一次符号文件的加载通常需要非常长的时间，因为系统中有很多的可执行文件，每个文件都需要去尝试加载一次。</li>
+<li>Symbol Path就是我们平常看到的pdb文件，而SymCache Path存放的SymCache文件是WPA中用于缓存pdb文件中对WPA有用的信息的文件，所以很明显，他的大小肯定比pdb要小很多，加载起来也会更快。</li>
+</ul>
+<h4 id="CPU-Usage-Sampled-Graph">3.2.4. CPU Usage (Sampled) Graph</h4>
+<p>为了查看这段时间内CPU上都执行了什么指令，让我们来打开CPU Usage (Sampled) Graph吧。CPU Sampled Graph内展示的数据，是每隔一毫秒在CPU上采集到的正在执行的线程信息和相关堆栈。从下面这张图里，我们可以从堆栈上看到主要的问题在Edit控件的操作上，Edit控件会按行来建立文件内容，从而导致了相当多的内存操作，最后导致了非常缓慢的文件加载。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-cpu.png" alt="wpa-cpu"></p>
+<h4 id="多图查看">3.2.5. 多图查看</h4>
+<p>为了让我们更加直观的了解这个问题，我们还可以同时打开多个图，比如我们现在同时打开UI Delay，CPU Usage (Sampled)和Disk IO，我们就能更加直观的看到其从IO为主的消耗转到CPU为主的消耗的过程。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-11-24-introduction-to-wpa-1-why-it-is-slow/wpa-multi-graph.png" alt="wpa-multi-graph"></p>
+<p>Tada，这样经过简单几步操作，我们就找到问题了。</p>
+<h2 id="总结">4. 总结</h2>
+<p>好了，我们现在已经知道了WPT的基本原理，如何使用WPR抓取Trace文件，并且还知道了如何使用WPA进行简单的性能分析，这次就先介绍到这里，之后我们再来尝试分析更加复杂的问题。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-3-graphs/">WPA入门 （三） —— 千变万化的图表</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-2-wait-analysis/">WPA入门（二） —— 分析线程上的等待</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/">WPA入门（一） —— 到底为什么这么慢？</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/introduction-to-wpa-1-why-it-is-slow/" target="_blank">WPA入门（一） —— 到底为什么这么慢？</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/wpa/" rel="tag"># wpa</a>
+              <a href="/tags/wpr/" rel="tag"># wpr</a>
+              <a href="/tags/wpt/" rel="tag"># wpt</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90/" rel="tag"># 性能分析</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-1-building-dev-environment-on-windows/" rel="prev" title="Go语言学习笔记：搭建Windows下的Go开发环境">
+                  <i class="fa fa-chevron-left"></i> Go语言学习笔记：搭建Windows下的Go开发环境
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/introduction-to-wpa-2-wait-analysis/" rel="next" title="WPA入门（二） —— 分析线程上的等待">
+                  WPA入门（二） —— 分析线程上的等待 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在上一章中，我们了解了SONiC的整体设计和核心组件，为我们提供了一副看代码的地图，所以这一章，我们就来从代码的级别来继续了解SONiC吧！ SONiC的代码都托管在GitHub的sonic-net账号上，仓库数量有30几个之多，所以刚开始看SONiC的代码时，肯定是会有点懵的，不过不用担心，我们这里就来一起看看～ 1. 核心仓库 首先是SONiC中最重要的两个核心仓库：SONiC和sonic-b">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SONiC学习笔记（三）：代码仓库">
+<meta property="og:url" content="http://r12f.com/posts/sonic-3-code-repos/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在上一章中，我们了解了SONiC的整体设计和核心组件，为我们提供了一副看代码的地图，所以这一章，我们就来从代码的级别来继续了解SONiC吧！ SONiC的代码都托管在GitHub的sonic-net账号上，仓库数量有30几个之多，所以刚开始看SONiC的代码时，肯定是会有点懵的，不过不用担心，我们这里就来一起看看～ 1. 核心仓库 首先是SONiC中最重要的两个核心仓库：SONiC和sonic-b">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-01-sonic-3-code-repos/sonic-mgmt-framework.jpg">
+<meta property="article:published_time" content="2023-05-01T19:16:37.000Z">
+<meta property="article:modified_time" content="2023-05-02T02:16:37.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="network">
+<meta property="article:tag" content="nos">
+<meta property="article:tag" content="sonic">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-01-sonic-3-code-repos/sonic-mgmt-framework.jpg">
+
+
+<link rel="canonical" href="http://r12f.com/posts/sonic-3-code-repos/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/sonic-3-code-repos/","path":"posts/sonic-3-code-repos/","title":"SONiC学习笔记（三）：代码仓库"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>SONiC学习笔记（三）：代码仓库 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E4%BB%93%E5%BA%93"><span class="nav-text">1. 核心仓库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Landing%E4%BB%93%E5%BA%93%EF%BC%9ASONiC"><span class="nav-text">1.1. Landing仓库：SONiC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E6%9E%84%E5%BB%BA%E4%BB%93%E5%BA%93%EF%BC%9Asonic-buildimage"><span class="nav-text">1.2. 镜像构建仓库：sonic-buildimage</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD%E5%AE%9E%E7%8E%B0%E4%BB%93%E5%BA%93"><span class="nav-text">2. 功能实现仓库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SWSS%EF%BC%88Switch-State-Service%EF%BC%89%E7%9B%B8%E5%85%B3%E4%BB%93%E5%BA%93"><span class="nav-text">2.1. SWSS（Switch State Service）相关仓库</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SWSS%E5%85%AC%E5%85%B1%E5%BA%93%EF%BC%9Asonic-swss-common"><span class="nav-text">2.1.1. SWSS公共库：sonic-swss-common</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SWSS%E4%B8%BB%E4%BB%93%E5%BA%93%EF%BC%9Asonic-swss"><span class="nav-text">2.1.2. SWSS主仓库：sonic-swss</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SAI-%E5%B9%B3%E5%8F%B0%E7%9B%B8%E5%85%B3%E4%BB%93%E5%BA%93"><span class="nav-text">2.2. SAI&#x2F;平台相关仓库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E6%9C%8D%E5%8A%A1%EF%BC%88mgmt%EF%BC%89%E7%9B%B8%E5%85%B3%E4%BB%93%E5%BA%93"><span class="nav-text">2.3. 管理服务（mgmt）相关仓库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%8F%B0%E7%9B%91%E6%8E%A7%E7%9B%B8%E5%85%B3%E4%BB%93%E5%BA%93%EF%BC%9Asonic-platform-common%E5%92%8Csonic-platform-daemons"><span class="nav-text">2.4. 平台监控相关仓库：sonic-platform-common和sonic-platform-daemons</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%8A%9F%E8%83%BD%E5%AE%9E%E7%8E%B0%E4%BB%93%E5%BA%93"><span class="nav-text">2.5. 其他功能实现仓库</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E4%BB%93%E5%BA%93%EF%BC%9Asonic-utilities"><span class="nav-text">3. 工具仓库：sonic-utilities</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E8%A1%A5%E4%B8%81%EF%BC%9Asonic-linux-kernel"><span class="nav-text">4. 内核补丁：sonic-linux-kernel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-text">5. 小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">6. 参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/sonic-3-code-repos/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="SONiC学习笔记（三）：代码仓库 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SONiC学习笔记（三）：代码仓库
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2023-05-01 12:16:37 / Modified: 19:16:37" itemprop="dateCreated datePublished" datetime="2023-05-01T12:16:37-07:00">2023-05-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/sonic-3-code-repos/" class="post-meta-item leancloud_visitors" data-flag-title="SONiC学习笔记（三）：代码仓库" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/sonic-3-code-repos/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/sonic-3-code-repos/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在<a href="/posts/sonic-2-key-components/">上一章中，我们了解了SONiC的整体设计和核心组件</a>，为我们提供了一副看代码的地图，所以这一章，我们就来从代码的级别来继续了解SONiC吧！</p>
+<p>SONiC的代码都托管在<a target="_blank" rel="noopener" href="https://github.com/sonic-net">GitHub的sonic-net账号</a>上，仓库数量有30几个之多，所以刚开始看SONiC的代码时，肯定是会有点懵的，不过不用担心，我们这里就来一起看看～</p>
+<h2 id="核心仓库">1. 核心仓库</h2>
+<p>首先是SONiC中最重要的两个核心仓库：SONiC和sonic-buildimage。</p>
+<span id="more"></span>
+<h3 id="Landing仓库：SONiC">1.1. Landing仓库：SONiC</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC">https://github.com/sonic-net/SONiC</a></p>
+<p>这个仓库里面存储着SONiC的Landing Page和大量的文档，Wiki，教程，以往的Talk的Slides，等等等等。这个仓库可以说是每个新人上手最常用的仓库了，但是注意，这个仓库里面<strong>没有任何的代码</strong>，只有文档。</p>
+<h3 id="镜像构建仓库：sonic-buildimage">1.2. 镜像构建仓库：sonic-buildimage</h3>
+<p><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-buildimage">https://github.com/sonic-net/sonic-buildimage</a></p>
+<p>这个构建仓库为什么对于我们十分重要？和其他项目不同，<strong>SONiC的构建仓库其实才是它的主仓库</strong>！这个仓库里面包含：</p>
+<ul>
+<li>所有的功能实现仓库，它们都以submodule的形式被加入到了这个仓库中（<code>src</code>目录）</li>
+<li>所有设备厂商的支持文件（<code>device</code>目录），比如每个型号的交换机的配置文件，用来访问硬件的支持脚本，等等等等，比如：我的交换机是Arista 7050 QX-32S，那么我就可以在<code>device/arista/x86_64-arista_7050_qx32s</code>目录中找到它的支持文件。</li>
+<li>所有ASIC芯片厂商提供的支持文件（<code>platform</code>目录），比如每个平台的驱动程序，BSP，底层支持的脚本等等。这里我们可以看到几乎所有的主流芯片厂商的支持文件，比如：Broadcom，Mellanox，等等，也有用来做模拟软交换机的实现，比如vs和p4。</li>
+<li>SONiC用来构建所有容器镜像的Dockerfile（<code>dockers</code>目录）</li>
+<li>各种各样通用的配置文件和脚本（<code>files</code>目录）</li>
+<li>用来做构建的编译容器的dockerfile（<code>sonic-slave-*</code>目录）</li>
+<li>等等……</li>
+</ul>
+<p>正因为这个仓库里面将所有相关的资源全都放在了一起，所以我们学习SONiC的代码时，基本只需要下载这一个源码仓库就可以了，不管是搜索还是跳转都非常方便！</p>
+<h2 id="功能实现仓库">2. 功能实现仓库</h2>
+<p>除了核心仓库，SONiC下还有很多功能实现仓库，里面都是各个容器和子服务的实现，这些仓库都被以submodule的形式放在了sonic-buildimage的<code>src</code>目录下，如果我们想对SONiC进行修改和贡献，我们也需要了解一下。</p>
+<h3 id="SWSS（Switch-State-Service）相关仓库">2.1. SWSS（Switch State Service）相关仓库</h3>
+<p>在上一篇中我们介绍过，SWSS容器是SONiC的大脑，在SONiC下，它由两个repo组成：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common">sonic-swss-common</a>和<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss">sonic-swss</a>。</p>
+<h4 id="SWSS公共库：sonic-swss-common">2.1.1. SWSS公共库：sonic-swss-common</h4>
+<p>首先是公共库：sonic-swss-common（<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss-common">https://github.com/sonic-net/sonic-swss-common</a>）。</p>
+<p>这个仓库里面包含了所有<code>*mgrd</code>和<code>*syncd</code>服务所需要的公共功能，比如，logger，json，netlink的封装，Redis操作和基于Redis的各种服务间通讯机制的封装等等。虽然能看出来这个仓库一开始的目标是专门给swss服务使用的，但是也正因为功能多，很多其他的仓库都有它的引用，比如<code>swss-sairedis</code>和<code>swss-restapi</code>。</p>
+<h4 id="SWSS主仓库：sonic-swss">2.1.2. SWSS主仓库：sonic-swss</h4>
+<p>然后就是SWSS的主仓库sonic-swss了：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-swss">https://github.com/sonic-net/sonic-swss</a>。</p>
+<p>我们可以在这个仓库中找到：</p>
+<ul>
+<li>绝大部分的<code>*mgrd</code>和<code>*syncd</code>服务：<code>orchagent</code>, <code>portsyncd/portmgrd/intfmgrd</code>，<code>neighsyncd/nbrmgrd</code>，<code>natsyncd/natmgrd</code>，<code>buffermgrd</code>，<code>coppmgrd</code>，<code>macsecmgrd</code>，<code>sflowmgrd</code>，<code>tunnelmgrd</code>，<code>vlanmgrd</code>，<code>vrfmgrd</code>，<code>vxlanmgrd</code>，等等。</li>
+<li><code>swssconfig</code>：在<code>swssconfig</code>目录下，用于在快速重启时（fast reboot）恢复FDB和ARP表。</li>
+<li><code>swssplayer</code>：也在<code>swssconfig</code>目录下，用来记录所有通过SWSS进行的配置下发操作，这样我们就可以利用它来做replay，从而对问题进行重现和调试。</li>
+<li>甚至一些不在SWSS容器中的服务，比如<code>fpmsyncd</code>（bgp容器）和<code>teamsyncd/teammgrd</code>（teamd容器）。</li>
+</ul>
+<h3 id="SAI-平台相关仓库">2.2. SAI/平台相关仓库</h3>
+<p>接下来就是作为交换机抽象接口的SAI了，<a target="_blank" rel="noopener" href="https://www.opencompute.org/documents/switch-abstraction-interface-ocp-specification-v0-2-pdf">虽然SAI是微软提出来并在2015年3月份发布了0.1版本</a>，但是<a target="_blank" rel="noopener" href="https://azure.microsoft.com/en-us/blog/switch-abstraction-interface-sai-officially-accepted-by-the-open-compute-project-ocp/">在2015年9月份，SONiC都还没有发布第一个版本的时候，就已经被OCP接收并作为一个公共的标准了</a>，这也是SONiC能够在这么短的时间内就得到了这么多厂商的支持的原因之一。而也因为如此，SAI的代码仓库也被分成了两部分：</p>
+<ul>
+<li>OCP下的OpenComputeProject/SAI：<a target="_blank" rel="noopener" href="https://github.com/opencomputeproject/SAI">https://github.com/opencomputeproject/SAI</a>。里面包含了有关SAI标准的所有代码，包括SAI的头文件，behavior model，测试用例，文档等等。</li>
+<li>SONiC下的sonic-sairedis：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-sairedis">https://github.com/sonic-net/sonic-sairedis</a>。里面包含了SONiC中用来和SAI交互的所有代码，比如syncd服务，和各种调试统计，比如用来做replay的<code>saiplayer</code>和用来导出asic状态的<code>saidump</code>。</li>
+</ul>
+<p>除了这两个仓库之外，还有一个平台相关的仓库，比如：<a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-platform-vpp">sonic-platform-vpp</a>，它的作用是通过SAI的接口，利用vpp来实现数据平面的功能，相当于一个高性能的软交换机，个人感觉未来可能会被合并到buildimage仓库中，作为platform目录下的一部分。</p>
+<h3 id="管理服务（mgmt）相关仓库">2.3. 管理服务（mgmt）相关仓库</h3>
+<p>然后是SONiC中所有和<a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/mgmt/Management%20Framework.md">管理服务</a>相关的仓库：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-mgmt-common">sonic-mgmt-common</a></td>
+<td>管理服务的基础库，里面包含着<code>translib</code>，yang model相关的代码</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-mgmt-framework">sonic-mgmt-framework</a></td>
+<td>使用Go来实现的REST Server，是下方架构图中的REST Gateway（进程名：<code>rest_server</code>）</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-gnmi">sonic-gnmi</a></td>
+<td>和sonic-mgmt-framework类似，是下方架构图中，基于gRPC的gNMI（gRPC Network Management Interface）Server</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-restapi">sonic-restapi</a></td>
+<td>这是SONiC使用go来实现的另一个配置管理的REST Server，和mgmt-framework不同，这个server在收到消息后会直接对CONFIG_DB进行操作，而不是走translib（下图中没有，进程名：<code>go-server-server</code>）</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-mgmt">sonic-mgmt</a></td>
+<td>各种自动化脚本（<code>ansible</code>目录），测试（<code>tests</code>目录），用来搭建test bed和测试上报（<code>test_reporting</code>目录）之类的，</td>
+</tr>
+</tbody>
+</table>
+<p>这里还是附上SONiC管理服务的架构图，方便大家配合食用 <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/mgmt/Management%20Framework.md">[4]</a>：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2023-05-01-sonic-3-code-repos/sonic-mgmt-framework.jpg" alt></p>
+<h3 id="平台监控相关仓库：sonic-platform-common和sonic-platform-daemons">2.4. 平台监控相关仓库：sonic-platform-common和sonic-platform-daemons</h3>
+<p>以下两个仓库都和平台监控和控制相关，比如LED，风扇，电源，温控等等：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-platform-common">sonic-platform-common</a></td>
+<td>这是给厂商们提供的基础包，用来定义访问风扇，LED，电源管理，温控等等模块的接口定义，这些接口都是用python来实现的</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-platform-daemons">sonic-platform-daemons</a></td>
+<td>这里包含了SONiC中pmon容器中运行的各种监控服务：<code>chassisd</code>，<code>ledd</code>，<code>pcied</code>，<code>psud</code>，<code>syseepromd</code>，<code>thermalctld</code>，<code>xcvrd</code>，<code>ycabled</code>，它们都使用python实现，通过和中心数据库Redis进行连接，和加载并调用各个厂商提供的接口实现来对各个模块进行监控和控制</td>
+</tr>
+</tbody>
+</table>
+<h3 id="其他功能实现仓库">2.5. 其他功能实现仓库</h3>
+<p>除了上面这些仓库以外，SONiC还有很多实现其方方面面功能的仓库，有些是一个或多个进程，有些是一些库，它们的作用如下表所示：</p>
+<table>
+<thead>
+<tr>
+<th>仓库</th>
+<th>介绍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-snmpagent">sonic-snmpagent</a></td>
+<td><a target="_blank" rel="noopener" href="https://www.ietf.org/rfc/rfc2741.txt">AgentX</a> SNMP subagent的实现（<code>sonic_ax_impl</code>），用于连接Redis数据库，给snmpd提供所需要的各种信息，可以把它理解成snmpd的控制面，而snmpd是数据面，用于响应外部SNMP的请求</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-frr">sonic-frr</a></td>
+<td>FRRouting，各种路由协议的实现，所以这个仓库中我们可以找到如<code>bgpd</code>，<code>zebra</code>这类的路由相关的进程实现</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-linkmgrd">sonic-linkmgrd</a></td>
+<td>Dual ToR support，检查Link的状态，并且控制ToR的连接</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-dhcp-relay">sonic-dhcp-relay</a></td>
+<td>DHCP relay agent</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-dhcpmon">sonic-dhcpmon</a></td>
+<td>监控DHCP的状态，并报告给中心数据库Redis</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-dbsyncd">sonic-dbsyncd</a></td>
+<td><code>lldp_syncd</code>服务，但是repo的名字没取好，叫做dbsyncd</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-pins">sonic-pins</a></td>
+<td>Google开发的基于P4的网络栈支持（P4 Integrated Network Stack，PINS），更多信息可以参看<a target="_blank" rel="noopener" href="https://opennetworking.org/pins/">PINS的官网</a>。</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-stp">sonic-stp</a></td>
+<td>STP（Spanning Tree Protocol）的支持</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-ztp">sonic-ztp</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/ztp/ztp.md">Zero Touch Provisioning</a></td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/DASH">DASH</a></td>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/DASH/blob/main/documentation/general/dash-high-level-design.md">Disaggregated API for SONiC Hosts</a></td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-host-services">sonic-host-services</a></td>
+<td>运行在host上通过dbus用来为容器中的服务提供支持的服务，比如保存和重新加载配置，保存dump之类的非常有限的功能，类似一个host broker</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-fips">sonic-fips</a></td>
+<td>FIPS（Federal Information Processing Standards）的支持，里面有很多为了支持FIPS标准而加入的各种补丁文件</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-wpa-supplicant">sonic-wpa-supplicant</a></td>
+<td>各种无线网络协议的支持</td>
+</tr>
+</tbody>
+</table>
+<h2 id="工具仓库：sonic-utilities">3. 工具仓库：sonic-utilities</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-utilities">https://github.com/sonic-net/sonic-utilities</a></p>
+<p>这个仓库存放着SONiC所有的命令行下的工具：</p>
+<ul>
+<li><code>config</code>，<code>show</code>，<code>clear</code>目录：这是三个SONiC CLI的主命令的实现。需要注意的是，具体的命令实现并不一定在这几个目录里面，大量的命令是通过调用其他命令来实现的，这几个命令只是提供了一个入口。</li>
+<li><code>scripts</code>，<code>sfputil</code>，<code>psuutil</code>，<code>pcieutil</code>，<code>fwutil</code>，<code>ssdutil</code>，<code>acl_loader</code>目录：这些目录下提供了大量的工具命令，但是它们大多并不是直接给用户使用的，而是被<code>config</code>，<code>show</code>和<code>clear</code>目录下的命令调用的，比如：<code>show platform fan</code>命令，就是通过调用<code>scripts</code>目录下的<code>fanshow</code>命令来实现的。</li>
+<li><code>utilities_common</code>，<code>flow_counter_util</code>，<code>syslog_util</code>目录：这些目录和上面类似，但是提供的是基础类，可以直接在python中import调用。</li>
+<li>另外还有很多其他的命令：<code>fdbutil</code>，<code>pddf_fanutil</code>，<code>pddf_ledutil</code>，<code>pddf_psuutil</code>，<code>pddf_thermalutil</code>，等等，用于查看和控制各个模块的状态。</li>
+<li><code>connect</code>和<code>consutil</code>目录：这两个目录下的命令是用来连接到其他SONiC设备并对其进行管理的。</li>
+<li><code>crm</code>目录：用来配置和查看SONiC中的<a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/wiki/Critical-Resource-Monitoring-High-Level-Design">CRM（Critical Resource Monitoring）</a>。这个命令并没有被包含在<code>config</code>和<code>show</code>命令中，所以用户可以直接使用。</li>
+<li><code>pfc</code>目录：用来配置和查看SONiC中的[PFC（Priority-based Flow Control）][SONiCPFC]。</li>
+<li><code>pfcwd</code>目录：用来配置和查看SONiC中的[PFC Watch Dog][SONiCPFCWD]，比如启动，停止，修改polling interval之类的操作。</li>
+</ul>
+<h2 id="内核补丁：sonic-linux-kernel">4. 内核补丁：sonic-linux-kernel</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/sonic-net/sonic-linux-kernel">https://github.com/sonic-net/sonic-linux-kernel</a></p>
+<p>虽然SONiC是基于debian的，但是默认的debian内核却不一定能运行SONiC，比如某个模块默认没有启动，或者某些老版本的驱动有问题，所以SONiC需要或多或少有一些修改的Linux内核。而这个仓库就是用来存放所有的内核补丁的。</p>
+<h2 id="小结">5. 小结</h2>
+<p>嗯……到最后我也没有想到SONiC的仓库有这么多，居然需要花一整篇文章来介绍它们，不过这也说明了SONiC的强大和可扩展性。本来想在这一篇文章中把服务间的通信机制也介绍一下的，但是两个内容加在一起可能就太长了，所以就放到下一篇文章中介绍吧。</p>
+<h2 id="参考资料">6. 参考资料</h2>
+<ul>
+<li>[1] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/wiki/Architecture">SONiC Architecture</a></li>
+<li>[2] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/sourcecode.md">SONiC Source Repositories</a></li>
+<li>[3] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/SONiC-User-Manual.md">SONiC User Manual</a></li>
+<li>[4] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/mgmt/Management%20Framework.md">SONiC Management Framework</a></li>
+<li>[5] <a target="_blank" rel="noopener" href="https://github.com/opencomputeproject/SAI/wiki/SAI-APIs">SAI API</a></li>
+<li>[6] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/wiki/Critical-Resource-Monitoring-High-Level-Design">SONiC Critical Resource Monitoring</a></li>
+<li>[7] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/blob/master/doc/ztp/ztp.md">SONiC Zero Touch Provisioning</a></li>
+<li>[8] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/SONiC/wiki/Critical-Resource-Monitoring-High-Level-Design">SONiC Critical Resource Monitoring</a></li>
+<li>[9] <a target="_blank" rel="noopener" href="https://opennetworking.org/pins/">SONiC P4 Integrated Network Stack</a></li>
+<li>[10] <a target="_blank" rel="noopener" href="https://github.com/sonic-net/DASH/blob/main/documentation/general/dash-high-level-design.md">SONiC Disaggregated API for Switch Hosts</a></li>
+<li>[11] <a target="_blank" rel="noopener" href="https://www.opencompute.org/documents/switch-abstraction-interface-ocp-specification-v0-2-pdf">SAI spec for OCP</a></li>
+</ul>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-7-bgp-workflow-part-2/">SONiC学习笔记（七）：BGP工作流（下）—— BGP路由变更下发</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-6-bgp-workflow-part-1/">SONiC学习笔记（六）：BGP工作流（上）—— 命令实现与FRR</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-5-syncd-sai-workflow/">SONiC学习笔记（五）：Syncd-SAI工作流</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-4-communication/">SONiC学习笔记（四）：通信机制</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-3-code-repos/">SONiC学习笔记（三）：代码仓库</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-2-key-components/">SONiC学习笔记（二）：核心组件</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/sonic-1-intro/">SONiC学习笔记（一）：概述与安装</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/sonic-3-code-repos/" target="_blank">SONiC学习笔记（三）：代码仓库</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/network/" rel="tag"># network</a>
+              <a href="/tags/nos/" rel="tag"># nos</a>
+              <a href="/tags/sonic/" rel="tag"># sonic</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/sonic-2-key-components/" rel="prev" title="SONiC学习笔记（二）：核心组件">
+                  <i class="fa fa-chevron-left"></i> SONiC学习笔记（二）：核心组件
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/sonic-4-communication/" rel="next" title="SONiC学习笔记（四）：通信机制">
+                  SONiC学习笔记（四）：通信机制 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

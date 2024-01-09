@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="好了，在简单探索完基础类型之后，我们就来看一下我们最关心的Struct吧！  1. 简单结构体 我们先从最简单的开始，先定义一个简单的结构体，里面错落的放一些大小不一的字段： 12345678type A struct &amp;#123;    FA1 bool    FA2 int32    FA3 int16    FA4 int64    FA5 byte    FA6 byte&amp;#125; 然后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言学习笔记：深入对象模型之结构体">
+<meta property="og:url" content="http://r12f.com/posts/learning-golang-object-model-struct/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="好了，在简单探索完基础类型之后，我们就来看一下我们最关心的Struct吧！  1. 简单结构体 我们先从最简单的开始，先定义一个简单的结构体，里面错落的放一些大小不一的字段： 12345678type A struct &amp;#123;    FA1 bool    FA2 int32    FA3 int16    FA4 int64    FA5 byte    FA6 byte&amp;#125; 然后">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/struct-a.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/field-distances.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/multi-embedding-with-dup-struct-data-accessor.png">
+<meta property="article:published_time" content="2021-01-06T20:33:35.000Z">
+<meta property="article:modified_time" content="2021-01-07T04:33:35.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/struct-a.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-golang-object-model-struct/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-golang-object-model-struct/","path":"posts/learning-golang-object-model-struct/","title":"Go语言学习笔记：深入对象模型之结构体"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Go语言学习笔记：深入对象模型之结构体 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-text">1. 简单结构体</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E5%B5%8C%E5%A5%97"><span class="nav-text">2. 结构体嵌套</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E5%B1%82%E7%BB%93%E6%9E%84%E4%BD%93%E5%B5%8C%E5%A5%97"><span class="nav-text">2.1. 单层结构体嵌套</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Go%E8%AF%AD%E8%A8%80%E7%9A%84%E7%BB%A7%E6%89%BF%EF%BC%9A%E5%B5%8C%E5%85%A5%EF%BC%88Embedding%EF%BC%89"><span class="nav-text">2.2. Go语言的继承：嵌入（Embedding）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A%E5%B1%82%E7%BB%93%E6%9E%84%E4%BD%93%E5%8D%95%E5%B5%8C%E5%85%A5"><span class="nav-text">2.3. 多层结构体单嵌入</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Go%E4%B8%AD%E7%9A%84%E7%BB%93%E6%9E%84%E4%BD%93%E6%9C%89%E5%A4%9A%E6%80%81%E5%90%97%EF%BC%9F"><span class="nav-text">3. Go中的结构体有多态吗？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BD%E6%95%B0%E8%A6%86%E7%9B%96%E4%B8%8E%E9%9D%9E%E5%8F%82%E6%95%B0%E5%8C%96%E5%A4%9A%E6%80%81"><span class="nav-text">3.1. 函数覆盖与非参数化多态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E5%8C%96%E5%A4%9A%E6%80%81"><span class="nav-text">3.2. 参数化多态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%82%A3%E8%BF%90%E8%A1%8C%E6%97%B6%E5%A4%9A%E6%80%81%E5%91%A2%EF%BC%9F"><span class="nav-text">3.3. 那运行时多态呢？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99%E4%B8%8E%E9%87%8C%E6%B0%8F%E6%9B%BF%E6%8D%A2"><span class="nav-text">3.4. 开闭原则与里氏替换</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E5%B5%8C%E5%85%A5"><span class="nav-text">4. 多嵌入</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%90%E5%91%98%E9%80%89%E6%8B%A9%EF%BC%9A%E6%9C%80%E7%9F%AD%E8%B7%9D%E7%A6%BB%E4%BC%98%E5%85%88"><span class="nav-text">4.1. 成员选择：最短距离优先</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90"><span class="nav-text">5. 内存对齐</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B1%BB%E5%9E%8B%E7%9A%84%E5%AF%B9%E9%BD%90%E5%80%BC"><span class="nav-text">5.1. 类型的对齐值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E4%BD%93%E7%A9%BA%E9%97%B4%E5%8D%A0%E7%94%A8%E7%9A%84%E8%AE%A1%E7%AE%97"><span class="nav-text">5.2. 结构体空间占用的计算</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-text">6. 结论</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-golang-object-model-struct/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Go语言学习笔记：深入对象模型之结构体 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go语言学习笔记：深入对象模型之结构体
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2021-01-06 12:33:35 / Modified: 20:33:35" itemprop="dateCreated datePublished" datetime="2021-01-06T12:33:35-08:00">2021-01-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-golang-object-model-struct/" class="post-meta-item leancloud_visitors" data-flag-title="Go语言学习笔记：深入对象模型之结构体" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-golang-object-model-struct/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-golang-object-model-struct/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>好了，在简单探索完基础类型之后，我们就来看一下我们最关心的Struct吧！</p>
+<hr>
+<h2 id="简单结构体">1. 简单结构体</h2>
+<p>我们先从最简单的开始，先定义一个简单的结构体，里面错落的放一些大小不一的字段：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> A <span class="keyword">struct</span> &#123;</span><br><span class="line">    FA1 <span class="type">bool</span></span><br><span class="line">    FA2 <span class="type">int32</span></span><br><span class="line">    FA3 <span class="type">int16</span></span><br><span class="line">    FA4 <span class="type">int64</span></span><br><span class="line">    FA5 <span class="type">byte</span></span><br><span class="line">    FA6 <span class="type">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后定义一个变量a，再用<a href="./learning-golang-object-model-inbox-data-type/#%E5%89%8D%E7%BD%AE%E5%87%86%E5%A4%87">上篇文章中的DumpObject函数</a>来看一下其内存布局：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">a           objmodelexp.A  0x000000c00000e520           0           0   32</span><br><span class="line">a.FA1       bool           0x000000c00000e520           0           0    1</span><br><span class="line">a.FA2       int32          0x000000c00000e524           4           4    4</span><br><span class="line">a.FA3       int16          0x000000c00000e528           8           8    2</span><br><span class="line">a.FA4       int64          0x000000c00000e530          16          16    8</span><br><span class="line">a.FA5       uint8          0x000000c00000e538          24          24    1</span><br><span class="line">a.FA6       uint8          0x000000c0001121f9          25          25    1</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<p>我们可以看到变量定义在结构体里大小是不会变化的。这里估计学过C/C++朋友都知道我想干什么了，没错，这里会发现一个非常有趣的现象，这个对象的大小会比所有字段本身的占用的空间要大，因为字段和字段的中间有很多空白的区域。</p>
+<!--
+@startuml
+digraph g {
+    graph [ rankdir = "LR" fontname = "Verdana" ];
+    subgraph cluster1 {
+        label="Struct A"
+        node [ fontsize = "16" fontname = "Verdana"  shape = "ellipse" ];
+        "node0" [
+            label = "<f0> +0 FA1 (1 bytes) | <f1> +1 [Padding] (3 bytes) | <f2> +4 FA2 (4 bytes) | <f3> +8 FA3 (2 bytes) | <f4> +10 [Padding] (6 bytes) | <f5> +16 FA4 (8 bytes) | <f6> +24 FA5 (1 bytes) | <f7> +25 FA6 (1 bytes) | <f8> +26 [Padding] (6 bytes)"
+            shape = "record"
+        ];
+    }
+}
+@enduml
+-->
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/struct-a.png" alt="Struct A"></p>
+<p>这个就是Go对结构体变量进行内存对齐导致的结果。内存对齐主要是为了两个原因：</p>
+<ul>
+<li>一个是保证CPU读取内存的速度，如果数据不对齐，一次读取可能会需要拆分为两次，</li>
+<li>另一个是有一些CPU甚至不支持读取不对齐的数据，要么报错要么得到错误的结果，不如一些ARM的CPU。</li>
+</ul>
+<p>关于内存对齐，我们现在只需要了解其在Go语言中存在即可，具体的规则我们到后面再来探索。</p>
+<hr>
+<h2 id="结构体嵌套">2. 结构体嵌套</h2>
+<p>Go语言中结构体还有一个非常大的特点，就是没有继承，只有嵌套。</p>
+<p>这个是我个人非常喜欢的一个设计，因为继承很容易带来<a target="_blank" rel="noopener" href="https://dzone.com/articles/is-inheritance-dead">类爆炸的问题</a>，常见的解决方法有很多，比如应用<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BF%AE%E9%A5%B0%E6%A8%A1%E5%BC%8F">修饰模式</a>，所以在写代码的时候，我会更倾向于使用组合而不是继承，而Go语言在这个方向走的就更远了，直接禁止了继承，只能使用组合，也就是嵌套。</p>
+<h3 id="单层结构体嵌套">2.1. 单层结构体嵌套</h3>
+<p>我们还是先从最简单的看起：单层的结构体嵌套：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> B <span class="keyword">struct</span> &#123;</span><br><span class="line">    SA A</span><br><span class="line">    FB1 <span class="type">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在我们还是用DumpObject函数来查看一下这个结构体的成员布局：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">b           objmodelexp.B  0x000000c00000c4e0           0           0   40</span><br><span class="line">b.SA        objmodelexp.A  0x000000c00000c4e0           0           0   32</span><br><span class="line">b.SA.FA1    bool           0x000000c00000c4e0           0           0    1</span><br><span class="line">b.SA.FA2    int32          0x000000c00000c4e4           4           4    4</span><br><span class="line">b.SA.FA3    int16          0x000000c00000c4e8           8           8    2</span><br><span class="line">b.SA.FA4    int64          0x000000c00000c4f0          16          16    8</span><br><span class="line">b.SA.FA5    uint8          0x000000c00000c4f8          24          24    1</span><br><span class="line">b.SA.FA6    uint8          0x000000c00000c4f9          25          25    1</span><br><span class="line">b.FB1       bool           0x000000c00000c500          32          32    1</span><br></pre></td></tr></table></figure>
+<p>从上面的输出，我们可以发现三件事情：</p>
+<ul>
+<li>嵌套的结构体A和外层的B的起始地址是一样的，也就是说Go不会在这种情况下为我们的结构体添加额外的字段</li>
+<li>嵌套的结构体A的内存布局和原始布局完全一致，包括内存对齐的Padding</li>
+<li>外层结构体的成员变量的内存对齐会受嵌入的结构体的影响</li>
+</ul>
+<h3 id="Go语言的继承：嵌入（Embedding）">2.2. Go语言的继承：嵌入（Embedding）</h3>
+<p>虽然上面的代码实现了最简单的嵌套，但在我们访问A的内部成员的时候，我们需要通过SA进行间接访问：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b B</span><br><span class="line">b.SA.FA1 = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>如果我们想用嵌套来代替继承，这会导致使用上非常不方便，我们还是希望能像继承一样能直接访问其父类成员，为此Go的结构体提供了一个特性叫做嵌入结构体（Embedded Struct）。</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> B <span class="keyword">struct</span> &#123;</span><br><span class="line">    A</span><br><span class="line">    FB1 <span class="type">bool</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>被嵌入的结构体所有的变量和方法都会被升级（Promote）到外层结构体中，所以访问就变得简单了：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b B</span><br><span class="line">b.FA1 = <span class="literal">true</span></span><br><span class="line">b.A.FA1 = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>更多关于嵌入的信息，可以移步<a target="_blank" rel="noopener" href="https://golang.org/ref/spec#Struct_type">Golang的spec</a>。</p>
+<p>我们知道，C++里面继承能让对象内存布局变得非常复杂（虚继承给我带来的阴影久久不能散去），那么嵌入结构体会对Go的对象内存布局产生什么影响呢？我们来试一试就知道了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">b           objmodelexp.B  0x000000c00012a120           0           0   40</span><br><span class="line">b.A         objmodelexp.A  0x000000c00012a120           0           0   32</span><br><span class="line">b.A.FA1     bool           0x000000c00012a120           0           0    1</span><br><span class="line">b.A.FA2     int32          0x000000c00012a124           4           4    4</span><br><span class="line">b.A.FA3     int16          0x000000c00012a128           8           8    2</span><br><span class="line">b.A.FA4     int64          0x000000c00012a130          16          16    8</span><br><span class="line">b.A.FA5     uint8          0x000000c00012a138          24          24    1</span><br><span class="line">b.A.FA6     uint8          0x000000c00012a139          25          25    1</span><br><span class="line">b.FB1       bool           0x000000c00012a140          32          32    1</span><br></pre></td></tr></table></figure>
+<p>可以看到，成员布局和之前完全一样！所以，我们可以将嵌入理解成一个帮助我们访问嵌套结构体成员和函数的<strong>语法糖</strong>。为什么我觉得是语法糖呢？因为：</p>
+<ol>
+<li>
+<p>在对结构体初始化时，被嵌套的结构体成员无法直接在外层结构体中初始化，而要通过嵌套的结构体本身来初始化</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b B = B&#123;</span><br><span class="line">    A: A&#123;</span><br><span class="line">        FA1: <span class="literal">true</span>,</span><br><span class="line">        FA2: <span class="number">1</span>,</span><br><span class="line">        FA3: <span class="number">2</span>,</span><br><span class="line">        FA4: <span class="number">3</span>,</span><br><span class="line">        FA5: <span class="number">4</span>,</span><br><span class="line">        FA6: <span class="number">5</span>,</span><br><span class="line">    &#125;,</span><br><span class="line">    FB1: <span class="literal">true</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>从上面DumpObject函数通过反射输出的结果中来看，嵌入的结构体A在类型系统中是作为一个独立的对象存在的：虽然我们可以通过<code>b.FA1</code>来访问FA1，但是我们在类型系统中看到的依然是<code>b.A.FA1</code>。</p>
+</li>
+</ol>
+<p>一旦我们将其理解成为了语法糖而不是继承，后面很多内容就非常好理解了。</p>
+<h3 id="多层结构体单嵌入">2.3. 多层结构体单嵌入</h3>
+<p>现在我们在B外面再包一层C，但是和B包A不同，在C里面，我们在嵌入的B之前加一个变量，然后来看看其内存布局，如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> C <span class="keyword">struct</span> &#123;</span><br><span class="line">    FC1 <span class="type">bool</span></span><br><span class="line">    B</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">c           objmodelexp.C  0x000000c00000c4e0           0           0   48</span><br><span class="line">c.FC1       bool           0x000000c00000c4e0           0           0    1</span><br><span class="line">c.B         objmodelexp.B  0x000000c00000c4e8           8           8   40</span><br><span class="line">c.B.A       objmodelexp.A  0x000000c00000c4e8           8           0   32</span><br><span class="line">c.B.A.FA1   bool           0x000000c00000c4e8           8           0    1</span><br><span class="line">c.B.A.FA2   int32          0x000000c00000c4ec          12           4    4</span><br><span class="line">c.B.A.FA3   int16          0x000000c00000c4f0          16           8    2</span><br><span class="line">c.B.A.FA4   int64          0x000000c00000c4f8          24          16    8</span><br><span class="line">c.B.A.FA5   uint8          0x000000c00000c500          32          24    1</span><br><span class="line">c.B.A.FA6   uint8          0x000000c00000c501          33          25    1</span><br><span class="line">c.B.FB1     bool           0x000000c00000c508          40          32    1</span><br></pre></td></tr></table></figure>
+<p>这里我们可以观察到两个事情：</p>
+<ol>
+<li>无论嵌入多少层，Go永远会保持嵌入的结构体的内存布局。</li>
+<li>除此以外，Go语言的结构体成员变量的布局，包括嵌入的结构体，都和定义的顺序保持一致！这个和C++的继承不同，在继承中，第一个基类的地址一定也是这个类本身的地址，而嵌入结构体的地址却没有这个行为，因为嵌入不是继承，而是一个语法糖。</li>
+</ol>
+<p>这些性质都让Go的结构体的内存布局变得和C语言一样好理解，因为所写即所得。</p>
+<hr>
+<h2 id="Go中的结构体有多态吗？">3. Go中的结构体有多态吗？</h2>
+<p>在面向对象的语言中，多态是一个经常使用的概念。一般而言的多态分为三种：</p>
+<ul>
+<li>非参数化多态（Ad-hoc polymorphism）：比如函数重载，运算符重载，宏等等</li>
+<li>参数化多态：比如泛型编程</li>
+<li>运行时多态：比如虚函数调用，不同的子类行为可能不同。</li>
+</ul>
+<p>那么Go的嵌入支持哪些多态呢？我们这里就来看看吧～</p>
+<h3 id="函数覆盖与非参数化多态">3.1. 函数覆盖与非参数化多态</h3>
+<p>首先，Go语言里面只有接收器，并没有虚函数，所以我们能做的就是为每一个类定义一个签名一样的函数，如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a *A)</span></span> Foo() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;A: .FA1 = %v\n&quot;</span>, a.FA1)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *B)</span></span> Foo() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;B: .A.FA1 = %v\n&quot;</span>, b.FA1)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *C)</span></span> Foo() &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;C: .B.A.FA1 = %v\n&quot;</span>, c.FA1)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后我们调用这些成员函数：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a A; <span class="keyword">var</span> b B; <span class="keyword">var</span> c C</span><br><span class="line">a.Foo()</span><br><span class="line">b.Foo()</span><br><span class="line">c.Foo()</span><br></pre></td></tr></table></figure>
+<p>如下，可以看到输出结果是不同的，也就是说外层类的函数可以覆盖嵌入类的函数，这个和C++中继承时子类覆盖父类的行为类似：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">A: .FA1 = false</span><br><span class="line">B: .A.FA1 = false</span><br><span class="line">C: .B.A.FA1 = false</span><br></pre></td></tr></table></figure>
+<p>我们知道在Go语言中，方法的接收器其实就是此函数的第一个参数，所以我们经常把接收器作一种语法糖，甚至我们可以定义第一个参数是这个结构体指针的函数变量，并进行赋值，那这是不是代表Go可以支持非参数化多态呢？我们这就来换一种方法写这个代码：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Foo2</span><span class="params">(a *A)</span></span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;A: .FA1 = %v\n&quot;</span>, a.FA1)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Foo2</span><span class="params">(b *B)</span></span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;B: .A.FA1 = %v\n&quot;</span>, b.FA1)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Foo2</span><span class="params">(c *C)</span></span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;C: .B.A.FA1 = %v\n&quot;</span>, c.FA1)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们编译的时候马上就会得到如下编译错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x27;Foo2&#x27; redeclared in this package</span><br></pre></td></tr></table></figure>
+<p>这说明了两个问题：</p>
+<ol>
+<li>Go的编译器不支持重载，也就是<strong>不支持非参数化多态</strong></li>
+<li>Go作为语言本身认为<strong>接收器并不是一种语法糖</strong>，它是真正意义上的不同的概念。这个在另一个地方也会反映出来：如果有一个接口里面只定义了方法<code>Foo2()</code>，我们没有办法使用上述写法实现这个接口。</li>
+</ol>
+<h3 id="参数化多态">3.2. 参数化多态</h3>
+<p>我们知道Go是不支持泛型的，所以Go也不支持参数化多态。如果想要了解Go对泛型支持的进展，传送门在此：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.golang.org/generics-next-step">The Next Step for Generics</a></li>
+<li><a target="_blank" rel="noopener" href="https://go.googlesource.com/proposal/+/refs/heads/master/design/go2draft-contracts.md">Contracts — Draft Design</a></li>
+</ul>
+<h3 id="那运行时多态呢？">3.3. 那运行时多态呢？</h3>
+<p>我们都知道运行时多态的实现一般是通过虚表（C++），嵌入类型引用（C#，Java）或者属性表（Python）来实现的。</p>
+<p>要验证运行时多态，我们只需要简单的在基类里面调用子类覆盖的方法便可以了，所以我们只需要加一个简单的函数，如下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a *A)</span></span> CallFoo() &#123;</span><br><span class="line">    a.Foo()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Invoke in test:</span></span><br><span class="line">c.CallFoo()</span><br></pre></td></tr></table></figure>
+<p>熟悉的人一眼就能看出来，这是我们经常使用的一种设计模式，叫做<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Template_method_pattern">模板方法</a>，是多态最为常见的应用之一。其运行结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A: .FA1 = false</span><br></pre></td></tr></table></figure>
+<p>我们发现，输出的结果和调用类A的结果是一样的！也就是说：<strong>对嵌入类的函数覆盖不会改变嵌入类本身的行为</strong>，即<strong>Go的结构体不支持运行时多态</strong>！</p>
+<p>我们能再次对这个结论进行确认吗？当然可以！我们知道，运行时多态的实现都需要对原始对象进行修改，比如：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Virtual_method_table">C++的虚表</a>，<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2005/may/net-framework-internals-how-the-clr-creates-runtime-objects">C#的MethodTable</a>，<a target="_blank" rel="noopener" href="https://docs.python.org/3/reference/datamodel.html">Python的__dict__</a>，所以我们只要看一下添加完这些函数后，结构体的内存布局会不会出现变化，如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">a           objmodelexp.A  0x000000c0001121a0           0           0   32</span><br><span class="line">a.FA1       bool           0x000000c0001121a0           0           0    1</span><br><span class="line">a.FA2       int32          0x000000c0001121a4           4           4    4</span><br><span class="line">a.FA3       int16          0x000000c0001121a8           8           8    2</span><br><span class="line">a.FA4       int64          0x000000c0001121b0          16          16    8</span><br><span class="line">a.FA5       uint8          0x000000c0001121b8          24          24    1</span><br><span class="line">a.FA6       uint8          0x000000c0001121b9          25          25    1</span><br><span class="line">b           objmodelexp.B  0x000000c00012a060           0           0   40</span><br><span class="line">b.A         objmodelexp.A  0x000000c00012a060           0           0   32</span><br><span class="line">b.A.FA1     bool           0x000000c00012a060           0           0    1</span><br><span class="line">b.A.FA2     int32          0x000000c00012a064           4           4    4</span><br><span class="line">b.A.FA3     int16          0x000000c00012a068           8           8    2</span><br><span class="line">b.A.FA4     int64          0x000000c00012a070          16          16    8</span><br><span class="line">b.A.FA5     uint8          0x000000c00012a078          24          24    1</span><br><span class="line">b.A.FA6     uint8          0x000000c00012a079          25          25    1</span><br><span class="line">b.FB1       bool           0x000000c00012a080          32          32    1</span><br><span class="line">c           objmodelexp.C  0x000000c00012a090           0           0   48</span><br><span class="line">c.FC1       bool           0x000000c00012a090           0           0    1</span><br><span class="line">c.B         objmodelexp.B  0x000000c00012a098           8           8   40</span><br><span class="line">c.B.A       objmodelexp.A  0x000000c00012a098           8           0   32</span><br><span class="line">c.B.A.FA1   bool           0x000000c00012a098           8           0    1</span><br><span class="line">c.B.A.FA2   int32          0x000000c00012a09c          12           4    4</span><br><span class="line">c.B.A.FA3   int16          0x000000c00012a0a0          16           8    2</span><br><span class="line">c.B.A.FA4   int64          0x000000c00012a0a8          24          16    8</span><br><span class="line">c.B.A.FA5   uint8          0x000000c00012a0b0          32          24    1</span><br><span class="line">c.B.A.FA6   uint8          0x000000c00012a0b1          33          25    1</span><br><span class="line">c.B.FB1     bool           0x000000c00012a0b8          40          32    1</span><br></pre></td></tr></table></figure>
+<p>从上面输出的信息，我们可以看到，<strong>在嵌入的结构体中添加同名函数，不会对结构体的内存布局产生任何的影响</strong>！</p>
+<p>也就是说，Go的行为和C中间的结构体非常类似，不支持虚函数，也不会为每个对象添加虚表。而这也正印证了Go的说法：<strong>嵌入不是继承</strong>。Go不存在子类和父类一说，比如，如果我们用如下代码做子类到父类的类型转换，是会编译报错的：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> pa *A = &amp;c <span class="comment">// Cannot use &#x27;&amp;c&#x27; (type *C) as type *A</span></span><br></pre></td></tr></table></figure>
+<h3 id="开闭原则与里氏替换">3.4. 开闭原则与里氏替换</h3>
+<p>通过上述三个实验，我们得到一个结论：<strong>Go语言的结构体不支持多态</strong>！可是在面向对象中，多态的用处非常大啊，为什么要这么设计这门语言呢？这里我们就不得不提两个概念了：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99">开闭原则</a>与<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">里氏变换（LSP）</a>。</p>
+<p>虽然Go语言并没有将这两个概念作为<a target="_blank" rel="noopener" href="https://go-proverbs.github.io/">Go的核心哲学</a>，但是个人觉得，这个理念绝对是Go最重要的设计原则之一：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%BC%80%E9%97%AD%E5%8E%9F%E5%88%99">开闭原则</a>：软件中的对象应该对于扩展是开放的，但是对于修改是封闭的。</li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">里氏替换（LSP）</a>：我们可以简单的理解成“所有出现父类的地方，都可以用子类来替代，并且程序的行为保持不变”，而里氏替换是实现开闭原则的基础。</li>
+</ul>
+<p>这两个原则告诉我们：</p>
+<ol>
+<li>子类不应该修改父类的行为，如果子类需要改变行为（对修改封闭），需要通过添加新的函数来扩展父类的行为（对扩展开放）。</li>
+<li>如果一定需要使用运行期多态，则所有的父类都必须不可实例化，不然就会出现子类替代父类并通过运行期多态改变父类的行为的情况，这样就违反了LSP。</li>
+</ol>
+<p>我们再回头看Go的设计，上述的应用1就是Go语言对struct的设计，而应用2，就是Go语言对接口的设计！Go语言中不存在多层的继承，非侵入式接口的设计导致所有的类型都是直接实现的接口。</p>
+<p>好的，关于多态我们先分析到这里，关于接口和运行期多态，我们之后的篇章再来分析～</p>
+<hr>
+<h2 id="多嵌入">4. 多嵌入</h2>
+<p>好了，看完了相对简单的单嵌入后，我们看看多嵌入的时候我们发现的这些性质是不是还能继续保持呢？</p>
+<p>我们来写一个小类测试一下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> D <span class="keyword">struct</span> &#123;</span><br><span class="line">    FF1 <span class="type">int</span></span><br><span class="line">    C</span><br><span class="line">    FF2 <span class="type">int</span></span><br><span class="line">    C</span><br><span class="line">    FF3 <span class="type">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同一个的结构体是无法嵌入多次的，因为嵌入是语法糖，Go会给该结构体分配字段并用结构体名命名，所以同样的结构体嵌入多次会导致编译错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\object_def.go:44:5: duplicate field C</span><br></pre></td></tr></table></figure>
+<p>所以我们稍稍改一下：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> D <span class="keyword">struct</span> &#123;</span><br><span class="line">    FF1 <span class="type">int</span></span><br><span class="line">    C</span><br><span class="line">    FF2 <span class="type">int</span></span><br><span class="line">    B</span><br><span class="line">    FF3 <span class="type">int</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后查看内部的成员结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">Var         Type           Address             RootOffset LocalOffset Size</span><br><span class="line">d           objmodelexp.D  0x000000c00017e000           0           0  112</span><br><span class="line">d.FF1       int            0x000000c00017e000           0           0    8</span><br><span class="line">d.C         objmodelexp.C  0x000000c00017e008           8           8   48</span><br><span class="line">d.C.FC1     bool           0x000000c00017e008           8           0    1</span><br><span class="line">d.C.B       objmodelexp.B  0x000000c00017e010          16           8   40</span><br><span class="line">d.C.B.A     objmodelexp.A  0x000000c00017e010          16           0   32</span><br><span class="line">d.C.B.A.FA1 bool           0x000000c00017e010          16           0    1</span><br><span class="line">d.C.B.A.FA2 int32          0x000000c00017e014          20           4    4</span><br><span class="line">d.C.B.A.FA3 int16          0x000000c00017e018          24           8    2</span><br><span class="line">d.C.B.A.FA4 int64          0x000000c00017e020          32          16    8</span><br><span class="line">d.C.B.A.FA5 uint8          0x000000c00017e028          40          24    1</span><br><span class="line">d.C.B.A.FA6 uint8          0x000000c00017e029          41          25    1</span><br><span class="line">d.C.B.FB1   bool           0x000000c00017e030          48          32    1</span><br><span class="line">d.FF2       int            0x000000c00017e038          56          56    8</span><br><span class="line">d.B         objmodelexp.B  0x000000c00017e040          64          64   40</span><br><span class="line">d.B.A       objmodelexp.A  0x000000c00017e040          64           0   32</span><br><span class="line">d.B.A.FA1   bool           0x000000c00017e040          64           0    1</span><br><span class="line">d.B.A.FA2   int32          0x000000c00017e044          68           4    4</span><br><span class="line">d.B.A.FA3   int16          0x000000c00017e048          72           8    2</span><br><span class="line">d.B.A.FA4   int64          0x000000c00017e050          80          16    8</span><br><span class="line">d.B.A.FA5   uint8          0x000000c00017e058          88          24    1</span><br><span class="line">d.B.A.FA6   uint8          0x000000c00017e059          89          25    1</span><br><span class="line">d.B.FB1     bool           0x000000c00017e060          96          32    1</span><br><span class="line">d.FF3       int            0x000000c00017e068         104         104    8</span><br></pre></td></tr></table></figure>
+<p>从LocalOffset上，我们可以很快看出：</p>
+<ol>
+<li>在多继承的情况下，嵌入的结构体成员布局完全保持不变。开闭原则被保持的非常的好。</li>
+<li>定义嵌入的结构体时，其中有重复的字段（和方法）是没有关系的。</li>
+</ol>
+<h3 id="成员选择：最短距离优先">4.1. 成员选择：最短距离优先</h3>
+<p>不过现在我们有了一个新的问题，C和B都有相同的字段和方法，那当我们调用<code>d.Foo()</code>的时候，到底哪一个会被调用呢？我们来试一试：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.\object_def_test.go:81:6: ambiguous selector d.Foo</span><br></pre></td></tr></table></figure>
+<p>果不其然出错了。这就牵涉到Go是如何选择成员进行访问了，这里其实规则非常简单：</p>
+<ul>
+<li>存在距离相同的同名成员就报错。</li>
+<li>否则同名成员之间，访问距离最短的。</li>
+</ul>
+<p>比如，这里如果我们访问<code>d.FA1</code>就不会产生编译错误，因为虽然有两个FA1，但是其离D的距离不一样：<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/field-distances.png" alt="Field distances"></p>
+<p>所以，<code>d.FA1</code>在这里会被解释成<code>d.B.A.FA1</code>，我们这里可以用如下代码对其进行修改，然后在调试器下验证：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">d.FA1 = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2021-01-06-learning-golang-object-model-struct/multi-embedding-with-dup-struct-data-accessor.png" alt="Multi-embedding with dup struct data accessor"></p>
+<hr>
+<h2 id="内存对齐">5. 内存对齐</h2>
+<p>好的，在讨论完所有情况的内存布局之后，我们再回头来看一看一开始我们提到的内存对齐的问题。</p>
+<p>首先，我们必须明确一点，这一节的内容，不知道比知道了好。利用内存对齐在Go里面是一件非常危险的事情，<a target="_blank" rel="noopener" href="https://golang.org/ref/spec#Size_and_alignment_guarantees">Go语言Spec对类型的对齐的定义非常的松散</a>，如果编译器发生改变，便可能造成严重的错误，所以跳过本节不读是非常明智的选择。<strong>如果真的需要序列化和反序列化，请使用相关的包，而不是利用内存对齐和类型转换。</strong></p>
+<p>好了，那我们继续～</p>
+<h3 id="类型的对齐值">5.1. 类型的对齐值</h3>
+<p>我们先来看看每种基本类型的对齐值。在Go里，我们可以使用reflect.Type.Align()方法进行观察。这里我们写一个简单的函数来查看：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestObjectModelAlignment</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> b <span class="type">bool</span></span><br><span class="line">    <span class="keyword">var</span> i32 <span class="type">int32</span></span><br><span class="line">    <span class="keyword">var</span> c <span class="keyword">chan</span> <span class="type">bool</span></span><br><span class="line">    <span class="keyword">var</span> f <span class="function"><span class="keyword">func</span><span class="params">()</span></span></span><br><span class="line"></span><br><span class="line">    types := []reflect.Type&#123;</span><br><span class="line">        reflect.TypeOf(<span class="literal">true</span>), reflect.TypeOf(<span class="type">int8</span>(<span class="number">1</span>)), reflect.TypeOf(<span class="type">int16</span>(<span class="number">1</span>)),</span><br><span class="line">        reflect.TypeOf(<span class="type">int32</span>(<span class="number">1</span>)), reflect.TypeOf(<span class="type">int64</span>(<span class="number">1</span>)), reflect.TypeOf(<span class="type">float32</span>(<span class="number">1</span>)),</span><br><span class="line">        reflect.TypeOf(<span class="type">float64</span>(<span class="number">1</span>)), reflect.TypeOf(<span class="type">complex64</span>(<span class="number">1</span>)), reflect.TypeOf(<span class="type">complex128</span>(<span class="number">1</span>)),</span><br><span class="line">        reflect.TypeOf(&amp;b), reflect.TypeOf(&amp;i32), reflect.TypeOf([<span class="number">10</span>]<span class="type">bool</span>&#123;&#125;),</span><br><span class="line">        reflect.TypeOf([<span class="number">10</span>]<span class="type">int32</span>&#123;&#125;), reflect.TypeOf([<span class="number">10</span>]<span class="type">complex128</span>&#123;&#125;), reflect.TypeOf([]<span class="type">bool</span>&#123;&#125;),</span><br><span class="line">        reflect.TypeOf(<span class="keyword">map</span>[<span class="type">bool</span>]<span class="type">bool</span>&#123;&#125;), reflect.TypeOf(c), reflect.TypeOf(f),</span><br><span class="line">        reflect.TypeOf(<span class="keyword">struct</span>&#123;I <span class="type">int16</span>; B <span class="type">bool</span>&#125;&#123;&#125;),</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fmt.Printf(<span class="string">&quot;%-28v %v\n&quot;</span>, <span class="string">&quot;Type&quot;</span>, <span class="string">&quot;Alignment&quot;</span>)</span><br><span class="line">    <span class="keyword">for</span> _, t := <span class="keyword">range</span> types &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;%-28v %v\n&quot;</span>, t.String(), t.Align())</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> i <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">    ti := reflect.ValueOf(&amp;i).Elem().Type()</span><br><span class="line">    fmt.Printf(<span class="string">&quot;%-28v %v\n&quot;</span>, ti.String(), ti.Align())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> w io.Writer</span><br><span class="line">    tw := reflect.ValueOf(&amp;w).Elem().Type()</span><br><span class="line">    fmt.Printf(<span class="string">&quot;%-28v %v\n&quot;</span>, tw.String(), tw.Align())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我的机器是amd64的，输出如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Type                         Alignment</span><br><span class="line">bool                         1</span><br><span class="line">int8                         1</span><br><span class="line">int16                        2</span><br><span class="line">int32                        4</span><br><span class="line">int64                        8</span><br><span class="line">float32                      4</span><br><span class="line">float64                      8</span><br><span class="line">complex64                    4</span><br><span class="line">complex128                   8</span><br><span class="line">*bool                        8</span><br><span class="line">*int32                       8</span><br><span class="line">[10]bool                     1</span><br><span class="line">[10]int32                    4</span><br><span class="line">[10]complex128               8</span><br><span class="line">[]bool                       8</span><br><span class="line">map[bool]bool                8</span><br><span class="line">chan bool                    8</span><br><span class="line">func()                       8</span><br><span class="line">struct &#123; I int16; B bool &#125;   2</span><br><span class="line">interface &#123;&#125;                 8</span><br><span class="line">io.Writer                    8</span><br></pre></td></tr></table></figure>
+<p>我们可以看到：</p>
+<ol>
+<li>每种类型对齐值的大小取决于类型的内部实现：
+<ol>
+<li>整数和浮点数大小就是其本身的大小</li>
+<li>实数，因为实现是实部和虚部，所以对齐值大小是类型大小的一半</li>
+<li>Slice是一个指针，两个int，所以对齐值为8</li>
+<li>Map，Channel和Function其实都是一个指针，所以对齐值为8</li>
+</ol>
+</li>
+<li>数组的对齐值取决于内部元素的对齐值，和元素数量无关</li>
+<li>结构体对齐值的计算我们下面来仔细讨论</li>
+</ol>
+<h3 id="结构体空间占用的计算">5.2. 结构体空间占用的计算</h3>
+<p>到目前为止，Go计算结构体的空间占用流程还算简单：</p>
+<ol>
+<li>首先定义当前的对齐值为0，并获取当前环境中的默认对齐值</li>
+<li>然后对结构体的字段按定义顺序逐个进行处理，每当处理一个新字段时，都会按照下面几步检查<strong>在这个字段前面</strong>是否需要添加Padding进行对齐：
+<ol>
+<li>取当前字段类型的对齐值和默认对齐值中的最小值作为当前的对齐值
+<ol>
+<li>如果当前字段是结构体，则递归计算，并取其内部字段对齐值的最大值作为其对齐值（这个和我们上面观察到的一样）</li>
+</ol>
+</li>
+<li>从当前的偏移开始，找到最小的当前对齐值的整数倍的值，将其作为当前字段的起始偏移，前面的部分用Padding填充</li>
+<li>重复1-2，直到所有字段处理完毕</li>
+</ol>
+</li>
+<li>最后对结构体的整体进行对齐，取结构体内部所有字段对齐值的最大值作为其对齐值，从最后的偏移开始找到最小的当前对齐值的整数倍的值，并将其作为结构体的最终大小</li>
+</ol>
+<p>这里我们拿结构体A和B，来举一个例子，这里我们的编译环境是amd64，所以环境的默认对齐值是8：</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:50px">字段</div></th>
+<th><div style="width:35px">类型</div></th>
+<th><div style="width:35px">字段大小</div></th>
+<th><div style="width:35px">对齐值</div></th>
+<th><div style="width:35px">最终对齐值</div></th>
+<th><div style="width:35px">当前偏移</div></th>
+<th><div style="width:35px">最终偏移</div></th>
+<th><div style="width:35px">加入对齐</div></th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a.FA1</td>
+<td>bool</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>字段对齐值是1，小于默认对齐值8，所以用1作为对齐值，偏移从0开始，最小对齐值整数倍偏移就是0，不需要加Padding</td>
+</tr>
+<tr>
+<td>a.FA2</td>
+<td>int32</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>1</td>
+<td>4</td>
+<td>3</td>
+<td>字段对齐值为4，偏移从1开始，最小对齐值整数倍偏移为4，所以加上3个字节的Padding</td>
+</tr>
+<tr>
+<td>a.FA3</td>
+<td>int16</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>8</td>
+<td>8</td>
+<td>0</td>
+<td>字段对齐值为2，当前偏移为8，最小对齐值整数倍偏移也为8，于是不需要加Padding</td>
+</tr>
+<tr>
+<td>a.FA4</td>
+<td>int64</td>
+<td>8</td>
+<td>8</td>
+<td>8</td>
+<td>10</td>
+<td>16</td>
+<td>6</td>
+<td>字段对齐值为8，当前偏移为10，最小的对齐值整数倍偏移为16，所以需要加上6个字节的Padding</td>
+</tr>
+<tr>
+<td>a.FA5</td>
+<td>uint8</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>24</td>
+<td>24</td>
+<td>0</td>
+<td>字段对齐值为1，当前偏移24，最小的对齐值整数倍偏移就是24，无需添加Padding</td>
+</tr>
+<tr>
+<td>a.FA6</td>
+<td>uint8</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>25</td>
+<td>25</td>
+<td>0</td>
+<td>字段对齐值为1，当前偏移25，最小的对齐值整数倍偏移就是25，无需添加Padding</td>
+</tr>
+</tbody>
+</table>
+<p>最后再来计算结构体整体的对齐，现在结构体一共26个字节，结构体对齐值为内部字段对齐值的最大值即8，最小的对齐值整数倍为32，所以结构体A最终大小为32，需要添加6个字节的Padding。到这里对于结构体A的计算就完毕了。</p>
+<p>那我们再来看看结构体B，我们知道嵌套不改变结构体的布局，所以A的布局完全保持不变。所以我们直接来看B的字段：</p>
+<table>
+<thead>
+<tr>
+<th><div style="width:50px">字段</div></th>
+<th><div style="width:35px">类型</div></th>
+<th><div style="width:35px">字段大小</div></th>
+<th><div style="width:35px">对齐值</div></th>
+<th><div style="width:35px">最终对齐值</div></th>
+<th><div style="width:35px">当前偏移</div></th>
+<th><div style="width:35px">最终偏移</div></th>
+<th><div style="width:35px">加入对齐</div></th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener" href="http://b.SA">b.SA</a></td>
+<td>A</td>
+<td>32</td>
+<td>8</td>
+<td>8</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>字段对齐值为8，小于等于默认对齐值8，所以用8作为对齐值，偏移从0开始，最小对齐值整数倍偏移就是0，不需要加Padding</td>
+</tr>
+<tr>
+<td>b.FB1</td>
+<td>bool</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>32</td>
+<td>32</td>
+<td>0</td>
+<td>字段对齐值为1，偏移从32开始，最小对齐值整数倍偏移为32，无需Padding</td>
+</tr>
+</tbody>
+</table>
+<p>最后还是计算结构体整体的对齐，B的对齐值应该是8，因为字段对齐值的最大值是8。B的大小现在为33，所以从33开始，最小的对齐值的整数倍是40，于是B的最终大小就是40，需要添加7个字节的Padding。</p>
+<hr>
+<h2 id="结论">6. 结论</h2>
+<ol>
+<li>Go语言中没有继承，所谓的嵌入（Embedding）只不过是方便访问内部字段的语法糖</li>
+<li>开闭原则和里氏替换是Go语言结构体的设计的核心思想，其结果是：
+<ol>
+<li>对修改封闭：
+<ol>
+<li>结构体嵌套时，其成员的内存布局永远不会发生改变</li>
+<li>结构体不支持任何类型的多态，外层结构体永远无法改变嵌入结构体的行为</li>
+</ol>
+</li>
+<li>对扩展开放：当我们需要改变嵌入结构体行为时，只能通过添加新的函数，将想要改变的函数进行包装</li>
+</ol>
+</li>
+<li>Go语言结构体也存在内存对齐
+<ol>
+<li>Go语言Spec对内存对齐的计算约束松散，所以不到万不得已，请不要利用内存对齐实现想要的功能</li>
+<li>每种类型的对齐值取决于其本身的底层实现</li>
+<li>计算规则请参阅：<a href="./#%E7%BB%93%E6%9E%84%E4%BD%93%E7%A9%BA%E9%97%B4%E5%8D%A0%E7%94%A8%E7%9A%84%E8%AE%A1%E7%AE%97">结构体空间占用的计算</a></li>
+</ol>
+</li>
+</ol>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-struct/">Go语言学习笔记：深入对象模型之结构体</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-object-model-inbox-data-type/">Go语言学习笔记：深入对象模型之内置类型</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-essential-learning-materials/">Go语言学习笔记：学习资料汇总</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/">Go语言学习笔记：搭建Windows下的Go开发环境</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-golang-object-model-struct/" target="_blank">Go语言学习笔记：深入对象模型之结构体</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/go/" rel="tag"># go</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-golang-object-model-inbox-data-type/" rel="prev" title="Go语言学习笔记：深入对象模型之内置类型">
+                  <i class="fa fa-chevron-left"></i> Go语言学习笔记：深入对象模型之内置类型
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/summarizing-consistency-model/" rel="next" title="一致性模型一句话总结">
+                  一致性模型一句话总结 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

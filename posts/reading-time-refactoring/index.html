@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="好不容易读完了重构——2010年下半年唯一读了的一本书。只能说这半年以来很忙，来了北京之后连个喘息的机会都没有，半年都没有管过博客了，写写读后感，就当作是除除草吧。 以下只是我的一些读书笔记，不过虽然是笔记，但是里面并没有关于重构方法的细节记录，而只是粗略的记下了我理解的重构的大致思路。和《重构》这本书不同，这本书本身说的很细，作者把每一步重构的都拆成了很小的步骤，每一步都可以轻松的回滚，所以有兴">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《重构》读书笔记 —— 如何让你的代码变得更好">
+<meta property="og:url" content="http://r12f.com/posts/reading-time-refactoring/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="好不容易读完了重构——2010年下半年唯一读了的一本书。只能说这半年以来很忙，来了北京之后连个喘息的机会都没有，半年都没有管过博客了，写写读后感，就当作是除除草吧。 以下只是我的一些读书笔记，不过虽然是笔记，但是里面并没有关于重构方法的细节记录，而只是粗略的记下了我理解的重构的大致思路。和《重构》这本书不同，这本书本身说的很细，作者把每一步重构的都拆成了很小的步骤，每一步都可以轻松的回滚，所以有兴">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2011-01-01T17:02:51.000Z">
+<meta property="article:modified_time" content="2011-01-01T17:02:51.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="设计模式">
+<meta property="article:tag" content="重构">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/reading-time-refactoring/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/reading-time-refactoring/","path":"posts/reading-time-refactoring/","title":"《重构》读书笔记 —— 如何让你的代码变得更好"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>《重构》读书笔记 —— 如何让你的代码变得更好 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E7%9A%84%E7%9B%AE%E7%9A%84"><span class="nav-text">1. 重构的目的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%92%8C%E9%87%8D%E6%9E%84"><span class="nav-text">2. 设计模式和重构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E4%B8%8E%E6%B5%8B%E8%AF%95"><span class="nav-text">3. 重构与测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E7%9A%84%E6%89%8B%E6%AE%B5"><span class="nav-text">4. 重构的手段</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A9%E4%BA%BA%E8%BF%B7%E6%83%91%E7%9A%84%E4%B8%B4%E6%97%B6%E5%8F%98%E9%87%8F"><span class="nav-text">4.1. 让人迷惑的临时变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8C%96%E6%9D%A1%E4%BB%B6%E5%88%A4%E6%96%AD"><span class="nav-text">4.2. 简化条件判断</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%8F%E5%B0%91%E9%87%8D%E5%A4%8D%E4%BB%A3%E7%A0%81"><span class="nav-text">4.3. 减少重复代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%81%E8%A3%85%E5%8F%98%E5%8C%96"><span class="nav-text">4.4. 封装变化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8F%98%E5%8C%96%E4%B8%8D%E4%BC%9A%E5%AF%BC%E8%87%B4%E8%A1%8C%E4%B8%BA%E5%8F%91%E7%94%9F%E5%8F%98%E5%8C%96"><span class="nav-text">4.4.1. 数据变化不会导致行为发生变化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8F%98%E5%8C%96%E4%BC%9A%E5%AF%BC%E8%87%B4%E8%A1%8C%E4%B8%BA%E5%8F%91%E7%94%9F%E5%8F%98%E5%8C%96"><span class="nav-text">4.4.2. 数据变化会导致行为发生变化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%B3%E4%BD%BF%E6%95%B0%E6%8D%AE%E4%B8%8D%E5%8F%98%E5%8C%96%EF%BC%8C%E8%A1%8C%E4%B8%BA%E6%9C%AC%E8%BA%AB%E4%B9%9F%E5%8F%AF%E8%83%BD%E5%8F%91%E7%94%9F%E5%8F%98%E5%8C%96"><span class="nav-text">4.4.3. 即使数据不变化，行为本身也可能发生变化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B4%E7%90%86%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="nav-text">4.5. 整理你的代码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%87%E9%95%BF%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-text">4.5.1. 过长的函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%87%E9%95%BF%E7%9A%84%E5%8F%82%E6%95%B0%E5%88%97%E8%A1%A8"><span class="nav-text">4.5.2. 过长的参数列表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%87%E9%95%BF%E7%9A%84%E7%B1%BB"><span class="nav-text">4.5.3. 过长的类</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%B6%E5%90%88%E5%B1%82"><span class="nav-text">4.6. 胶合层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%87%E5%A4%9A%E7%9A%84%E6%B3%A8%E9%87%8A"><span class="nav-text">4.7. 过多的注释</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E4%B8%8E%E6%80%A7%E8%83%BD"><span class="nav-text">5. 重构与性能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-text">6. 重构的本质</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9D%9F"><span class="nav-text">7. 结束</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/reading-time-refactoring/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="《重构》读书笔记 —— 如何让你的代码变得更好 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          《重构》读书笔记 —— 如何让你的代码变得更好
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2011-01-01 09:02:51" itemprop="dateCreated datePublished" datetime="2011-01-01T09:02:51-08:00">2011-01-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/04-Reading-Time/" itemprop="url" rel="index"><span itemprop="name">04 Reading Time</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/reading-time-refactoring/" class="post-meta-item leancloud_visitors" data-flag-title="《重构》读书笔记 —— 如何让你的代码变得更好" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/reading-time-refactoring/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/reading-time-refactoring/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>好不容易读完了重构——2010年下半年唯一读了的一本书。只能说这半年以来很忙，来了北京之后连个喘息的机会都没有，半年都没有管过博客了，写写读后感，就当作是除除草吧。<br>
+以下只是我的一些读书笔记，不过虽然是笔记，但是里面并没有关于重构方法的细节记录，而只是粗略的记下了我理解的重构的大致思路。和《重构》这本书不同，这本书本身说的很细，作者把每一步重构的都拆成了很小的步骤，每一步都可以轻松的回滚，所以有兴趣的可以去看看这本书，肯定都会有一定收获的。<br>
+我现在只是一名小菜，过段时间之后，我自己回头看这篇文章，可能都会觉得自己很傻，所以如有不对，还请多多指教，如果实在看不顺眼，就请纯当笑话看吧。<br>
+好，下面进入正题。</p>
+<p>注：因为是读书笔记，所以可能会有抄袭等等奇奇怪怪的问题，如果发现有版权问题，请联系我，我会尽快删除本文。</p>
+<p>===================== 我是欢乐的分隔线 =====================</p>
+<h2 id="重构的目的">1. 重构的目的</h2>
+<p>我们总希望自己的代码能写的更加好看，以至于我MM把我写代码比喻成为打扮自己。没有错，代码就是一个程序员的外表。而重构就是为了让你的代码更加好看。<br>
+但是仅仅是好看而已么？<br>
+不是，好看意味着简洁，好理解，好维护，好扩展。这就是我们真正要达到的目的。<br>
+那这些目的最终又是为了完成什么呢？我们最后再说。</p>
+<h2 id="设计模式和重构">2. 设计模式和重构</h2>
+<p>设计模式想必大家肯定已经不陌生了，平时在开发的时候，大家也肯定用过各种各样的模式来解决遇到的问题。而当你现在手头的代码使用的模式不能很好的支持你继续开发的时候（可能是不够灵活，也可能是过于灵活），你就需要使用重构来修改它，将你的代码变得更加优雅。</p>
+<span id="more"></span>
+<h2 id="重构与测试">3. 重构与测试</h2>
+<p>重构与测试的关系为什么要写在前面？因为测试实在是太重要了。<br>
+我在最近的项目中备受重构的挫折，为什么？因为没有测试。和很多程序员一样，经常迫于项目的压力，没有时间去实现一些测试用例，或者有些测试用例不方便实现，等到需要重构的时候，问题就出现了。</p>
+<p>“我不敢改这段代码，改了要是出错了怎么办？”<br>
+“但是这个版本一定要有这个功能啊。”<br>
+“那我尝试着改吧，出了错再调。”</p>
+<p>如果连这段代码的作者都这么说，谁还敢改这段代码？而偏偏修改中又引入了其他的Bug，结果就是和这个功能相关的所有人都为此买单。大家的时间就这么浪费在了无意义的事情上。如何避免这个问题呢？测试！这是我自己受到的血淋淋的教训。</p>
+<p>写测试代码的时候，经常会遇见两个问题：</p>
+<p>Q：“刚开发完一个功能，紧接着就要开发另外一个，没有时间来写这些测试代码啊？”<br>
+A：在开发这个功能之前，请先些测试用例，这样不仅仅节省了写测试用例的时间，而且能帮助你更快的设计接口，避免走弯路，因为你已经在考虑如何使用这个接口了。</p>
+<p>Q：“我还有开发任务，没有办法写全面的测试用例啊！”<br>
+A：一个全面的测试程序基本是不可能写出来的，功能一直在加，开发一直在进行，没有那么多时间给我们补全测试用例。但是我们不能因噎废食，测试对我们有好处，我们只要实现可能导致出错，或者实现原来出过错的测试用例即可。能找出大部分问题，总比什么问题都找不出，之后去补救的好。</p>
+<h2 id="重构的手段">4. 重构的手段</h2>
+<p>不要把重构看成一件很大或者需要花费很多时间的工程，也许它只是添加或者删除一个函数的参数，也许是从一种设计模式切换到另外一种，当然也有需要大规模的修改代码的结构的时候，具体看你遇见的问题来进行操作。</p>
+<p>但是请记住：不管过程如何，重构的目的和本质总是不变的。不要为了重构而重构。</p>
+<p>如何让代码变得更加好看，答案其实很废话：封装。把不变的部分放在一块，把变化的部分提取出来封装在另外一块。<br>
+而何时封装和如何封装，正是整本书在讲的内容。我归纳了一下，大概如下：</p>
+<h3 id="让人迷惑的临时变量">4.1. 让人迷惑的临时变量</h3>
+<p>临时变量容易让人产生迷惑，一个变量被来回的赋值，在某一段代码中他表达的是一个意思，在另外一段代码中，表达的又是另外一个意思，到最后就会让人产生疑惑，这个变量到底是什么？所以使用临时变量一定要小心。如果遇见代码中有很多临时变量，我们可以通过以下一些步骤来消除他们：</p>
+<ol>
+<li>如果一个临时变量在代码中表示了多个意思，那么将代码分段，给每段的临时变量取上不同的名字</li>
+<li>将能用函数查询代替的临时变量全变成函数查询，期间请先不要担心效率</li>
+<li>将能提取的代码提取成让人更好理解的函数</li>
+<li>如果还有顽固的让人不爽的临时变量，请修改你的算法</li>
+</ol>
+<p>当然并不是所有临时变量都是不好的，我们的目的是让代码更加易懂，所以只要这个临时变量能帮助我们理解这段代码，那这个变量就是有意义的。比如用一个临时变量来代替一个复杂的表达式。</p>
+<h3 id="简化条件判断">4.2. 简化条件判断</h3>
+<p>条件判断是程序开发中不可避免的一部分，而当某些语句执行的条件比较复杂的时候，如果处理不好，各种各样的条件判断就会阻碍我们理解这段代码真正的目的。而以下就几个方法，能将复杂的条件判断变得清晰。</p>
+<ol>
+<li>用易懂的临时变量或者查询来代替复杂的条件。比如isValid()函数，就比xxx &amp; FLAG_XXX != 0 &amp;&amp; xxxx != “” …，要清晰许多。</li>
+<li>确定这段代码的真实目的，对于处理前的条件判断，尽量使用ASSERT和卫语句，发现错误就尽快退出处理，减少条件判断嵌套的层次。</li>
+<li>如果是类型的判断，请引入子类+多态来解决这个问题。</li>
+<li>对于NULL的处理，可以引入NULL对象。通过多态，定义在对象为NULL时的行为。</li>
+</ol>
+<p>在写代码时，请不要在意如“一个函数，一个出口”，“使用break，continue是破坏代码的行为”之类的，一直被人灌输的思想。只要能让代码易懂，请尽情的使用这些关键字。</p>
+<h3 id="减少重复代码">4.3. 减少重复代码</h3>
+<p>重复代码是万恶之源（当然还有各种万恶之源，如调试器，我们都忽略吧），这点想必只要做过开发的人都经历过，改了这里忘了改那里。既然是相同的代码，那么就请放在一起来吧，尽量不要让重复的代码在你的代码中出现。避免重复代码的方法，有下面几种：</p>
+<ol>
+<li>如果代码完全一样，可以直接提取公共函数</li>
+<li>如果你使用的是一个库，无法修改他本身的代码，那么我们可以建立代理函数或者代理类来减少重复代码</li>
+<li>对于相似的代码，可以使用模版方法，Trait技术来减少重复的代码</li>
+</ol>
+<p>减少重复代码还有一个很重要的方法，那就是避免纯数据类。</p>
+<p>纯数据类是一个很神奇的东西，OO开发带来的一个很大的优点就是可以把数据和数据的操作封装在一起，让代码看起来更加自然。所以在代码中应该尽量避免出现纯数据类，如果经常出现对一个纯数据类的操作，请将他直接封装在这个数据类中。<br>
+比如：文件路径，本身它是一个字符串，习惯Windows开发的童鞋喜欢直接调用Window Api来对路径进行操作，但是有些操作需要多个Api组合完成。这时候，我们无意中就会写出很多重复的代码，实际上，我们把他封装成一个文件路径的类，就可以很好的避免这些重复代码的产生。</p>
+<h3 id="封装变化">4.4. 封装变化</h3>
+<p>如何让代码看起来简单？有一个标准，看起来变化越少的代码，越易懂。如果一段只有几行的简单代码，那肯定是很容易懂的。既然这样，那么如果我们把变化的部分都封装起来，那么代码肯定看起来就简单了。<br>
+如何封装变化，大家可以猛烈的参考设计模式。如果没有看过，Gang of Four和Head First的都不错。<br>
+对于经常用的方法，我这里总结了一下（以下不变化的意思是，不变或者变化较少）：</p>
+<h4 id="数据变化不会导致行为发生变化">4.4.1. 数据变化不会导致行为发生变化</h4>
+<p>在这种情况下，你需要做的就仅仅是封装数据了。</p>
+<ul>
+<li>尽量避免纯数据类，因为行为是固定的，所以请把行为放入数据类中，让它变得更加有用。</li>
+<li>有一些基本类型实际上也是纯数据类，如上文提到的文件路径。</li>
+<li>如果这个变化的数据是几个固定的型别码，那么请用类将它封装起来，再提供几个静态变量表示各种类型，避免出现超出范围的型别码。</li>
+</ul>
+<h4 id="数据变化会导致行为发生变化">4.4.2. 数据变化会导致行为发生变化</h4>
+<p>一般这种情况都是因为数据本身表示类型，这种情况下，请引入子类+多态。解决这种问题设计模式有很多：状态模式，职责链和命令模式等等。</p>
+<h4 id="即使数据不变化，行为本身也可能发生变化">4.4.3. 即使数据不变化，行为本身也可能发生变化</h4>
+<p>如果行为本身会有变化，此时，我们就需要使用反封装的方法，将数据操作提取出来。此类有一个典型的设计模式：Strategy。</p>
+<p>在封装变化的时候，还有一个问题要注意：<br>
+如果出现了“一个新的变化，你要修改很多个类的方法”的问题，请将这些方法移入一个类中，或者提取出一个公有的类。避免这种问题。</p>
+<h3 id="整理你的代码">4.5. 整理你的代码</h3>
+<p>有一个很有趣的关于bug数量的规律：一个模块的逻辑代码行数在200-400行之间的时候，bug数量是最少的。根据这个规律，如果你某个模块的代码过多，那么你就应该开始拆分他了。<br>
+而对于实现来说，除了一些变态的Trick，一般越是短小的代码越容易理解，所以如果你写了一段惊世骇俗的冗长代码，请尽快缩短他，不然后来的人要理解他就比较痛苦了。</p>
+<h4 id="过长的函数">4.5.1. 过长的函数</h4>
+<p>一段非常长的函数，常会让希望理解他的人望而却步。因为他没有办法很快的理解这段函数的目的，深陷在各种逻辑的泥沼中不能自拔。</p>
+<ul>
+<li>对于过长的函数，可以先检查里面是否有重复代码，或者可以分段，如果有，请提取成新的函数</li>
+<li>检查里面是否有临时变量，看能不能用上述方法简化</li>
+<li>如果还是过长，对于缩短代码，这里有一个杀手锏，把这个函数变成一个方法类。<br>
+如：有一个很复杂的函数：ComplexBehavior(xxx)，其中的逻辑无法简化。那么可以把它转化成一个叫做ComplexBehavior的类，在其中提取方法，达到缩短过长函数的目的。之后把调用的形式变成ComplexBehavior(xxx).run()即可。</li>
+</ul>
+<h4 id="过长的参数列表">4.5.2. 过长的参数列表</h4>
+<p>如果一个函数如果参数较多，可能会导致这个函数难以理解，不方便使用，而且这种函数经常还会遇见需要添加新的参数的情况，这种修改有时是很痛苦的。而在OO的程序中，参数列表一般要短很多。为什么呢？答案就是封装。如何封装？</p>
+<ul>
+<li>首先，看有没有能省去的参数，是否存在在对象成员变量中的参数，如果有，请删除它</li>
+<li>然后，自然而然想到的，就是整合参数，因为很可能这些参数之间是互相关联的，那么把这些互相关联的参数，提取成一个对象吧</li>
+<li>不要想着提高效率或者这个函数不需要某个对象的某些参数，而不把这个对象传入（除非是其他部分的接口）。这种效率不是我们应该考虑的事情，这种提高一般都是零头，而对于不需要的情况，你也不知道什么时候他就需要这些东西了，都传进去总是不会错的。</li>
+<li>如果还是不行，请继续用那个杀手锏，建立一个方法类，把所有的参数都转化成他的成员变量。</li>
+</ul>
+<h4 id="过长的类">4.5.3. 过长的类</h4>
+<p>在代码中，大家是不是经常遇见吓人的万能的工具类呢？如果一个类，他本身想做很多事情，那么这个类必然会变得过长。</p>
+<ul>
+<li>在设计一个类的时候，请首先确定好这个类的目的是什么</li>
+<li>对于已经过长的类，请先检查有没有重复代码，有请先消除</li>
+<li>确定好他到底想做那些事情，然后将各个部分分别提取成单独的类</li>
+<li>如果功能已经很单一了，只是实现本身复杂，请将他的实现分解成多个类</li>
+<li>如果这个类多个方法很类似，只是使用方式不同，请尝试提取出共有的接口，然后找出确定使用方式的型别码，然后利用多态来简化这个类</li>
+</ul>
+<h3 id="胶合层">4.6. 胶合层</h3>
+<p>在代码中，由于自顶向下设计和自下向上实现产生的冲突导致的，用于连接两部分的代码，就是胶合层。他一般出现在接口和代码真正实现的连接处。胶合层有时候是不可避免的，但是如果过厚，就会导致代码难以理解，找很久也发现不了代码的真实在做的事情，所以一般胶合层是越薄越好。如果发现你的代码中间出现了不必要的胶合层，请删除他们。<br>
+什么样是不必要的胶合层呢？如果他的存在并不能使你的代码看起来更加简单，而他又没有什么特殊的用途，那么他就是不必要的胶合层。比如一些可有可无的Adapter和Proxy。</p>
+<h3 id="过多的注释">4.7. 过多的注释</h3>
+<p>写注释是件好事，但是如果发现有一大段代码在解释一些写的非常烂的代码的时候，那么尝试重构这段代码吧。因为不管注释写的再多，我们总归是要去理解这段奇特的代码的，所以让代码本身变得可读性更高才是正确的选择。</p>
+<p>需要注意的是，在实施重构的时候，请使用“建立新函数之后替换原函数”的方式来实现重构，而不是直接修改，这样才能保证每一步足够小，而且能回滚，举一个例子，删除函数参数。</p>
+<h2 id="重构与性能">5. 重构与性能</h2>
+<p>程序员写代码的时候，最喜欢做的一件事情，那就是下意识的检查自己写过的代码。下面这些问题，不知道你是否问过自己。</p>
+<p>“这里用for循环查找，万一数据量大一点，效率会有问题吧？”<br>
+“这里用map是不是比vector更好一些？”<br>
+“这里遍历询问好么？要不要让每个模块先注册一下他关注的内容？”<br>
+“这种实现方式会不会绕太多弯路了，速度会很慢吧”</p>
+<p>除非你对程序这部分会承担的数据量或者他所使用组件的性能有非常清楚的了解，否则，请不要幻想着程序会慢在哪些地方，然后擅自的优化代码。因为事实可能并非你的想象，往往对于vector变map的优化，在时间上表现的都只是一个零头。而如果因为这个修改，使你这部分代码变得晦涩难懂，那就太得不偿失了。在优化性能之前，请先实现好整个原型，有了这个，你才能好好的雕琢它。写代码的时候，请谨记KISS原则，优化是之后的事情。</p>
+<p>那到底是哪一部分代码导致我的程序性能不好呢？问性能分析工具吧。</p>
+<p>Linux开发的童鞋请移步gprof：<a target="_blank" rel="noopener" href="http://www.cs.utah.edu/dept/old/texinfo/as/gprof_toc.html">http://www.cs.utah.edu/dept/old/texinfo/as/gprof_toc.html</a><br>
+Windows开发的童鞋请自行搜索：WPT, AQTime</p>
+<h2 id="重构的本质">6. 重构的本质</h2>
+<p>开头说了很多重构的目的，提高可理解性，降低其修改成本等等。我们再深究一些，完成这些都是为了什么？所有这些重构的手法，为的是什么？为了让代码简单？如果只是为了让代码简单，书中就不会提及如产生变化会导致多个模块调整等等的问题。那重构到底为了什么？</p>
+<p>正交性！</p>
+<p>看过Unix编程艺术的人应该都知道，这就是重构的本质。如何让每一个动作，只改变一件事情，而不会影响其他。这就是重构想完成的事情。</p>
+<h2 id="结束">7. 结束</h2>
+<p>好了，乱七八糟的写了这么多，至此，就是我看《重构》这本书的一些心得。</p>
+<p>===================== 我是欢乐的分隔线 =====================</p>
+<p>如果你看到了这个地方，真的多谢你的耐心，都是海大空的文字，连个像样的图或者代码实例都没有，所以如果你没有开始看一篇博客，就必须看完的强迫症，真的多谢。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag"># 设计模式</a>
+              <a href="/tags/%E9%87%8D%E6%9E%84/" rel="tag"># 重构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/google-breakpad-1-introduction-with-windows/" rel="next" title="Google Breakpad 完全解析（一） —— Windows入门篇">
+                  Google Breakpad 完全解析（一） —— Windows入门篇 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

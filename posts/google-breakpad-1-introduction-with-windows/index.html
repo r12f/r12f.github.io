@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Google breakpad是一个非常实用的跨平台的崩溃转储和分析模块，他支持Windows，Linux和Mac和Solaris。由于他本身跨平台，所以很大的减少我们在平台移植时的工作，毕竟崩溃转储，每个平台下都不同，使用起来很难统一，而Google breakpad就帮我们做到了这一点，不管是哪个平台下的崩溃，都能够进行统一的分析。现在很多工程都在使用他：最著名的几个如Chrome，Firef">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Google Breakpad 完全解析（一） —— Windows入门篇">
+<meta property="og:url" content="http://r12f.com/posts/google-breakpad-1-introduction-with-windows/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="Google breakpad是一个非常实用的跨平台的崩溃转储和分析模块，他支持Windows，Linux和Mac和Solaris。由于他本身跨平台，所以很大的减少我们在平台移植时的工作，毕竟崩溃转储，每个平台下都不同，使用起来很难统一，而Google breakpad就帮我们做到了这一点，不管是哪个平台下的崩溃，都能够进行统一的分析。现在很多工程都在使用他：最著名的几个如Chrome，Firef">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2011-01-23-google-breakpad-1-introduction-with-windows/breakpad-overview.png">
+<meta property="article:published_time" content="2011-01-23T19:48:00.000Z">
+<meta property="article:modified_time" content="2011-01-24T03:48:00.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="Breakpad">
+<meta property="article:tag" content="Dump">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2011-01-23-google-breakpad-1-introduction-with-windows/breakpad-overview.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/google-breakpad-1-introduction-with-windows/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/google-breakpad-1-introduction-with-windows/","path":"posts/google-breakpad-1-introduction-with-windows/","title":"Google Breakpad 完全解析（一） —— Windows入门篇"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Google Breakpad 完全解析（一） —— Windows入门篇 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B"><span class="nav-text">1. 原理简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E7%BC%96%E8%AF%91"><span class="nav-text">2. 安装和编译</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-text">2.1. 准备工作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-text">2.2. 安装</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8svn%E6%8A%8A%E4%BB%A3%E7%A0%81checkout%E4%B8%8B%E6%9D%A5"><span class="nav-text">2.2.1. 使用svn把代码checkout下来</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AEWindows-SDK-7"><span class="nav-text">2.2.2. 设置Windows SDK 7</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BApython%E8%AE%BE%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-text">2.2.3. 为python设置环境变量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E6%88%90Windows%E5%B7%A5%E7%A8%8B%E6%96%87%E4%BB%B6"><span class="nav-text">2.2.4. 生成Windows工程文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hello-World"><span class="nav-text">2.2.5. Hello World</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8breakpad"><span class="nav-text">3. 如何使用breakpad</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%86%85%E6%8A%93%E5%8F%96Dump%E6%96%87%E4%BB%B6"><span class="nav-text">3.1. 进程内抓取Dump文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%A4%96%E6%8A%93%E5%8F%96Dump%E6%96%87%E4%BB%B6"><span class="nav-text">3.2. 进程外抓取Dump文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%B3%A8%E6%84%8F"><span class="nav-text">4. 使用注意</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/google-breakpad-1-introduction-with-windows/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Google Breakpad 完全解析（一） —— Windows入门篇 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Google Breakpad 完全解析（一） —— Windows入门篇
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2011-01-23 11:48:00 / Modified: 19:48:00" itemprop="dateCreated datePublished" datetime="2011-01-23T11:48:00-08:00">2011-01-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/google-breakpad-1-introduction-with-windows/" class="post-meta-item leancloud_visitors" data-flag-title="Google Breakpad 完全解析（一） —— Windows入门篇" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/google-breakpad-1-introduction-with-windows/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/google-breakpad-1-introduction-with-windows/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Google breakpad是一个非常实用的跨平台的崩溃转储和分析模块，他支持Windows，Linux和Mac和Solaris。由于他本身跨平台，所以很大的减少我们在平台移植时的工作，毕竟崩溃转储，每个平台下都不同，使用起来很难统一，而Google breakpad就帮我们做到了这一点，不管是哪个平台下的崩溃，都能够进行统一的分析。现在很多工程都在使用他：最著名的几个如Chrome，Firefox，Picasa和Google Earth。另外他的License是BSD的，也就是说，我们即便是在商业软件中使用，也是合法的，哈哈，这么好的东西，我们能放过么？现在就让我们来看看这个神奇的软件吧。</p>
+<h2 id="原理简介">1. 原理简介</h2>
+<p>breakpad抓取dump的方式和一般我们抓取dump的方式不一样。在breakpad的wiki上有一幅图可以很好的概括他的原理。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2011-01-23-google-breakpad-1-introduction-with-windows/breakpad-overview.png" alt="Breakpad"></p>
+<p>breakpad把应用程序分成三个部分，代码，breakpad客户端和调试信息。</p>
+<ol>
+<li>在build system中，通过symbol dumper用平台相关的调试信息生成平台无关的symbol文件。这样做的好处很明显，一旦平台无关了，所有平台的崩溃就可以做统一的分析了。</li>
+<li>breakpad采取进程外转储和分析崩溃的方式，他使用C/S结构，客户端用来捕获当前进程中发生的崩溃，并通知服务端崩溃发生。服务端用来响应客户端，抓取dump文件。这样做的目的是为了减少崩溃进程对dump的影响。</li>
+<li>Dump生成后转发到崩溃分析器中，这个部分可以在本地也可以在服务器上，他对Dump文件进行解析，生成可读的堆栈信息。</li>
+</ol>
+<p>这就是breakpad处理dump大概的流程。</p>
+<span id="more"></span>
+<p>对于原理的介绍google写的已经相当好了。更多的详细信息，可以直接移步到breakpad的wiki。</p>
+<h2 id="安装和编译">2. 安装和编译</h2>
+<p>breakpad的编译比较曲折，所以在此记录一下。</p>
+<h3 id="准备工作">2.1. 准备工作</h3>
+<p>编译breakpad，请确认你的机器上装有以下的软件：</p>
+<ol>
+<li>python 2.4.3<br>
+请不要使用python3，会报错。另外python2中推荐这个版本，使用新的版本在编译其他google的工程时有时会报错</li>
+<li>Windows SDK 7<br>
+如果没有这个，编译会报错。另外这个是在线安装，时间很久，最好并行做其他的事情。</li>
+<li>VS2005的补丁
+<ul>
+<li>KB918559</li>
+<li>KB926601</li>
+<li>KB935225</li>
+<li>KB943969</li>
+<li>KB947315</li>
+</ul>
+</li>
+</ol>
+<h3 id="安装">2.2. 安装</h3>
+<p>已经安装了以上软件的童鞋，就可以开始进行下面的工作鸟。</p>
+<h4 id="使用svn把代码checkout下来">2.2.1. 使用svn把代码checkout下来</h4>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">:: Non-members may check out a read-only working <span class="built_in">copy</span> anonymously over HTTP.</span><br><span class="line">svn checkout &lt;http://google-breakpad.googlecode.com/svn/trunk/&gt; google-breakpad-read-only</span><br></pre></td></tr></table></figure>
+<h4 id="设置Windows-SDK-7">2.2.2. 设置Windows SDK 7</h4>
+<p>装过其他版本Windows SDK的童鞋，记得一定要进行这一步，SDK的安装程序，并不会帮你设置VS。<br>
+运行开始菜单-&gt;程序-&gt;Microsoft Windows SDK v7.0-&gt;Visual Studio Registration-&gt;Windows SDK Configuration Tool，选择v7.0，点击Make Current。</p>
+<h4 id="为python设置环境变量">2.2.3. 为python设置环境变量</h4>
+<p>由于breakpad使用python来生成Windows下的工程文件，所以需要将python所在目录，设置到环境变量PATH中去。</p>
+<h4 id="生成Windows工程文件">2.2.4. 生成Windows工程文件</h4>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">code snippet</span><br><span class="line"><span class="built_in">cd</span> &quot;源码目录/src/tools/gyp&quot;</span><br><span class="line"></span><br><span class="line">:: 注意，此处不能使用全路径，不然会出错</span><br><span class="line"></span><br><span class="line">gyp.bat &quot;../../client/windows/breakpad_client.gyp&quot;</span><br></pre></td></tr></table></figure>
+<p>此时，在src/client/windows下就可以看到生成好的breakpad_client.sln了。运行吧！</p>
+<h4 id="Hello-World">2.2.5. Hello World</h4>
+<p>编译build all，现在一般是不会报错了，如果报错，请检查是不是漏了什么步骤，特别是补丁。<br>
+编译完成之后，运行crash_generation_app吧，这是他的测试程序，dump的默认位置保存在C:Dumps下，请注意先建立好目录，不然会无法使用。<br>
+启动测试程序之后，此时还不能抓取dump，因为这个是breakpad中的服务器端，需要再启动一个测试程序，在第二个测试程序中，我们就可以试验Client菜单中的各种崩溃了。这些崩溃都会被抓住转存到C:Dumps目录下。</p>
+<h2 id="如何使用breakpad">3. 如何使用breakpad</h2>
+<p>在Windows下使用breakpad的方法很简单，只需要创建一个ExceptionHandler的类即可，大家可以在crash_generation_app这个工程中找到示例代码，也可以直接移步Wiki，上面说的也很详细。</p>
+<h3 id="进程内抓取Dump文件">3.1. 进程内抓取Dump文件</h3>
+<p>进程内抓取Dump文件是最简单的breakpad的用法。使用方法很简单：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> std::wstring s_strCrashDir = <span class="string">L&quot;c:\dumps&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span></span></span><br><span class="line"><span class="function"><span class="title">InitBreakpad</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    google_breakpad::ExceptionHandler *pCrashHandler =</span><br><span class="line">        <span class="keyword">new</span> google_breakpad::<span class="built_in">ExceptionHandler</span>(s_strCrashDir,</span><br><span class="line">                onExceptionFilter,</span><br><span class="line">                onMinidumpDumped,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                google_breakpad::ExceptionHandler::HANDLER_ALL,</span><br><span class="line">                MiniDumpNormal,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(pCrashHandler == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="进程外抓取Dump文件">3.2. 进程外抓取Dump文件</h3>
+<p>使用进程外抓取Dump时，需要指定服务端和客户端，在服务端中需要创建CrashGenerationServer的实例，而在客户端中则只需要创建ExceptionHandler即可。此外，如果服务端自己需要抓进程内的Dump，请将pipe的参数置为NULL。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">wchar_t</span> s_pPipeName[] = <span class="string">L&quot;\\.\pipe\breakpad\crash_handler_server&quot;</span>;</span><br><span class="line"><span class="type">const</span> std::wstring s_strCrashDir = <span class="string">L&quot;c:\dumps&quot;</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">bool</span></span></span><br><span class="line"><span class="function"><span class="title">InitBreakpad</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    google_breakpad::CrashGenerationServer *pCrashServer =</span><br><span class="line">        <span class="keyword">new</span> google_breakpad::<span class="built_in">CrashGenerationServer</span>(s_pPipeName,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                onClientConnected,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                onClientDumpRequest,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                onClientExited,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                <span class="literal">true</span>,</span><br><span class="line">                &amp;s_strCrashDir);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(pCrashServer == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果已经服务端已经启动了，此处启动会失败</span></span><br><span class="line">    <span class="keyword">if</span>(!pCrashServer-&gt;<span class="built_in">Start</span>()) &#123;</span><br><span class="line">        <span class="keyword">delete</span> pCrashServer;</span><br><span class="line">        pCrashServer = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    google_breakpad::ExceptionHandler *pCrashHandler =</span><br><span class="line">        <span class="keyword">new</span> google_breakpad::<span class="built_in">ExceptionHandler</span>(s_strCrashDir,</span><br><span class="line">                onExceptionFilter,</span><br><span class="line">                onMinidumpDumped,</span><br><span class="line">                <span class="literal">NULL</span>,</span><br><span class="line">                google_breakpad::ExceptionHandler::HANDLER_ALL,</span><br><span class="line">                MiniDumpNormal,</span><br><span class="line">                (pCrashServer == <span class="literal">NULL</span>) ? s_pPipeName : <span class="literal">NULL</span>, <span class="comment">// 如果是服务端，则直接使用进程内dump</span></span><br><span class="line">                <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(pCrashHandler == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="使用注意">4. 使用注意</h2>
+<p>使用breakpad的时候，有两个地方需要注意：</p>
+<ol>
+<li>记得把breakpad的solution下的几个工程，包含到你开发的工程中，或者直接包含他们的lib。
+<ul>
+<li>common：基础功能，包含一个对GUID的封装和http上传的类。</li>
+<li>exception_handler：用来捕获崩溃的类。</li>
+<li>crash_generation_server：breakpad的服务端，用来在产生崩溃时抓取dump。</li>
+<li>crash_generation_client：breakpad的客户端，用来捕获当前进程的崩溃。</li>
+</ul>
+</li>
+<li>在初始化breakpad之前，记得先创建好dump文件的目录，不然breakpad服务端将不能正常的写dump，这会导致breakpad客户端在崩溃时无限等待服务端dump写完的消息，最后失去响应。</li>
+</ol>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/google-breakpad-2-implementations-on-windows/">Google Breakpad 完全解析（二） —— Windows前台实现篇</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/google-breakpad-1-introduction-with-windows/">Google Breakpad 完全解析（一） —— Windows入门篇</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/google-breakpad-1-introduction-with-windows/" target="_blank">Google Breakpad 完全解析（一） —— Windows入门篇</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Breakpad/" rel="tag"># Breakpad</a>
+              <a href="/tags/Dump/" rel="tag"># Dump</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-refactoring/" rel="prev" title="《重构》读书笔记 —— 如何让你的代码变得更好">
+                  <i class="fa fa-chevron-left"></i> 《重构》读书笔记 —— 如何让你的代码变得更好
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/google-breakpad-2-implementations-on-windows/" rel="next" title="Google Breakpad 完全解析（二） —— Windows前台实现篇">
+                  Google Breakpad 完全解析（二） —— Windows前台实现篇 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

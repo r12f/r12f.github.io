@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在了解了如何注入API之后，我们来看一下一些比较复杂的JSRT API的用法吧。 在这一篇里，我们会来尝试做如下几件事情：  支持Promise，并用它来创建异步API 创建多个执行上下文，并创建一个API用以获取其他执行上下文里面的JS对象  1. 异步调用 Javascript现在在后台都如此被广泛的应用，其最大的好处就在于方便实现异步调用，随着promise和async function的加">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ChakraCore学习笔记（四）：使用JSRT API （二）">
+<meta property="og:url" content="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="在了解了如何注入API之后，我们来看一下一些比较复杂的JSRT API的用法吧。 在这一篇里，我们会来尝试做如下几件事情：  支持Promise，并用它来创建异步API 创建多个执行上下文，并创建一个API用以获取其他执行上下文里面的JS对象  1. 异步调用 Javascript现在在后台都如此被广泛的应用，其最大的好处就在于方便实现异步调用，随着promise和async function的加">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-03-19-learning-chakracore-4-using-jsrt-api-2/storage-get-with-promise.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-03-19-learning-chakracore-4-using-jsrt-api-2/object-from-another-script-context.png">
+<meta property="article:published_time" content="2017-03-19T20:29:21.000Z">
+<meta property="article:modified_time" content="2017-03-20T03:29:21.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="Chakra">
+<meta property="article:tag" content="ChakreCore">
+<meta property="article:tag" content="JavaScript">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-03-19-learning-chakracore-4-using-jsrt-api-2/storage-get-with-promise.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/","path":"posts/learning-chakracore-4-using-jsrt-api-2/","title":"ChakraCore学习笔记（四）：使用JSRT API （二）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ChakraCore学习笔记（四）：使用JSRT API （二） | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E8%B0%83%E7%94%A8"><span class="nav-text">1. 异步调用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9storage-get%E7%9A%84polyfill-script"><span class="nav-text">1.1. 修改storage.get的polyfill script</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E4%BB%BB%E5%8A%A1%E9%98%9F%E5%88%97%E7%94%A8%E4%BB%A5%E6%94%AF%E6%8C%81promise"><span class="nav-text">1.2. 添加任务队列用以支持promise</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0console-log-API%E7%94%A8%E4%BB%A5%E5%BC%82%E6%AD%A5%E8%BE%93%E5%87%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="nav-text">1.3. 添加console.log API用以异步输出字符串</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8main%E5%87%BD%E6%95%B0%E9%87%8C%E8%BF%90%E8%A1%8C%E8%84%9A%E6%9C%AC%EF%BC%8C%E6%B5%8B%E8%AF%95%E6%96%B0%E7%9A%84API"><span class="nav-text">1.4. 在main函数里运行脚本，测试新的API</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E5%85%B6%E4%BB%96%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87%E9%87%8C%E7%9A%84%E5%AF%B9%E8%B1%A1"><span class="nav-text">2. 访问其他执行上下文里的对象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CrossSite%E4%BB%A3%E7%90%86%E5%AF%B9%E8%B1%A1"><span class="nav-text">2.1. CrossSite代理对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BE%E4%B8%AA%E6%A0%97%E5%AD%90"><span class="nav-text">2.2. 举个栗子</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="ChakraCore学习笔记（四）：使用JSRT API （二） | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ChakraCore学习笔记（四）：使用JSRT API （二）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2017-03-19 13:29:21 / Modified: 20:29:21" itemprop="dateCreated datePublished" datetime="2017-03-19T13:29:21-07:00">2017-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-chakracore-4-using-jsrt-api-2/" class="post-meta-item leancloud_visitors" data-flag-title="ChakraCore学习笔记（四）：使用JSRT API （二）" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-chakracore-4-using-jsrt-api-2/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-chakracore-4-using-jsrt-api-2/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在了解了<a href="http://r12f.com/posts/learning-chakracore-3-using-jsrt-api-1/">如何注入API</a>之后，我们来看一下一些比较复杂的JSRT API的用法吧。</p>
+<p>在这一篇里，我们会来尝试做如下几件事情：</p>
+<ol>
+<li>支持Promise，并用它来创建异步API</li>
+<li>创建多个执行上下文，并创建一个API用以获取其他执行上下文里面的JS对象</li>
+</ol>
+<h2 id="异步调用">1. 异步调用</h2>
+<p>Javascript现在在后台都如此被广泛的应用，其最大的好处就在于方便实现异步调用，随着promise和async function的加入，现在在JS中实现异步也越来越方便，<a href="callbackhell.com">代码逻辑也越来越清晰</a>，那么现在我们也来跟上时代，把我们的storage.get API改造成promise吧。</p>
+<h3 id="修改storage-get的polyfill-script">1.1. 修改storage.get的polyfill script</h3>
+<p>首先，我们把我们注入的API修改成promise的形式，内部实现我们依然可以使用回调函数，这样我们C++的实现部分就不需要做任何的修改：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">APIStorageGet</span> : <span class="keyword">public</span> API</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">wchar_t</span> * <span class="title">GetPolyFillScript</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">            <span class="string">L&quot;(() =&gt; &#123;&quot;</span></span><br><span class="line">            <span class="string">L&quot;  var executeAPI = apiUtils.executeAPI;&quot;</span></span><br><span class="line">            <span class="string">L&quot;  try &#123; storage = storage &#125; catch(err) &#123; storage = &#123;&#125;; &#125;;&quot;</span></span><br><span class="line">            <span class="string">L&quot;  storage.get = function() &#123; &quot;</span></span><br><span class="line">            <span class="string">L&quot;    return new Promise(function(resolve) &#123;&quot;</span></span><br><span class="line">            <span class="string">L&quot;      var apiArguments = [ arguments[0], function (data) &#123; resolve(data); &#125; ];&quot;</span></span><br><span class="line">            <span class="string">L&quot;      executeAPI(&#x27;storage.get&#x27;, apiArguments);&quot;</span></span><br><span class="line">            <span class="string">L&quot;    &#125;);&quot;</span></span><br><span class="line">            <span class="string">L&quot;  &#125;;&quot;</span></span><br><span class="line">            <span class="string">L&quot;&#125;)()&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
+<h3 id="添加任务队列用以支持promise">1.2. 添加任务队列用以支持promise</h3>
+<p>和callback不同，promise都是异步执行的。当一个promise被创建时，ChakraCore会产生一个ContinuationCallback并传递给host，当脚本执行完毕返回到host之后，如果host认为这个时候可以开始继续所有的promise了，我们就可以回调这些callback，让promise继续执行了。所以也很明显，为了支持promise，我们必须要实现一个任务队列。</p>
+<p>实现任务队列的时候我们需要对传入的回调函数调用<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsAddRef">JsAddRef</a>，这个是因为这个回调函数是被Chakra外部的程序拿着，所以Chakra的垃圾回收器并不知道这个信息，所以如果我们不调用这个函数告诉Chakra这个对象上有一个外部引用，那么这个对象就会在所有内部引用消失后被回收掉，等我们再调用时，这个对象就成了野指针了。所以这个调用非常重要，同样的在执行完这个回调后，我们会将其从任务队列中删除，那么我们就需要调用<a target="_blank" rel="noopener" href="https://github.com/Microsoft/ChakraCore/wiki/JsRelease">JsRelease</a>来告诉Chakra，这个外部引用已经消失了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">JsCallbackQueue</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">IsEmpty</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="keyword">return</span> _callbacks.<span class="built_in">empty</span>(); &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">Push</span><span class="params">(JsValueRef callback)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        _callbacks.<span class="built_in">push</span>(callback);</span><br><span class="line">        <span class="built_in">JsAddRef</span>(callback, <span class="literal">nullptr</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">ExecuteAll</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        JsValueRef global;</span><br><span class="line">        <span class="built_in">JsGetGlobalObject</span>(&amp;global);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (!<span class="built_in">IsEmpty</span>())</span><br><span class="line">        &#123;</span><br><span class="line">            JsValueRef callback = _callbacks.<span class="built_in">front</span>();</span><br><span class="line">            _callbacks.<span class="built_in">pop</span>();</span><br><span class="line"></span><br><span class="line">            JsValueRef result;</span><br><span class="line">            <span class="built_in">JsCallFunction</span>(callback, &amp;global, <span class="number">1</span>, &amp;result);</span><br><span class="line">            <span class="built_in">JsRelease</span>(callback, <span class="literal">nullptr</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::queue&lt;JsValueRef&gt; _callbacks;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>有了任务队列之后，我们就可以使用JsSetPromiseContinuationCallback来注册回调函数了，需要注意的是：<strong>每一个ScriptContext都有一个单独的PromiseContinuationCallback</strong>，所以每创建一个ScriptContext，我们就需要注册一个PromiseContinuationCallback。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> CALLBACK <span class="title">PromiseContinuationCallback</span><span class="params">(JsValueRef callback, <span class="type">void</span> *callbackState)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    JsCallbackQueue *queue = <span class="built_in">reinterpret_cast</span>&lt;JsCallbackQueue*&gt;(callbackState);</span><br><span class="line">    queue-&gt;<span class="built_in">Push</span>(callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Setting up promise callback queue, after script context created</span></span><br><span class="line">    JsCallbackQueue promiseCallbackQueue;</span><br><span class="line">    <span class="built_in">JsSetPromiseContinuationCallback</span>(PromiseContinuationCallback, &amp;promiseCallbackQueue);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Run any scripts here ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// After running scripts</span></span><br><span class="line">    promiseCallbackQueue.<span class="built_in">ExecuteAll</span>()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="添加console-log-API用以异步输出字符串">1.3. 添加console.log API用以异步输出字符串</h3>
+<p>因为换成Promise之后，函数变成异步执行了，所以我们没有办法用返回值来回传API的返回值了，所以我们这里需要再实现一个简单的console.log来输出一个字符串，用于校验我们程序的运行结果。实现非常简单，这里就不多说了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">APIConsoleLog</span> : <span class="keyword">public</span> API</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">wchar_t</span> * <span class="title">GetAPIName</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">L&quot;console.log&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">wchar_t</span> * <span class="title">GetPolyFillScript</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">L&quot;(() =&gt; &#123; var executeAPI = apiUtils.executeAPI; try &#123; console = console; &#125; catch(err) &#123; console = &#123;&#125;; &#125;; console.log = function() &#123; executeAPI(&#x27;console.log&#x27;, arguments); &#125;; &#125;)()&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">_Ret_maybenull_ JsValueRef <span class="title">Execute</span><span class="params">(_In_ JsValueRef *arguments, _In_ <span class="type">unsigned</span> <span class="type">short</span> argumentCount)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="type">const</span> <span class="type">wchar_t</span> *resultWC;</span><br><span class="line">        <span class="type">size_t</span> stringLength;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsStringToPointer</span>(arguments[<span class="number">0</span>], &amp;resultWC, &amp;stringLength));</span><br><span class="line"></span><br><span class="line">        <span class="function">std::wstring <span class="title">resultW</span><span class="params">(resultWC)</span></span>;</span><br><span class="line">        std::wcout &lt;&lt; resultW &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">        JsValueRef undefined = <span class="literal">nullptr</span>;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsGetUndefinedValue</span>(&amp;undefined));</span><br><span class="line">        <span class="keyword">return</span> undefined;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="在main函数里运行脚本，测试新的API">1.4. 在main函数里运行脚本，测试新的API</h3>
+<p>现在一切准备就绪，我们可以来编写我们的main函数运行测试代码了！</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    APIManager apiManager;</span><br><span class="line">    apiManager.<span class="built_in">RegisterCallbackAPI</span>(<span class="keyword">new</span> <span class="built_in">APIConsoleLog</span>());</span><br><span class="line">    apiManager.<span class="built_in">RegisterCallbackAPI</span>(<span class="keyword">new</span> <span class="built_in">APIStorageGet</span>());</span><br><span class="line"></span><br><span class="line">    JsRuntimeHandle runtime;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsCreateRuntime</span>(JsRuntimeAttributeNone, <span class="literal">nullptr</span>, &amp;runtime));</span><br><span class="line"></span><br><span class="line">    JsContextRef context;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsCreateContext</span>(runtime, &amp;context));</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(context));</span><br><span class="line">    apiManager.<span class="built_in">InjectAllAPIsToCurrentJsContext</span>();</span><br><span class="line"></span><br><span class="line">    JsCallbackQueue promiseCallbackQueue;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetPromiseContinuationCallback</span>(PromiseContinuationCallback, &amp;promiseCallbackQueue));</span><br><span class="line"></span><br><span class="line">    std::wstring script = <span class="string">L&quot;(()=&gt;&#123; storage.get(&#x27;key&#x27;).then(function(data) &#123; console.log(data); &#125;); &#125;)()&quot;</span>;</span><br><span class="line"></span><br><span class="line">    JsValueRef result;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsRunScript</span>(script.<span class="built_in">c_str</span>(), currentSourceContext++, <span class="string">L&quot;&quot;</span>, &amp;result));</span><br><span class="line"></span><br><span class="line">    promiseCallbackQueue.<span class="built_in">ExecuteAll</span>();</span><br><span class="line"></span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(JS_INVALID_REFERENCE));</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsDisposeRuntime</span>(runtime));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>好的，现在我们把程序跑起来吧！<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-03-19-learning-chakracore-4-using-jsrt-api-2/storage-get-with-promise.png" alt="storage-get-with-promise"></p>
+<h2 id="访问其他执行上下文里的对象">2. 访问其他执行上下文里的对象</h2>
+<p>我们知道执行上下文（JsContext）是用来提供隔离的JS执行环境的，不同的执行上下文之间的对象是默认互相看不见的，可是有的时候我们希望能访问对方的对象，这时候应该怎么办呢？</p>
+<h3 id="CrossSite代理对象">2.1. CrossSite代理对象</h3>
+<p>其实跨执行上下文传递对象在ChakraCore里面异常的简单，我们并不需要对传递的对象做任何额外的处理。在JSRT API被调用的时候，他们会主动检查所有的参数，如果发现任何的JS对象来自别的执行上下文，ChakraCore会主动将该对象拷贝到当前ScriptContext的环境中或者为其创建一个CrossSite对象当作Proxy（CrossSite代理对象有时候并不是一个真正的对象，但是我们这里可以先简单这么理解，后面看对象模型的时候我们再来看CrossSite代理的实现），而我们代码不需要做任何的调整。现在我们就来看一个例子吧：JsCallFunction。</p>
+<p>在JsCallFunction中，我们可以看到一开始这个函数就对所有的参数用VALIDATE_INCOMING_REFERENCE进行了参数检查。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">CHAKRA_API <span class="title">JsCallFunction</span><span class="params">(_In_ JsValueRef function, _In_reads_(cargs) JsValueRef *args, _In_ ushort cargs, _Out_opt_ JsValueRef *result)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ContextAPIWrapper</span>&lt;<span class="literal">true</span>&gt;([&amp;](Js::ScriptContext *scriptContext, TTDRecorder&amp; _actionEntryPopper) -&gt; JsErrorCode &#123;</span><br><span class="line">        <span class="comment">// ......</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> index = <span class="number">0</span>; index &lt; cargs; index++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">VALIDATE_INCOMING_REFERENCE</span>(args[index], scriptContext);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// ......</span></span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="comment">//......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而我们看这个VALIDATE_INCOMING_REFERENCE的定义的时候，我们就会发现其中有一行很可疑：MARSHAL_OBJECT。没错，这个宏就是用来判断ScriptContext和创建CrossSite代理对象的宏了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">define</span> VALIDATE_INCOMING_REFERENCE(p, scriptContext) \</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line">    &#123; \</span><br><span class="line">        <span class="built_in">VALIDATE_JSREF</span>(p); \</span><br><span class="line">        <span class="keyword">if</span> (Js::RecyclableObject::<span class="built_in">Is</span>(p)) \</span><br><span class="line">        &#123; \</span><br><span class="line">            <span class="built_in">MARSHAL_OBJECT</span>(p, scriptContext)   \</span><br><span class="line">        &#125; \</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">#<span class="meta">#<span class="keyword">define</span> MARSHAL_OBJECT(p, scriptContext) \</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line">    Js::RecyclableObject* __obj = Js::RecyclableObject::<span class="built_in">FromVar</span>(p); \</span><br><span class="line">    <span class="keyword">if</span> (__obj-&gt;<span class="built_in">GetScriptContext</span>() != scriptContext) \</span><br><span class="line">    &#123; \</span><br><span class="line">        <span class="keyword">if</span>(__obj-&gt;<span class="built_in">GetScriptContext</span>()-&gt;<span class="built_in">GetThreadContext</span>() != scriptContext-&gt;<span class="built_in">GetThreadContext</span>()) \</span><br><span class="line">        &#123;  \</span><br><span class="line">            <span class="keyword">return</span> JsErrorWrongRuntime;  \</span><br><span class="line">        &#125;  \</span><br><span class="line">        p = Js::CrossSite::<span class="built_in">MarshalVar</span>(scriptContext, __obj); \  <span class="comment">// Create cross site wrapper for objects from different script context.</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="举个栗子">2.2. 举个栗子</h3>
+<p>为了实验我们刚刚看到的代码，我们来写个小程序创建多个ScriptContext，并实现一个context.get的API用以获取各个ScriptContext中的GlobalObject吧。</p>
+<p>首先，我们先定义好一个全局变量，用来保存所有的ScriptContext。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#<span class="meta">#<span class="keyword">define</span> JS_CONTEXT_COUNT 5</span></span><br><span class="line"></span><br><span class="line">std::vector&lt;JsContextRef&gt; s_contexts;</span><br></pre></td></tr></table></figure>
+<p>然后，我们来实现context.get的API，代码用了上一章我们实现的APIManager，实现并不复杂。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">APIContextGet</span> : <span class="keyword">public</span> API</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">wchar_t</span> * <span class="title">GetAPIName</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">L&quot;context.get&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">wchar_t</span> * <span class="title">GetPolyFillScript</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">L&quot;(()=&gt;&#123; var executeAPI = apiUtils.executeAPI; try &#123; context = context; &#125; catch(err) &#123; context = &#123;&#125;; &#125;; context.get = function() &#123; executeAPI(&#x27;context.get&#x27;, arguments); &#125;; &#125;)()&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">_Ret_maybenull_ JsValueRef <span class="title">Execute</span><span class="params">(_In_ JsValueRef *arguments, _In_ <span class="type">unsigned</span> <span class="type">short</span> argumentCount)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (argumentCount &lt; <span class="number">2</span>) &#123; <span class="keyword">throw</span> <span class="built_in">ChakraErrorException</span>(JsErrorInvalidArgument); &#125;</span><br><span class="line"></span><br><span class="line">        JsValueRef undefined = <span class="literal">nullptr</span>;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsGetUndefinedValue</span>(&amp;undefined));</span><br><span class="line"></span><br><span class="line">        <span class="type">int</span> contextIndex = <span class="number">0</span>;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsNumberToInt</span>(arguments[<span class="number">0</span>], &amp;contextIndex));</span><br><span class="line">        <span class="keyword">if</span> (contextIndex &gt;= <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(s_contexts.<span class="built_in">size</span>())) &#123; <span class="keyword">throw</span> <span class="built_in">ChakraErrorException</span>(JsErrorInvalidArgument); &#125;</span><br><span class="line"></span><br><span class="line">        JsContextRef currentContext;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsGetCurrentContext</span>(&amp;currentContext));</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(s_contexts[contextIndex]));</span><br><span class="line"></span><br><span class="line">        JsValueRef contextGlobalObject;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsGetGlobalObject</span>(&amp;contextGlobalObject));</span><br><span class="line"></span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(currentContext));</span><br><span class="line"></span><br><span class="line">        JsValueRef callbackArgs[<span class="number">2</span>] = &#123; undefined, contextGlobalObject &#125;;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsCallFunction</span>(arguments[<span class="number">1</span>], callbackArgs, <span class="number">2</span>, <span class="literal">nullptr</span>));</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> undefined;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后，我们在main函数里创建多个ScriptContext，并给它们都注入一个contextId，然后我们通过context.getAPI来获取第3个Context中的Id，并输出：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    APIManager apiManager;</span><br><span class="line">    apiManager.<span class="built_in">RegisterCallbackAPI</span>(<span class="keyword">new</span> <span class="built_in">APIContextGet</span>());</span><br><span class="line">    apiManager.<span class="built_in">RegisterCallbackAPI</span>(<span class="keyword">new</span> <span class="built_in">APIConsoleLog</span>());</span><br><span class="line">    apiManager.<span class="built_in">RegisterCallbackAPI</span>(<span class="keyword">new</span> <span class="built_in">APIStorageGet</span>());</span><br><span class="line"></span><br><span class="line">    JsRuntimeHandle runtime;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsCreateRuntime</span>(JsRuntimeAttributeNone, <span class="literal">nullptr</span>, &amp;runtime));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Create multiple script context and inject unique context id for each of them.</span></span><br><span class="line">    s_contexts.<span class="built_in">resize</span>(JS_CONTEXT_COUNT, <span class="literal">nullptr</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; JS_CONTEXT_COUNT; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsCreateContext</span>(runtime, &amp;s_contexts[i]));</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(s_contexts[i]));</span><br><span class="line">        apiManager.<span class="built_in">InjectAllAPIsToCurrentJsContext</span>();</span><br><span class="line"></span><br><span class="line">        <span class="type">wchar_t</span> scriptBuffer[<span class="number">256</span>];</span><br><span class="line">        <span class="built_in">wsprintfW</span>(scriptBuffer, <span class="string">L&quot;(()=&gt;&#123; contextId = &#x27;context-id-%d&#x27;; &#125;)()&quot;</span>, i);</span><br><span class="line"></span><br><span class="line">        JsValueRef result;</span><br><span class="line">        ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsRunScript</span>(scriptBuffer, currentSourceContext++, <span class="string">L&quot;&quot;</span>, &amp;result));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(s_contexts[<span class="number">0</span>]));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the context id from the third script context.</span></span><br><span class="line">    std::wstring script = <span class="string">L&quot;(()=&gt;&#123; context.get(3, function(contextGlobalObject) &#123; console.log(contextGlobalObject.contextId); &#125;); &#125;)()&quot;</span>;</span><br><span class="line"></span><br><span class="line">    JsValueRef result;</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsRunScript</span>(script.<span class="built_in">c_str</span>(), currentSourceContext++, <span class="string">L&quot;&quot;</span>, &amp;result));</span><br><span class="line"></span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsSetCurrentContext</span>(JS_INVALID_REFERENCE));</span><br><span class="line">    ChakraUtils::<span class="built_in">CheckThrow</span>(<span class="built_in">JsDisposeRuntime</span>(runtime));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，我们就可以看到contextId被正确的输出啦。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2017-03-19-learning-chakracore-4-using-jsrt-api-2/object-from-another-script-context.png" alt="object-from-another-script-context"></p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/">ChakraCore学习笔记（四）：使用JSRT API （二）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-3-using-jsrt-api-1/">ChakraCore学习笔记（三）：使用JSRT API （一）</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-2-top-level-data-structures/">ChakraCore学习笔记（二）：从Hello World看ChakraCore顶层数据结构</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chakracore-1-building-chakracore-on-windows/">ChakraCore学习笔记（一）：在Windows上编译ChakraCore</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-chakracore-4-using-jsrt-api-2/" target="_blank">ChakraCore学习笔记（四）：使用JSRT API （二）</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Chakra/" rel="tag"># Chakra</a>
+              <a href="/tags/ChakreCore/" rel="tag"># ChakreCore</a>
+              <a href="/tags/JavaScript/" rel="tag"># JavaScript</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/learning-chakracore-3-using-jsrt-api-1/" rel="prev" title="ChakraCore学习笔记（三）：使用JSRT API （一）">
+                  <i class="fa fa-chevron-left"></i> ChakraCore学习笔记（三）：使用JSRT API （一）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-building-microservices/" rel="next" title="《微服务架构》知识总结">
+                  《微服务架构》知识总结 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="由于前段时间经常在各种奇奇怪怪的窗口相关的问题上纠缠着，而spy++的功能又总是不那么尽如人意，所以就在业余的时间，写了这么一个非常简单的小工具，能查看和修改窗口的一些信息，方便测试窗口，避免每实验一下，都要重新编译工程带来的痛苦。 1. 下载地址 Mirror v0.1 Preview (0.1.21.101)  下载地址：Mirror-0.1.21.101 项目地址：https:&#x2F;&#x2F;bitbu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mirror v0.1 Preview 发布 —— Windows开发辅助工具">
+<meta property="og:url" content="http://r12f.com/posts/mirror-v0-1-preview/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="由于前段时间经常在各种奇奇怪怪的窗口相关的问题上纠缠着，而spy++的功能又总是不那么尽如人意，所以就在业余的时间，写了这么一个非常简单的小工具，能查看和修改窗口的一些信息，方便测试窗口，避免每实验一下，都要重新编译工程带来的痛苦。 1. 下载地址 Mirror v0.1 Preview (0.1.21.101)  下载地址：Mirror-0.1.21.101 项目地址：https:&#x2F;&#x2F;bitbu">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-main.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-info.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-highlight.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-op.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-hotkey.png">
+<meta property="article:published_time" content="2012-04-18T09:32:03.000Z">
+<meta property="article:modified_time" content="2012-04-18T16:32:03.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="mirror">
+<meta property="article:tag" content="project">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-main.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/mirror-v0-1-preview/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/mirror-v0-1-preview/","path":"posts/mirror-v0-1-preview/","title":"Mirror v0.1 Preview 发布 —— Windows开发辅助工具"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Mirror v0.1 Preview 发布 —— Windows开发辅助工具 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E5%9C%B0%E5%9D%80"><span class="nav-text">1. 下载地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF"><span class="nav-text">2. 基本信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E5%BC%80%E6%BA%90%E5%92%8C%E5%8F%8D%E9%A6%88"><span class="nav-text">3. 关于开源和反馈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E8%A6%81%E5%8A%9F%E8%83%BD"><span class="nav-text">4. 主要功能</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AA%97%E5%8F%A3%E6%93%8D%E4%BD%9C"><span class="nav-text">4.1. 窗口操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%83%AD%E9%94%AE%E7%AE%A1%E7%90%86"><span class="nav-text">4.2. 热键管理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E6%88%AA%E5%9B%BE"><span class="nav-text">5. 软件截图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E6%9C%9F%E7%9A%84%E8%AE%A1%E5%88%92"><span class="nav-text">6. 后期的计划</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/mirror-v0-1-preview/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Mirror v0.1 Preview 发布 —— Windows开发辅助工具 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Mirror v0.1 Preview 发布 —— Windows开发辅助工具
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2012-04-18 02:32:03 / Modified: 09:32:03" itemprop="dateCreated datePublished" datetime="2012-04-18T02:32:03-07:00">2012-04-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/mirror-v0-1-preview/" class="post-meta-item leancloud_visitors" data-flag-title="Mirror v0.1 Preview 发布 —— Windows开发辅助工具" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/mirror-v0-1-preview/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/mirror-v0-1-preview/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>由于前段时间经常在各种奇奇怪怪的窗口相关的问题上纠缠着，而spy++的功能又总是不那么尽如人意，所以就在业余的时间，写了这么一个非常简单的小工具，能查看和修改窗口的一些信息，方便测试窗口，避免每实验一下，都要重新编译工程带来的痛苦。</p>
+<h2 id="下载地址">1. 下载地址</h2>
+<p>Mirror v0.1 Preview (0.1.21.101)</p>
+<ul>
+<li>下载地址：<a target="_blank" rel="noopener" href="http://bigasp.com/wp-content/plugins/download-monitor/download.php?id=189">Mirror-0.1.21.101</a></li>
+<li>项目地址：<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror">https://bitbucket.org/bigasp/mirror</a></li>
+</ul>
+<h2 id="基本信息">2. 基本信息</h2>
+<p>Mirror的目标是成为一个足够绿色，对开发人员足够友好的观察窗口的行为的小工具。现在的Mirror还很简单，只有两个主要功能：窗口操作和热键管理，希望他以后会慢慢强大起来。但是Mirror是一个单纯的孩子，它并不想成为Spy++，所以暂时不会添加关于Hook窗口消息的功能。</p>
+<p>软件主要包含如下文件：</p>
+<ul>
+<li>mirror.exe：软件主程序</li>
+<li>mirror.ini：软件配置文件，在软件第一次启动时会自动生成在exe所在目录下。</li>
+</ul>
+<p>本来打算将配置文件生成在appdata目录下，但是这个软件本来只是一个很小的工具，实在没有必要。</p>
+<p>如果有兴趣的，也可以点击下面的捐赠页面，让作者每天都能吃上好吃的鸡蛋灌饼，帮我增加继续下去的动力。<br>
+捐赠页面：<a target="_blank" rel="noopener" href="https://me.alipay.com/bigasp">https://me.alipay.com/bigasp</a></p>
+<span id="more"></span>
+<h2 id="关于开源和反馈">3. 关于开源和反馈</h2>
+<p>代码写的实在难看，这里就不把源代码开出来了，里面其实就是调用了一些窗口相关的Api而已。欢迎各位大大指点小弟，让我更好的完善这个小软件。</p>
+<p>Mirror将永远免费，所以就请大家不要随意修改它了，如果有任何建议，可以随时向作者留言，或邮件反馈，或者<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issues/new">在mirror项目中新建issue</a>，我会尽快修正~</p>
+<h2 id="主要功能">4. 主要功能</h2>
+<p>软件现在主要包括两个功能：窗口操作和热键管理。</p>
+<h3 id="窗口操作">4.1. 窗口操作</h3>
+<ul>
+<li>查看/修改窗口基本信息</li>
+<li>查看窗口所在的线程信息</li>
+<li>查看/高亮显示/设置前景窗口，焦点窗口，激活窗口</li>
+<li>查看窗口类信息</li>
+<li>查看/修改窗口Prop</li>
+<li>发送窗口消息，并提供一些常用的窗口相关的Api调用</li>
+<li>模拟鼠标，键盘输入</li>
+<li>查看/修改DWM信息，可以自己设置几乎所有的窗口DWM的属性</li>
+</ul>
+<h3 id="热键管理">4.2. 热键管理</h3>
+<ul>
+<li>基本上面提到的所有的功能，都可以对其设置热键，甚至包括切换软件中的Tab</li>
+<li>应用设置之后，新的热键会被自动保存在mirror.ini配置文件中。</li>
+</ul>
+<h2 id="软件截图">5. 软件截图</h2>
+<p>主界面，外加可以各种过滤的窗口树，支持自动刷新，方便调试Z-Order相关的问题<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-main.png" alt="mirror-main"></p>
+<p>窗口信息，可以看也可以改。注意左上角的猫咪，哪里想看，点哪里~妈妈再也不用担心窗口问题了~<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-info.png" alt="mirror-window-info"></p>
+<p>窗口高亮，焦点焦点你在哪里？<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-highlight.png" alt="mirror-window-highlight"></p>
+<p>窗口操作，发送消息，到底是什么消息让我欢喜让我忧~<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-window-op.png" alt="mirror-window-op"></p>
+<p>热键设置，选择窗口时，不变化前景窗口，菜单窗口也能看<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-04-18-mirror-v0-1-preview/mirror-hotkey.png" alt="mirror-hotkey"></p>
+<h2 id="后期的计划">6. 后期的计划</h2>
+<ol>
+<li>优化软件界面，支持界面更改布局，缩小软件的窗口大小</li>
+<li>支持自动元素重排，进一步缩小软件窗口大小</li>
+<li>添加独立的追踪模式，还是为了缩小软件的窗口大小，尽可能避免对调试的打扰</li>
+<li>弄一个英文版啥的，主要是担心一些专有名词翻译不正确，从而误导开发人员</li>
+<li>等等等等…</li>
+</ol>
+<p>更多的计划和进度，可以关注项目的issues：<a target="_blank" rel="noopener" href="https://bitbucket.org/bigasp/mirror/issues?status=new&amp;status=open">https://bitbucket.org/bigasp/mirror/issues?status=new&amp;status=open</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/mirror/" rel="tag"># mirror</a>
+              <a href="/tags/project/" rel="tag"># project</a>
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/" rel="tag"># 开发工具</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/implementing-objective-c-categories-in-c/" rel="prev" title="一次好玩的扯淡——在C++中实现Objective-C的categories">
+                  <i class="fa fa-chevron-left"></i> 一次好玩的扯淡——在C++中实现Objective-C的categories
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/mirror-v0-2-preview-2/" rel="next" title="Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具">
+                  Mirror v0.2 Preview 2 发布 —— Windows开发辅助工具 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

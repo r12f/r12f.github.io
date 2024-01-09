@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="In the last post, we discussed the reasons for writing tests, principles and how to write code that is easy to test. In this post, we’ll discuss more on how to write good tests. First, let me repeat t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)">
+<meta property="og:url" content="http://r12f.com/posts/pragmatic-testing-part-2/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="In the last post, we discussed the reasons for writing tests, principles and how to write code that is easy to test. In this post, we’ll discuss more on how to write good tests. First, let me repeat t">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2021-02-15T22:56:13.000Z">
+<meta property="article:modified_time" content="2021-02-15T22:56:13.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="Testing">
+<meta property="article:tag" content="Coding">
+<meta property="article:tag" content="Software Engineering">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://r12f.com/posts/pragmatic-testing-part-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/pragmatic-testing-part-2/","path":"posts/pragmatic-testing-part-2/","title":"Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests) | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Good-tests"><span class="nav-text">1. Good tests</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Choose-the-right-way-to-test"><span class="nav-text">1.1. Choose the right way to test</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reasonable-prompt-messages"><span class="nav-text">1.2. Reasonable prompt messages</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Clarify-the-test-scenarios"><span class="nav-text">1.2.1. Clarify the test scenarios</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Actionable-error-messages"><span class="nav-text">1.2.2. Actionable error messages</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Make-behavior-changes-obvious"><span class="nav-text">1.2.3. Make behavior changes obvious</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Focus-on-requirement-and-defect-coverage"><span class="nav-text">1.3. Focus on requirement and defect coverage</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-good-scaffolding"><span class="nav-text">1.4. Create good scaffolding</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Metadata-based-testing"><span class="nav-text">2. Metadata-based testing</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Extract-metadata"><span class="nav-text">2.1. Extract metadata</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Baseline-generation"><span class="nav-text">2.2. Baseline generation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generating-reference-data-for-test-failures"><span class="nav-text">2.3. Generating reference data for test failures</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Good-enough-More-to-come"><span class="nav-text">2.4. Good enough? More to come!</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9CFake%E2%80%9D-tests"><span class="nav-text">3. “Fake” tests</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Flaky-tests"><span class="nav-text">3.1. Flaky tests</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Slow-tests"><span class="nav-text">3.2. Slow tests</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Shallow-Probes"><span class="nav-text">3.3. Shallow Probes</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Let%E2%80%99s-take-another-break"><span class="nav-text">4. Let’s take another break</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/pragmatic-testing-part-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests) | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2021-02-15 14:56:13" itemprop="dateCreated datePublished" datetime="2021-02-15T14:56:13-08:00">2021-02-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/pragmatic-testing-part-2/" class="post-meta-item leancloud_visitors" data-flag-title="Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/pragmatic-testing-part-2/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/pragmatic-testing-part-2/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><a href="/posts/pragmatic-testing-part-1">In the last post, we discussed the reasons for writing tests, principles and how to write code that is easy to test</a>. In this post, we’ll discuss more on how to write good tests.</p>
+<p>First, let me repeat the important thing: <strong>Test is a not a silver bullet.</strong> Adding a few tests won’t help us improve the code quality that much. If you haven’t read the <a href="/posts/pragmatic-testing-part-1">part 1</a> yet, it is highly recommended to read it first.</p>
+<hr>
+<h2 id="Good-tests">1. Good tests</h2>
+<p>We are finally here! Let’s talk about writing tests! Making code easy to test is only the first step, and to write good tests we will need some more skills.</p>
+<h3 id="Choose-the-right-way-to-test">1.1. Choose the right way to test</h3>
+<p>We know that there are various types of tests. And here are some examples:</p>
+<ul>
+<li><strong>Unit test</strong>: Test a class or a small module by talking to them directly, e.g. calling public member functions.</li>
+<li><strong>Module/Service test</strong>: Test a module or service by simulating its upstream and downstream services.</li>
+<li><strong>End-To-End test (E2E test)</strong>: Test a complete system by simulating the upstream and downstream services of the whole system.</li>
+<li><strong>Integration test</strong>: Integrate all services, even multiple systems, as required and test them.</li>
+<li><strong>In-Service/Probe test</strong>: Test the services within the service itself or with a dedicated probe service at regular intervals.</li>
+</ul>
+<span id="more"></span>
+<p>Each of these tests has its own advantages and disadvantages, roughly as follows.</p>
+<table>
+<thead>
+<tr>
+<th>Test type</th>
+<th>Implementation difficulty</th>
+<th>Local testing?</th>
+<th>Test speed</th>
+<th>Time to find problems</th>
+<th>Complexity of finding problems</th>
+<th>Difficulty of debugging problems</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unit Testing</td>
+<td>Easy</td>
+<td>Yes</td>
+<td>Fast</td>
+<td>Early</td>
+<td>Simple</td>
+<td>Easy</td>
+</tr>
+<tr>
+<td>Module/Service Testing</td>
+<td>Relatively Easy</td>
+<td>Doable</td>
+<td>Relatively Fast</td>
+<td>Relatively Early</td>
+<td>Normal</td>
+<td>Relatively Simple<br>(if local debugging is possible)</td>
+</tr>
+<tr>
+<td>End-to-end testing</td>
+<td>Normal</td>
+<td>Doable</td>
+<td>Nromal</td>
+<td>Normal</td>
+<td>Relatively Complex</td>
+<td>Relatively Simple<br>(if local debugging is possible)</td>
+</tr>
+<tr>
+<td>Integration Testing</td>
+<td>Hard</td>
+<td>Usually No</td>
+<td>Slow</td>
+<td>Late</td>
+<td>Complex</td>
+<td>Hard</td>
+</tr>
+<tr>
+<td>Probe Testing</td>
+<td>Normal</td>
+<td>Usually No</td>
+<td>Relatively Fast</td>
+<td>Late</td>
+<td>Normal</td>
+<td>Relatively Hard</td>
+</tr>
+</tbody>
+</table>
+<p>Therefore, when writing tests, we need to think about what we want to test and choose the appropriate way to test it.</p>
+<p>When choosing, we must pay attention to the <a href="/posts/pragmatic-testing-part-1Principles-of-testing">shortest distance principle</a>. For example, we may feel that the integration test will have the best coverage, so we should test everything with integration tests. But precisely because of its coverage, we may spend a tremendous amount of work building these tests, and debugging them when test fails. Imagine an exception is thrown in a very strange place after dozens of services have called each other hundreds of times. And then, we need to debug this and find out why… (Good luck with this :D)</p>
+<hr>
+<h3 id="Reasonable-prompt-messages">1.2. Reasonable prompt messages</h3>
+<blockquote>
+<p>“Transparency is a passive quality. A program is transparent when it is possible to form a simple mental model of its behavior that is actually predictive for all or most cases, because you can see through the machinery to what is actually going on.”</p>
+<p>- Eric Steven Raymond, from “The Art of Unix Programming”</p>
+</blockquote>
+<p>While tests can tell us that something is wrong, many people often miss the point that: <strong>it is more important to tell us what is wrong and what to check</strong>.</p>
+<h4 id="Clarify-the-test-scenarios">1.2.1. Clarify the test scenarios</h4>
+<p>The first and most overlooked thing is the names of the tests. Here are some examples that I’ve (often) seen in real projects:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Test</span><br><span class="line">Test1/<span class="number">2</span>/<span class="number">3</span>/...</span><br><span class="line">TestSwitch</span><br><span class="line">TestBasic</span><br><span class="line">MyTest</span><br><span class="line">FooTest/TestFoo <span class="comment">// Foo is the name of the class that being tested</span></span><br></pre></td></tr></table></figure>
+<p>These test names won’t help us understand their purpose at all, so when something goes wrong we have no idea what to look at. A better way here would be to <strong>describe the test scenario well and use assertive test name</strong>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ScopeHandle_AfterDtor_UnderlyingHandleShouldBeClosed</span><br><span class="line">CrontabTimer_ParsingValidCrontabSyntax_ShouldSucceed</span><br><span class="line">DataProcessor_ProcessingDataWithUnexpectedFormat_ShouldFail</span><br><span class="line">HealthProber_ProbeUnresponsiveHttpTarget_ShouldFailWithTimeout</span><br></pre></td></tr></table></figure>
+<p>Don’t worry about long function names. Being descriptive is never wrong.</p>
+<h4 id="Actionable-error-messages">1.2.2. Actionable error messages</h4>
+<p>When test fails, the error message must be clear and actionable.</p>
+<p>For example: when writing assertions, don’t just simply write something like <code>Assert(a != 0);</code>. It is better to give some advice:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Assert</span>(dataIterator != dataMap.<span class="built_in">end</span>(),</span><br><span class="line">       <span class="string">&quot;Data is not created while id still exists. It might be a leak on id. Please check CreateData/RemoveData functions.&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>Debugging such error will be much easier because the error is very clear and specific.</p>
+<h4 id="Make-behavior-changes-obvious">1.2.3. Make behavior changes obvious</h4>
+<p>As we mentioned before, one of the purpose of testing is to identify behavior changes. So, to ensure high observability, these behavior changes must be as clear and obvious as possible. These include changes in our service internal states, data reporting, and even behavior of debugging related tools (e.g., APIs for getting certain state of the service).</p>
+<p>This idea is great, but it also leads to the problem - If we want to see all the behavior changes, we have to write code to test every behavior our program. This makes it extremely hard to maintain these tests!</p>
+<p>Here’s a simple example: <a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/building-microservices/9781491950340/ch07.html#idp3960144">Testing a microservice by simulating a service upstream and downstream</a> is a very common practise, so I’m sure you’ve seen countless of tests that look like this:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">TEST_METHOD</span>(MyService_WhenReceivingValidRequest_DownstreamServicesShouldBeProgrammed)</span><br><span class="line">&#123;</span><br><span class="line">    std::shared_ptr&lt;MyService&gt; service = <span class="built_in">CreateMyService</span>();</span><br><span class="line"></span><br><span class="line">    MyServiceRequest mockRequest;</span><br><span class="line">    mockRequest.Foo = <span class="number">1</span>;</span><br><span class="line">    mockRequest.Bar = <span class="number">2</span>;</span><br><span class="line">    <span class="comment">// ... Update all fields here.</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Simulating upstream service sending state to my service</span></span><br><span class="line">    service-&gt;<span class="built_in">SendRequestSync</span>(mockRequest);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Test service internal states</span></span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyServiceState&gt; serviceState = service-&gt;<span class="built_in">GetInternalState</span>()-&gt;<span class="built_in">GetPayload</span>&lt;MyServiceState&gt;();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, serviceState-&gt;Foo);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2</span>, serviceState-&gt;Bar);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate downstream services</span></span><br><span class="line">    ServiceDownstreamStates statesToDownstreamServices = service-&gt;<span class="built_in">GetStatesToDownStreamServices</span>();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2ull</span>, statesToDownstreamServices.<span class="built_in">size</span>());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate states send to downstream service 1</span></span><br><span class="line">    Assert::<span class="built_in">IsTrue</span>(statesToDownstreamServices.<span class="built_in">find</span>(<span class="string">L&quot;MyDownstreamService1&quot;</span>) != statesToDownstreamServices.<span class="built_in">end</span>());</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1ull</span>, statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService1&quot;</span>].States.<span class="built_in">size</span>());</span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyDownstreamService1Request&gt; stateToDownstreamService1 = statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService1&quot;</span>].States[<span class="number">0</span>].<span class="built_in">GetPayload</span>&lt;MyDownstreamService1Request&gt;();</span><br><span class="line">    Assert::<span class="built_in">IsNotNull</span>(stateToDownstreamService1);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, stateToDownstreamService1-&gt;Foo);</span><br><span class="line">    <span class="comment">// ... Validate all other states</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate states send to downstream service 2</span></span><br><span class="line">    Assert::<span class="built_in">IsTrue</span>(statesToDownstreamServices.<span class="built_in">find</span>(<span class="string">L&quot;MyDownstreamService2&quot;</span>) != statesToDownstreamServices.<span class="built_in">end</span>());</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1ull</span>, statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService2&quot;</span>].States.<span class="built_in">size</span>());</span><br><span class="line">    std::shared_ptr&lt;<span class="type">const</span> MyDownstreamService2Request&gt; stateToDownstreamService2 = statesToDownstreamServices[<span class="string">L&quot;MyDownstreamService2&quot;</span>].States[<span class="number">0</span>].<span class="built_in">GetPayload</span>&lt;MyDownstreamService2Request&gt;();</span><br><span class="line">    Assert::<span class="built_in">IsNotNull</span>(stateToDownstreamService2);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">2</span>, stateToDownstreamService2-&gt;Bar);</span><br><span class="line">    <span class="comment">// ... Validate all other states</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Validate metrics</span></span><br><span class="line">    MyServiceTrackedStats trackedStats = service-&gt;<span class="built_in">GetStatsTracker</span>()-&gt;<span class="built_in">GetTrackedStats</span>();</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.RequestCount);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.Service1RequestSent);</span><br><span class="line">    Assert::<span class="built_in">AreEqual</span>(<span class="number">1</span>, trackedStates.Service2RequestSent);</span><br><span class="line">    <span class="comment">// ... Validate all other stats</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>As we can see, even with the help from a lot of helper functions to simplify the code, the tests are still very tedious to write. And once any behavior change is made, all the tests must be changed along with it. This leads to an extremely high workload in maintaining the tests, which makes everyone so tired of adding more. So, is there a way to have the best of both worlds? Gladly, yes! Later, we will introduce metadata-based testing to help us solve this problem.</p>
+<h3 id="Focus-on-requirement-and-defect-coverage">1.3. Focus on requirement and defect coverage</h3>
+<p>Nowadays, many testing tools can provide code coverage. And high code coverage is also enforced in many projects. While this indeed helps, it can also mislead people, making people overly value the “100% code coverage” data and forgot what real intention.</p>
+<p>So, why is code coverage misleading? It is because 100% code coverage doesn’t mean that all cases have been tested. But, what?? Yes, this may sound strange and let’s look at the following code:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Access <span class="title">GetUserAccess</span><span class="params">(UserRole role)</span> </span>&#123;</span><br><span class="line">    Access access;</span><br><span class="line">    access.<span class="built_in">AddFlag</span>(Access::Read);       <span class="comment">// Anyone can read.</span></span><br><span class="line">    <span class="keyword">if</span> (role &gt;= UserRole.Reader) &#123;      <span class="comment">// Bug!!!</span></span><br><span class="line">        access.<span class="built_in">AddFlag</span>(Access::Write);  <span class="comment">// Only writers can write.</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> access;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The bug in this code is so obvious, but the following test with 100% code coverage cannot find it!</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Assert::<span class="built_in">AreEqual</span>(Access::Read | Access::Write, <span class="built_in">GetUserAccess</span>(UserRole.Writer));</span><br></pre></td></tr></table></figure>
+<p>So only pursuing code coverage is no different from putting the cart before the horse. Then, what should we really go after? The answer always goes back to what our program really want to do, in other words - the requirements. The requirement can be as small as the purpose of a single class or as large as the customer scenario. The tests are written to ensure that our requirements are implemented correctly and do not regress. And this is called <strong>requirement coverage</strong>. Of course, it is hard to achieve high requirements coverage, because it requires us to have an good understanding of both our code and product to foresee what needs to be covered.</p>
+<p>Besides foresight, hindsight is the equally important - <strong>defect coverage</strong>. Mistakes what were made before, we should add tests to ensure that the same mistakes will never happen again.</p>
+<p>These two types of coverage are what we should really go after.</p>
+<h3 id="Create-good-scaffolding">1.4. Create good scaffolding</h3>
+<p>Some tests are hard to write directly. For example, although microservices are usually small enough to be easily covered by service tests, building them are still not easy. This is where we can help by building a test framework or utility, i.e. scaffolding. Just like the scaffolding in real life, it helps us to create an (easy) way to do what we want to do (test what we want to test).</p>
+<p>In this example of testing microservices, we can use mock to simulate the communication layer of that service and provide generic mocks for upstream and downstream services. With this, testing our services will be much simpler. We can just simulate the requests via the mock upstream service and check if the state in our service and requests send to downstream serviceas are all looks good.</p>
+<p>Scaffolding is also frequently used in large regression tests, integration tests and end-to-end tests. These tests usually require a certain environment to be built before testing, such as creating all the services and then simulating the customer requests and verifying the whole system. These works are usually very tedious. And having a unified and easy-to-use scaffolding can make the whole team more efficient.</p>
+<p>If you are planning to creating a scaffolding, please <strong>treat it as a product</strong>! And here our customer are our internal developers. This means that we need to understand the requirements before implementation, and we need to collect user feedback to help us improve and iterate from time to time. Here are some principles on how to create good scaffolding. Hope they help:</p>
+<p><strong>Principle #1</strong>: The cost of using scaffolding must be lower than the cost of implementing our main logic for testing.</p>
+<ul>
+<li>Scaffolding is used to help us simplify testing.</li>
+<li>If, after using scaffolding, we still see majority of the testing code is for building test environment, this scarffolding is definitely a failure.</li>
+</ul>
+<p><strong>Principle #2</strong>: A scaffolding is a framework. It means it has responsibility to not only help simplify testing for everyone, but also help people avoid making mistakes.</p>
+<ul>
+<li>A good framework is a great helper as well as a constraint. The creator of any framework must be forward-thinking and help (or even force) everyone use the right approach to do things.</li>
+<li>For example, if we use any actor model framework, it will be difficult to get data directly from one actor to another actor. Instead, we will have to send messages. This might sound annoying, but it’s also one of the cornerstones of actor model that makes people hard to make mistakes. (Extended reading: <a target="_blank" rel="noopener" href="https://youtu.be/PAAkCSZUG1c">Go Proverbs: Don’t communicate by sharing memory, share memory by communicating.</a>)</li>
+</ul>
+<hr>
+<h2 id="Metadata-based-testing">2. Metadata-based testing</h2>
+<blockquote>
+<p>“Put Abstractions in Code, Details in Metadata” - Andy Hunt, from “The Pragmatic Programmer: Your Journey to Mastery”</p>
+</blockquote>
+<p>In the <a href="/posts/pragmatic-testing-part-2#Make-behavior-changes-obvious">“Make behavior changes obvious”</a> section above, we encountered a problem: the more tests we create, the harder they are to maintain. This ended up discouraging us from writing tests. This is where metadata-based testing can really help.</p>
+<h3 id="Extract-metadata">2.1. Extract metadata</h3>
+<p>To help us simplify our tests, I recommend applying the idea of <a target="_blank" rel="noopener" href="https://www.artima.com/intv/metadata.html">separating application and metadata</a> when writing tests: Abstract the tests as much as possible into a unified scaffolding, then extract the details as metadata and use <a target="_blank" rel="noopener" href="http://catb.org/~esr/writings/taoup/html/textualitychapter.html">textuality storage</a>. In this way, if we need to write a new test case, we only need to add a new set of test metadata, the core testing logic doesn’t need to be changed at all! And even better - the textualized metadata can be easily managed by any source control, and all the behavior changes can be revealed at a glance by simply checking the diff.</p>
+<p>For example, the tedious code above can be simplified as follows:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">TEST_METHOD</span>(MyService_WhenReceivingValidRequest_DownstreamServicesShouldBeProgrammed)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">RunMyServiceStateHandlingTest</span>(<span class="string">L&quot;MyServiceTests\\ValidRequest-Input.json&quot;</span>, <span class="string">L&quot;MyServiceTests\\ValidRequest-ExpectedStatesAfterUpdate.json&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">StatesToTest</span></span><br><span class="line">&#123;</span><br><span class="line">    ServiceInternalState ServiceInternalState;</span><br><span class="line">    ServiceDownstreamStates StatesToDownstreamServices;</span><br><span class="line">    MyServiceTrackedStats TrackedStats;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunMyServiceStateHandlingTest</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; inputFilePath, _In_ <span class="type">const</span> std::wstring&amp; expectedStatesAfterUpdateFilePath)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::shared_ptr&lt;MyService&gt; service = <span class="built_in">CreateMyService</span>();</span><br><span class="line"></span><br><span class="line">    MyServiceRequest mockRequest;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(inputFilePath, mockRequest);</span><br><span class="line">    service-&gt;<span class="built_in">SendRequestSync</span>(mockRequest);</span><br><span class="line"></span><br><span class="line">    StatesToTest actualStatesAfterUpdate;</span><br><span class="line">    actionStatesAfterUpdate.ServiceInternalState = service-&gt;<span class="built_in">GetInternalState</span>();</span><br><span class="line">    actionStatesAfterUpdate.StatesToDownstreamServices = service-&gt;<span class="built_in">GetStatesToDownStreamServices</span>();</span><br><span class="line">    actualStatesAfterUpdate.TrackedStats = service-&gt;<span class="built_in">GetStatsTracker</span>()-&gt;<span class="built_in">GetTrackedStats</span>();</span><br><span class="line"></span><br><span class="line">    StatesToTest expectedStatesAfterUpdate;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedStatesAfterUpdateFilePath, expectedStatesAfterUpdate);</span><br><span class="line">    UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>After this change, all the details are extracted into metadata and saved in a json file. (If you love yaml like me, you could use yaml or other formats as well. But please remember - the data must be in a human-readable form.)</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;ServiceInternalState&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Foo&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Bar&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;ServiceDownstreamStates&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;MyDownstreamService1&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Foo&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;MyDownstreamService2&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Bar&quot;</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;TrackedStats&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;RequestCount&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Service1RequestSent&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Service2RequestSent&quot;</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>This not only makes the code shorter and better to read, also makes adding tests extremely easy. And if we made some behavior changes to our service, the test code doesn’t need to be changed at all!</p>
+<h3 id="Baseline-generation">2.2. Baseline generation</h3>
+<p>Here, you may wonder, the workload is not really reduced at all, but just moved to changing the metadata file. So, what is the difference? Don’t worry, because of this small change, a sea change is about to begin!</p>
+<p>So, let’s look at our metadata again. Do we really need to change it ourselves? No at all! To compare the states, we have to fetch the actual states as well as the expected states. So if we save the actual states as expected states, isn’t this the metadata we want for future, i.e. a new baseline? So, we only need to make a very small change to make it work:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">RunMyServiceStateHandlingTest</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; inputFilePath, _In_ <span class="type">const</span> std::wstring&amp; expectedStatesAfterUpdateFilePath)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="comment">// Replacing UnitTestUtils::AssertEquality(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span></span><br><span class="line">    UnitTestUtils::<span class="built_in">GenerateBaselineOrAssertEquality</span>(expectedStatesAfterUpdateFilePath, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UnitTestUtils::GenerateBaselineOrAssertEquality</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; expectedDataFilePath, _In_ <span class="type">const</span> T&amp; actualData)</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (UnitTestUtils::<span class="built_in">IsBaselineGenerationEnabled</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        JsonConverter::<span class="built_in">ToJsonFile</span>(expectedDataFilePath, actualData);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    T expectedData;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedDataFilePath, expectedData);</span><br><span class="line">    UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>There you go! With only a few lines of code change, now we have the ability of baseline generation. After we change the behavior of the service, we just need to turn on the switch for baseline generation and run all the tests again, all the metadata will be updated without changing a single line of testing code.</p>
+<h3 id="Generating-reference-data-for-test-failures">2.3. Generating reference data for test failures</h3>
+<p>That’s not all. Another benefit this brings is that debugging becomes unbelievably easy! I don’t know if you’ve ever had the experience of debugging a test failure caused by two insanely complex objects (e.g. long/nested lists, structs/classses as follows) … So what failed the check? what else are different in the list besides the one fails the check? Who am I? Where am I? What am I doing here?</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Assert::<span class="built_in">AreEqual</span>(longListWithDeeplyNestedStructs1, longListWithDeeplyNestedStructs2);</span><br></pre></td></tr></table></figure>
+<p>And none of these issues are problems for metadata testing, because when test fails, we can generate reference data as well!</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> <span class="title class_">T</span>&gt;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UnitTestUtils::GenerateBaselineOrAssertEquality</span><span class="params">(_In_ <span class="type">const</span> std::wstring&amp; expectedDataFilePath, _In_ <span class="type">const</span> T&amp; actualData)</span></span>;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (UnitTestUtils::<span class="built_in">IsBaselineGenerationEnabled</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        JsonConverter::<span class="built_in">ToJsonFile</span>(expectedDataFilePath, actualData);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    T expectedData;</span><br><span class="line">    JsonConverter::<span class="built_in">FromJsonFile</span>(expectedDataFilePath, expectedData);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        UnitTestUtils::<span class="built_in">AssertEquality</span>(expectedStatesAfterUpdate, actualStatesAfterUpdate);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">catch</span> (...)</span><br><span class="line">    &#123;</span><br><span class="line">        UnitTestUtils::<span class="built_in">GenerateActualDataFileWhenTestFailed</span>(actualData, expectedDataFilePath);</span><br><span class="line">        <span class="keyword">throw</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>After this small change, when the test fails, we will get the reference data in our log folder. And we can simply diff it against our baseline to see exactly what is changed. This will not just tell us the first failure, but gives us a full picture of the state change! It might be an ordering change, or some changes with a very obvious pattern. Knowing the full picture can greatly help us to figure out what might go wrong exactly.</p>
+<p>Maybe you are wondering, can’t we always generate the baseline and check diff for local development? For local develop, this is indeed possible, but sometimes some errors only occur on our build servers, which is when the reference data becomes quite useful. It greatly increases the observability of test failures.</p>
+<h3 id="Good-enough-More-to-come">2.4. Good enough? More to come!</h3>
+<p>I started experimenting this test approach since a few years ago and our team is currently using it. It has been proved to be very effective in reducing the development and maintenance costs of the tests. Hopefully, by this point, you will also start to get interested in metadata-based testing and willing to give it a try. However, its power doesn’t stop there. But this post starts to become too long again, we’ll stop here for now. In the next (and supposedly final) post, we’ll discuss the advanced use of metadata-based testing and demonstrate how it can be used to better help us in our daily development.</p>
+<hr>
+<h2 id="“Fake”-tests">3. “Fake” tests</h2>
+<p>When writing tests, we have to be especially careful about several types of tests below. Even if they existed, they wouldn’t help us at all. In the best case, they will serve as placebo. But most of time, these tests are really harmful to our daily development.</p>
+<h3 id="Flaky-tests">3.1. Flaky tests</h3>
+<p>First and the worst, flaky tests. We mentioned it in <a href="/posts/pragmatic-testing-part-1#Avoid-unstable-code">“Avoid unstable code”</a> in the previous post. For this kind of test, we should disable it as soon as possible and treat it as a high priority development task. As long as the test is not fixed, development of the new features must stop. The reason is simple - if test cannot even pass, how do we know that the issue won’t cause any problems for our customers?</p>
+<p>The way to find this problem is quite simple and brutal, because the only way is to run the tests multiple times. So besides hearing multiple developers all complaining, we could either look at the test history (which will be mentioned in the next post) or just trigger a test stability test every so often and run each test many times to find the unstable ones.</p>
+<p>I was once asked to fix such a test. Someone came to me and say: “This test had about a 20% chance of failing a week ago, but this week it feels like it went up to 30%, can you see what’s going on?”. To be honest, I have no idea how to fix this. First of all, I don’t know if it’s because of <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=hLkQhaFOT58&amp;ab_channel=BuzzFeedVideo">mercury retrograde</a> causing you having a bad week and just simply being unlucky. Then, I don’t know if the failure I’m hitting is from the 20% that is “ignorable” and already exists, or the 10% that we need to fix? So, in the end, here is what I did:</p>
+<ol>
+<li>Disable this test completely, as whoever encounters its failure will just keep retry anyway. It is a total waste of our build and test resources.</li>
+<li>Read this test and try to fully understand what it is actually trying to test.</li>
+<li>Create a new test which can steadily reproduce the failure.</li>
+<li>Fix the failure from this new test and commit it, then repeat steps 3-4 until all the problems are fixed.</li>
+</ol>
+<p>Finally, since the original test was written in a wrong way, I created a new test to test the scenario. After submitting it, I deleted the original test from our code base.</p>
+<h3 id="Slow-tests">3.2. Slow tests</h3>
+<p>Tests are supposed to help us find problems early, which means we should test as early and as often as possible. But if the tests are slow, we won’t be able to do this. And ever worse, over time no one will run these tests anymore. Like the tests, which we mentioned <a href="/posts/pragmatic-testing-part-1#Increase-testable-surface-high-cohesion-low-coupling">in the previous post</a> and blindly sleep for 30 seconds everywhere, no one runs it in our project. When any test failed, people just simply retry or even comment them out! … So please do not ignore the performance of tests.</p>
+<p>Of course, we should not pursue the speed of testing blindly (<a target="_blank" rel="noopener" href="http://www.catb.org/esr/writings/taoup/html/ch01s06.html">TAOUP: Rule of Economy</a>), but we will have different expectations for the speed of different types of tests. For example, large integration tests or end-to-end tests may take several hours to run, but we might only run such tests once a day for measuring the quality of our daily build. So, even if it takes an hour, it doesn’t matter that much. However, it may not be ideal for such tests to take several days. For example, if you need a create a hotfix release to fix a urgent online issue, but after the build is done, the tests need three days to run to tell us whether the release is good or bad. By that time, I believe the customer will probably go crazy when hearing this.</p>
+<p>An exception here is performance test. Performance test usually requires us to repeatly run a scenario many times, so it’s natural that they take time. But again, this leads us to the same problem, they won’t be run as ofthen as other tests. So, to ensure that other regular tests won’t be impacted, we can isolate it out by putting they into a separate test class or test module.</p>
+<h3 id="Shallow-Probes">3.3. Shallow Probes</h3>
+<p>Probe is very helpful to building high availablity services. It provides to ability to check if an service is healthy or not. And if something goes wrong, it can help automatically triggers failover, fixes, rollback, or in the worse case - alerts. This is critical to get things automated, otherwise every service issue must be manually checked and fixed. And in large scale services, errors will happen. Without automation, our work will be extremely ineffiecient.</p>
+<p>Many service governance frameworks provide probe support, for example, <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes">kubernetes liveness, readiness, startup probe</a>. These probes provide convenient configuration and support for a variety of implementations, such as doing a tcp connect, or http request. These probes are intended to provide a convenient and uniform mechanism to check the health of a service, but this also leads to a very common problem: <strong>the things checked in the probe are way too simple!</strong></p>
+<p>For example, a service is considered healthy as long as it is “started” successfully, e.g. process is running or certain port is open or certain core component is initialized. However, it is usually not enough for any service to properly serve any requests, which hides and real problems and gives us an impression that everything works fine, but actually not. And this brings up the real question: <strong>How healthy does a service have to be to be considered healthy?</strong> This is also the key ensuring the probe is implemented correctly.</p>
+<p>But if we think about this question a bit carefully, we will quickly discover a very scary fact: <strong>A service has to be completely problem-free to be considered healthy!</strong> This means everything we need has to be correctly loaded, and not a single piece of customer data can go wrong (and the list goes on…)! Because only then, we can say the service should be able to correctly serve the requests now. This also means that the probe should check if everything of the service are running in the right state. I call this type of probe “Deep Probe”.</p>
+<p>However, Deep probe also causes another problem: it takes too long to execute for a single probe request, which leads to timeout failures. So, the typical ways to implement deep probes are usually different from the regular probes:</p>
+<ul>
+<li><strong>Timers and health reporting</strong>: The idea is to move the deep probe logic out of the probe request handling into timers. In some service governance frameworks, service health checks is not using a pull model (timed probes), but a push model (health reporting), such as <a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-health-introduction#health-reporting">Service Fabric</a>. And when a problem is found, we can either report an unhealthy event or stop the heartbeat of the healthy event. And when using pull model, we can make our probe endpoint return failure when things goes wrong.</li>
+<li><strong>Dedicated deep probe service</strong>: If the amount of data to be tested is too large, we can also create a dedicated deep probe service. The deep probe service can talk to other services and read in relevant information, then run tests and report errors. This makes it very easy to limit the overall resource usage and avoid impacting our key services. Of course, this also requires our services to have a good and unified service discovery and state discovery mechanism to support these operations.</li>
+</ul>
+<p>So, depends on how our services are implemented, we need to choose the right way to implement the deep probe. For example, sometimes it might not be a good idea to put deep probe in kubernetes readiness probe, as we might not want to the traffic to be cut for that partition. And creating a dedicated deep-probe service might be a better idea.</p>
+<hr>
+<h2 id="Let’s-take-another-break">4. Let’s take another break</h2>
+<p>Well, this post is a bit long again, so let’s end here and call it part 2 and summarize everything we mentioned here again:</p>
+<ol>
+<li>First, we discussed how to write good tests:
+<ol>
+<li>Choosing a reasonable way test our scenarios.</li>
+<li>Giving reasonable hints about test failures, which include clarify test scenario by using assertive test names, make error messages actionable, and make behavior changes as obvious as possible.</li>
+<li>Pursuing requirements coverage and defect coverage, rather than simple code coverage.</li>
+<li>Build professional scaffolding to help us simplify the testing workload.</li>
+</ol>
+</li>
+<li>To achieve the observability in behavior changes, maintaining tests becomes extremely expensive, so we introduced metadata-based testing and demonstrate how it helps greatly reduce the development and maintenance cost of test, improves even more on the observability of test failures, and improve the experience of debugging test failures.</li>
+<li>Finally, we discuss several types of “fake” tests: flaky tests, slow tests and shallow probes. None of them helps but only being harmful to our daily development. And we also discussed the deep probe and how to implement it, to solve the shallow probe problem.</li>
+</ol>
+<p>In the next post, let’s move on to discuss more about metadata-based testing and other test related topics.</p>
+<hr>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/pragmatic-testing-part-2/">Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/pragmatic-testing-part-1/">Pragmatic testing (P1: Problems, principles and test-friendly code)</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/pragmatic-testing-part-2/" target="_blank">Pragmatic testing (P2: Good tests, Data-oriented testing, Fake tests)</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Testing/" rel="tag"># Testing</a>
+              <a href="/tags/Coding/" rel="tag"># Coding</a>
+              <a href="/tags/Software-Engineering/" rel="tag"># Software Engineering</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/pragmatic-testing-part-1/" rel="prev" title="Pragmatic testing (P1: Problems, principles and test-friendly code)">
+                  <i class="fa fa-chevron-left"></i> Pragmatic testing (P1: Problems, principles and test-friendly code)
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/reading-time-rework/" rel="next" title="《重来：更为简单有效的商业思维》（Rework）读书笔记">
+                  《重来：更为简单有效的商业思维》（Rework）读书笔记 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

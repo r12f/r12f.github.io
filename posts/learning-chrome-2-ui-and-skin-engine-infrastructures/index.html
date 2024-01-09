@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Chrome的UI是很奇妙的，因为看起来能很好的跨平台，而且可以很好的兼容各个平台的特性，比如在Mac下最小化和关闭按钮在左侧，还兼容全屏的特性，在Linux上，也能加载GTK的外框，外加现在Chrome在推的Aura，更是直接接管了桌面合成器。。。这一切让人不得不想去弄清楚Chrome到底是怎么来实现这么强大的UI呢？有一句话我非常喜欢：“源码面前，了无秘密”，读了几天的源代码，也总结些东西，以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇">
+<meta property="og:url" content="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="Chrome的UI是很奇妙的，因为看起来能很好的跨平台，而且可以很好的兼容各个平台的特性，比如在Mac下最小化和关闭按钮在左侧，还兼容全屏的特性，在Linux上，也能加载GTK的外框，外加现在Chrome在推的Aura，更是直接接管了桌面合成器。。。这一切让人不得不想去弄清楚Chrome到底是怎么来实现这么强大的UI呢？有一句话我非常喜欢：“源码面前，了无秘密”，读了几天的源代码，也总结些东西，以">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/NativeWidget.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/View.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Views.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Canvas.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/NativeTheme.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Layout.png">
+<meta property="article:published_time" content="2012-02-29T21:53:52.000Z">
+<meta property="article:modified_time" content="2012-03-01T05:53:52.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="chrome">
+<meta property="article:tag" content="DirectUI">
+<meta property="article:tag" content="ui">
+<meta property="article:tag" content="皮肤引擎">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/NativeWidget.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/","path":"posts/learning-chrome-2-ui-and-skin-engine-infrastructures/","title":"Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-text">1. 基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%BA%93%EF%BC%9Abase"><span class="nav-text">2. 基础库：base</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AA%97%E5%8F%A3%E5%B0%81%E8%A3%85%EF%BC%9AWidget"><span class="nav-text">3. 窗口封装：Widget</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%95%8C%E9%9D%A2%E5%85%83%E7%B4%A0%EF%BC%9AView"><span class="nav-text">4. 界面元素：View</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Windows%E5%8E%9F%E7%94%9F%E7%AA%97%E5%8F%A3%E7%9A%84%E7%89%B9%E5%BE%81"><span class="nav-text">4.1. Windows原生窗口的特征</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Chrome%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-text">4.2. Chrome的实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%98%E5%88%B6%E5%B0%81%E8%A3%85%EF%BC%9Agfx"><span class="nav-text">5. 绘制封装：gfx</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%83%E5%B1%80%E7%AD%96%E7%95%A5%EF%BC%9ALayoutManager"><span class="nav-text">6. 布局策略：LayoutManager</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%84%A6%E7%82%B9%E7%AE%A1%E7%90%86%EF%BC%9AFocusManager"><span class="nav-text">7. 焦点管理：FocusManager</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%84%A6%E7%82%B9%E9%97%AE%E9%A2%98%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-text">7.1. 焦点问题的类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%92%8C%E7%84%A6%E7%82%B9%E6%9C%89%E5%85%B3%E7%9A%84%E6%B6%88%E6%81%AF%E7%9A%84%E5%88%86%E5%8F%91"><span class="nav-text">7.2. 和焦点有关的消息的分发</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%84%A6%E7%82%B9%E5%8F%98%E5%8C%96%E7%9A%84%E5%A4%84%E7%90%86"><span class="nav-text">7.3. 焦点变化的处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%84%A6%E7%82%B9%E4%B8%8E%E6%8E%A7%E4%BB%B6%E6%98%BE%E7%A4%BA%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-text">7.4. 焦点与控件显示的关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Chrome%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E%E6%80%BB%E7%BB%93"><span class="nav-text">8. Chrome皮肤引擎总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2012-02-29 13:53:52 / Modified: 21:53:52" itemprop="dateCreated datePublished" datetime="2012-02-29T13:53:52-08:00">2012-02-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/" class="post-meta-item leancloud_visitors" data-flag-title="Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-chrome-2-ui-and-skin-engine-infrastructures/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>Chrome的UI是很奇妙的，因为看起来能很好的跨平台，而且可以很好的兼容各个平台的特性，比如在Mac下最小化和关闭按钮在左侧，还兼容全屏的特性，在Linux上，也能加载GTK的外框，外加现在Chrome在推的Aura，更是直接接管了桌面合成器。。。这一切让人不得不想去弄清楚Chrome到底是怎么来实现这么强大的UI呢？有一句话我非常喜欢：“源码面前，了无秘密”，读了几天的源代码，也总结些东西，以免后面忘记。</p>
+<p>对使用比较感兴趣的朋友也可以先看看<a href="http://r12f.com/post/Chrome%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-3-UI%E7%BB%84%E4%BB%B6%EF%BC%8C%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E-%E6%8E%A7%E4%BB%B6%E5%BA%93">如何使用这套皮肤引擎</a>，再来回头看实现。</p>
+<h2 id="基本概念">1. 基本概念</h2>
+<p>由于<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/chromeviews#Other_Approaches">Chrome不满Windows没有自带好用的皮肤引擎</a>，所以在一顿折腾之后，就自己设计了一套平台无关的皮肤引擎：Views。它是一个典型的DirectUI，关于它，Chromium的网站上有三篇文章对其的设计进行了阐述：<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/chromeviews">Views framework</a>，<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/views-windowing">views Windowing system</a>，<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/native-controls">NativeControls</a>。这三篇文章虽然是在09年的时候写的，但是后面的设计基本没有太大的改动，所以还是比较有用的，感兴趣的童鞋可以先看看。</p>
+<p>在Chrome皮肤引擎里面两个非常重要的概念：<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/widget.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Widget">Widget</a>和<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=View">View</a>。</p>
+<p>Widget对应着一个原生的窗口，而View对应着窗口里面的一个控件，如容器，Button，Tab等等。这样在Widget和View之上，Chrome搭建起了自己跨平台的皮肤引擎。</p>
+<p>关于跨平台，这里可能大家需要注意的一点是：这个皮肤引擎并不会封装的非常的完善，这里从Chromium的文档上对于Views framework的定义可以看出来：Our UI layout layer used on Windows/Chrome OS，能在Windows和ChromeOS上用用就可以了。而且Chrome团队也在文档中坦言，<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/chromeviews#Limitations_Issues">支持跨平台会遇到很多问题</a>，如不好处理特殊的窗口消息等等。</p>
+<span id="more"></span>
+<h2 id="基础库：base">2. 基础库：base</h2>
+<p>基本上每个程序库都有着自己的基础库，Chrome的皮肤引擎也不例外，在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/base</a>这个目录下放着的就是它的基础库。</p>
+<p>由于已经有了Chrome本身的基础库，和一些第三方的组件的支撑，这个基础库下面主要放的就只是一些和UI相关的基本定义和基础的功能实现了。</p>
+<p>以下是他所包含的目录和其对应的功能：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/accelerators/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">accelerators</a>：快捷键的处理。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/animation/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">animation</a>：动画效果的抽象，这里并不管绘制，只是负责计算动画效果的进度。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/clipboard/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">clipboard</a>：平台无关的剪贴板操作。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/cocoa/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">cocoa</a>：Mac上和<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Cocoa_(API)">cocoa</a>相关的代码。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/dragdrop/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">dragdrop</a>：和拖拽相关的代码，并在内部封装了平台无关的统一数据传输接口。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/glib/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">glib</a>：一些Linux上用的代码。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/gtk/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">gtk</a>：Linux上使用的和gtk相关的封装，简化事件处理什么的。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/ime/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">ime</a>：和输入法相关的代码。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/keycodes/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">keycodes</a>：平台无关的键盘的KeyCode的封装。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/l10n/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">l10n</a>：本地化工具函数。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/models/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">models</a>：定义了一些控件的数据接口。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/range/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">range</a>：用于表示范围的基本类型。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/strings/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">strings</a>：用于本地化的字符串表。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/touch/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">touch</a>：触屏相关的代码？</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/wayland/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">wayland</a>：Linux和<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Wayland_(display_server_protocol)">wayland</a>相关的代码。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/win/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">win</a>：Windows下才会用到的代码，里面包含Windows原生窗口的封装，IME的处理等等。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/base/x/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">x</a>：Linux下和<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/X_Window_System">X11</a>相关的代码。</li>
+</ul>
+<h2 id="窗口封装：Widget">3. 窗口封装：Widget</h2>
+<p>一个<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/widget.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Widget">Widget</a>对应着一个真实的窗口，在Windows下它就对应一个HWND。</p>
+<p>其相关的代码在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views/widget</a>目录下。</p>
+<p>为了将平台相关的窗口细节隐藏在Widget内部，Chromium为平台相关的窗口抽取出了一个接口：<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/native_widget_private.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeWidgetPrivate">NativeWidgetPrivate</a>，用以封装平台相关的代码，而在里面将平台相关的消息转化为平台无关的消息，再通过<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/native_widget_delegate.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeWidgetDelegate">NativeWidgetDelegate</a>回调出来。而NativeWidgetDelegate除了接收回调以外，他还有很多用以指定原生窗口风格的回调函数，供NativeWidgetPrivate创建时调用。</p>
+<p>这些处理过后的消息，就可以被统一来处理了。这里Widget本身作为NativeWidgetDelegate接收并处理这些消息或者分发给所有的控件，也就是马上要提到的View，由这些控件来触发真实的逻辑。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/NativeWidget.png" alt="chrome-native-widget"></p>
+<p>这里我们可以发现一件事情：那就是为什么没有看到mac平台下的NativeWidget呢？答案估计你也猜到了：那就是。。。。mac下面用cocoa重写了一套，貌似压根就没有实现widget。=.=|||</p>
+<h2 id="界面元素：View">4. 界面元素：View</h2>
+<p>Chrome的开发者说：Windows既然没有自带好用的界面库，那我们就自己搞！所以在对原生窗口抽象完毕之后，接下来的工作就是搭建自己的界面了。这个就是<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=View">View</a>。</p>
+<p>其相关的代码主要分布在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views</a>和<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views/window</a>目录下。</p>
+<h3 id="Windows原生窗口的特征">4.1. Windows原生窗口的特征</h3>
+<p>我们先回忆一下，在开发原生的Windows程序时的窗口结构：</p>
+<p>程序一般都有一个主窗口，主窗口下面有子窗口或者各种控件，他们形成一个树形的关系，这些我们在Spy++里面可以很好的观察到。</p>
+<p>另外一个窗口的内容实际上分成两个部分：</p>
+<ul>
+<li>非客户区：一个窗口只有一个非客户区，这部分包括标题栏，关闭按钮等等</li>
+<li>客户区：这部分包括很多内容，按钮，工具条等等我们用到的控件</li>
+</ul>
+<p>通过这些窗口和控件，我们搭建起了程序的主界面。</p>
+<p>我们应该能想到，chrome要干的也是这件事情，所以现在我们不用看chrome的源代码，也能将他里面的代码猜个大概。</p>
+<h3 id="Chrome的实现">4.2. Chrome的实现</h3>
+<p>现在让我们来看Chrome是如何实现的。</p>
+<p>为了方便理解各个不同的类的职责，我们首先来看看最后的层级关系，对照着这个关系来看代码。在Chrome的代码里面有一副很GEEK的字符图很形象的表示了这个关系：</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/View.png" alt="chrome-view-hierarchy"></p>
+<p>在Chrome里面，各种不同的View成树形的关系组织在一起，他们的根节点就是Widget，Widget接收到系统原生的消息，并通过<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/root_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=RootView">RootView</a>将消息分发给下层的View，这里Widget和RootView是一一对应的。</p>
+<p>下层的View主要分为三种：</p>
+<ul>
+<li>用于表示整个窗体非客户区的<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/client_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NonClientView">NonClientView</a>，负责NCHitTest和设置窗口边框大小。他也是其他两种View的父，原因很简单：他管着整个窗体的边框，所以其他的View必须是他的子。</li>
+<li>用于表示非客户区的内容的<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/non_client_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NonClientFrameView">NonClientFrameView</a>，负责绘制非客户区里面的元素，如标题栏，关闭按钮等等。</li>
+<li>用于表示客户区和其内容的<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/non_client_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=ClientView">ClientView</a>，负责生成各种窗口元素。</li>
+</ul>
+<p>另外Chromium还提供了几种不同的默认的非客户区方便编程：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/native_frame_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeFrameView">NativeFrameView</a>，用于生成默认的窗口。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/dialog_client_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=DialogClientView">DialogClientView</a>，用于生成对话框的窗口。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/custom_frame_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=CustomFrameView">CustomFrameView</a>，用于自绘窗口边框。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Views.png" alt="chrome-views"></li>
+</ul>
+<p>通过这样的一个关系，chrome将所有的界面元素都管理了起来。</p>
+<h2 id="绘制封装：gfx">5. 绘制封装：gfx</h2>
+<p>在封装好了界面元素之后，如何实现跨平台统一的绘制呢？这就是gfx要做的事情。</p>
+<p>其相关代码主要分布在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/gfx</a>目录下。</p>
+<p>gfx里面其实封装了不少和界面绘制相关的内容，其中最重要的就是Canvas。</p>
+<p>为了实现跨平台的界面绘制，Chrome定义了一个<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/canvas.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Canvas">Canvas</a>的接口，来进行绘制的操作。我们在View的接口中可以看到一个<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=View%3A%3APaint&amp;origq=View%3A%3APaint">View::Paint</a>的函数，这个函数就是主要来控制绘图的。我们拿Windows来举例，窗口绘制的回调逻辑主要分如下这么几步：</p>
+<ol>
+<li>在原生窗口收到了<a target="_blank" rel="noopener" href="http://msdn.microsoft.com/en-us/library/dd145213(v=vs.85).aspx">WM_PAINT</a>消息之后，NativeWidget会对其进行处理，将其转化为Chrome内部的事件，并利用系统原生的绘图方式生成Canvas，回调给Widget进行分发。</li>
+<li>Widget在<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=Widget%3A%3AOnNativeWidgetPaint&amp;origq=Widget%3A%3AOnNativeWidgetPaint">Widget::OnNativeWidgetPaint</a>中将消息分发给其对应的RootView，由其分发给自己和各个子View。</li>
+<li>每个View在自己的<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=View%3A%3AOnPaint&amp;origq=View%3A%3AOnPaint">View::OnPaint</a>函数中进行重绘。</li>
+</ol>
+<p>为了实现Canvas，Chrome使用<a target="_blank" rel="noopener" href="http://zh.wikipedia.org/wiki/Skia_Graphics_Library">Skia</a>作为其2D图形渲染库，来<a target="_blank" rel="noopener" href="http://www.chromium.org/developers/design-documents/graphics-and-skia">接管所有图形的绘制</a>。而绘制文字的部分，则在不同平台上使用其原生的Api来实现，如在Windows上，则使用Api <a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/canvas_skia_win.cc%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=DrawText">DrawText</a>进行绘制。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Canvas.png" alt="chrome-ui-canvas"></p>
+<p>另外在gfx里面还有一个很重要的类，叫做<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/native_theme.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeTheme">NativeTheme</a>，这个类中保存这当前系统的主题设置，甚至还可以用它来直接画系统默认的一些风格样式。比如：Windows窗口中右下角的表示窗口可以拖拽的小三角。在Windows下，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/gfx/native_theme_win.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeThemeWin">NativeThemeWin</a>优先会使用uxtheme.dll提供的Api进行风格绘图，如果没有这个dll，chrome会使用自定义的风格进行绘制。</p>
+<p><img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/NativeTheme.png" alt="chrome-native-theme"></p>
+<h2 id="布局策略：LayoutManager">6. 布局策略：LayoutManager</h2>
+<p>写过界面的人都知道，皮肤布局是一件很繁琐的事情，每个元素如何排布，可能都有其各自的策略，而且每个窗口所包含的元素也不尽相同，所以chrome中可以为每一个View创建了一个专门用于控制布局的<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/layout/layout_manager.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=LayoutManager">LayoutManager</a>。这其实是一个典型的<a target="_blank" rel="noopener" href="http://zh.wikipedia.org/zh-hk/%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F">策略模式</a>，将复杂且多变的布局封装起来。</p>
+<p>其相关代码主要分布在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/layout/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views/layout</a>目录下。</p>
+<p>在layout目录中，可以发现Chrome还提供几种不同的布局策略：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/layout/fill_layout.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=FillLayout">FillLayout</a>，用于将第一个子View保持和当前View一样大的策略。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/layout/grid_layout.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=GridLayout">GridLayout</a>，将子View排布成表格状。</li>
+<li><a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/layout/box_layout.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=BoxLayout">BoxLayout</a>，排布成一个贴一个的格子。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2012-02-29-learning-chrome-2-ui-and-skin-engine-infrastructures/Layout.png" alt="chrome-ui-layout"></li>
+</ul>
+<p>现在我们可以猜到，RootView肯定使用的是FillLayout，从而让NonClientView永远保持和其本身一样大。</p>
+<p>当然一个View也可以没有LayoutManager ，这样除非你重载View的Layout函数，或者使用其他的方法来主动布局，不然里面的元素就不会布局了。</p>
+<h2 id="焦点管理：FocusManager">7. 焦点管理：FocusManager</h2>
+<p>一旦所有界面元素都自己来管理了，那么很明显，这些元素的焦点也就需要自己来管理了。关于焦点的相关代码主要分布在<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/focus/%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2">src/ui/views/focus</a>目录下。</p>
+<h3 id="焦点问题的类型">7.1. 焦点问题的类型</h3>
+<p>在看焦点管理的时候，我们需要先意识到一个问题，焦点虽然说起来简单，谁接收鼠标事件谁就是窗口的焦点，但是对于Chrome这种DirectUI的皮肤引擎来说，焦点分为两种类型：</p>
+<ul>
+<li>原生窗口的焦点：原生的窗口在被点击的时候会被赋予焦点，皮肤引擎必须能够很好的响应这些事件。</li>
+<li>窗体中元素的焦点： 对于窗口中的所有元素，由于他们都不包含句柄，所以的焦点和键盘消息需要Chrome自己来实现转发。</li>
+</ul>
+<p>为了实现上面两种类型的焦点，Chrome建立了一个专门用于管理焦点的类：<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/focus/focus_manager.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=FocusManager">FocusManager</a>。Chrome会为每一个<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/widget.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=Widget">Widget</a>建立一个对应的FocusManager。利用他来处理这两种焦点问题。</p>
+<h3 id="和焦点有关的消息的分发">7.2. 和焦点有关的消息的分发</h3>
+<p>和焦点有关的消息分发流程主要包含这么几步：</p>
+<ol>
+<li>当一个原生窗口在有焦点的状态时，系统会将发生的键盘和部分鼠标输入交给这个窗口来处理。</li>
+<li>在窗口收到消息时，<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/widget/native_widget.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=NativeWidget">NativeWidget</a>会首先处理这些消息并将其转化为<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/events/event.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=KeyEvent">KeyEvent</a>，交给Widget来处理。（<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=NativeWidgetWin%3A%3AOnKeyEvent&amp;origq=NativeWidgetWin%3A%3AOnKeyEvent">NativeWidgetWin::OnKeyEvent</a>）</li>
+<li>Widget将此消息转交给他所对应的RootView由他来分发消息。（<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=Widget%3A%3AOnKeyEvent&amp;origq=Widget%3A%3AOnKeyEvent">Widget::OnKeyEvent</a>）</li>
+<li>RootView从当前Widget所对应的FocusManager中获取出当前的焦点窗口分发消息。（<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=RootView%3A%3AOnKeyEvent&amp;origq=RootView%3A%3AOnKeyEvent">RootView::OnKeyEvent</a>）</li>
+<li>焦点窗口处理消息。</li>
+</ol>
+<h3 id="焦点变化的处理">7.3. 焦点变化的处理</h3>
+<p>在Widget接收到原生窗口的焦点变化的时候（<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=Widget%3A%3AOnNativeFocus&amp;origq=Widget%3A%3AOnNativeFocus">Widget::OnNativeFocus</a>），他会回调WidgetFocusManager来广播焦点变化的事件，但是从皮肤引擎的代码里面来看，默认的，没有类会关心这个事件。</p>
+<p>对于窗体元素的焦点，如果某个元素获取了焦点，那么这个元素对应的View会调用当前View所在Widget的<a target="_blank" rel="noopener" href="http://code.google.com/p/chromium/source/search?q=FocusManager%3A%3ASetFocusedView&amp;origq=FocusManager%3A%3ASetFocusedView">FocusManager::SetFocusedView</a>方法，将自己设为焦点。此时FocusManager也会将这个消息广播给其他关心焦点变化的事件的监听者。但是在View里面只有<a target="_blank" rel="noopener" href="http://code.google.com/codesearch#OAMlx_jo-ck/%E2%80%9Dsrc/ui/views/window/dialog_client_view.h%E2%80%9D&amp;exact_package=chromium&amp;ct=rc&amp;cd=2&amp;q=DialogClientView">DialogClientView</a>看上去比较关心这个事件。</p>
+<h3 id="焦点与控件显示的关系">7.4. 焦点与控件显示的关系</h3>
+<p>我们发现，这些焦点变化的消息居然没有人关心？那么焦点是怎么影响控件显示的呢？</p>
+<p>这里会涉及到两个不同的，但是容易混淆的概念：<a target="_blank" rel="noopener" href="http://msdn.microsoft.com/en-us/library/aa969768.aspx">Focus</a>和<a target="_blank" rel="noopener" href="http://msdn.microsoft.com/en-us/library/windows/desktop/ms632599(v=vs.85).aspx#active">Active</a>。这里有一个较为简单的区分这两个概念的方法，当然不一定完全对：</p>
+<ul>
+<li>Focus：可以是非顶层窗口，主要影响键盘鼠标等消息的接收。</li>
+<li>Activate：必须是顶层窗口，影响窗口绘制。</li>
+</ul>
+<p>当我们点击非Chrome窗口导致Chrome窗体发生颜色变化，这个主要是由于Active消息对应的处理。</p>
+<p>当地址栏在可以输入时会出现一个边框，这个是由Focus来控制的。这个控制Chrome其实实现很简单，<strong>通过判断FocusManager中的FocusedView是不是自己来进行不同种类的绘图。</strong></p>
+<h2 id="Chrome皮肤引擎总结">8. Chrome皮肤引擎总结</h2>
+<p>到此为止Chrome皮肤引擎的基础设施算是基本写完了。总的来说，这一套皮肤引擎算是一个比较容易理解的跨平台的DirectUI设计了。</p>
+<p>在这一整套基础设施上，Chrome开始搭建起自己的一套<a href="http://r12f.com/post/Chrome%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0-3-UI%E7%BB%84%E4%BB%B6%EF%BC%8C%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E-%E6%8E%A7%E4%BB%B6%E5%BA%93">控件库</a>，再在这些内容的基础上搭建起自己的主界面。这些后续再继续写。</p>
+<div class="post-series"><div class="post-series-title">同系列文章：</div><ul class="post-series-list"><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-3-ui-and-skin-engine-controls/">Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/">Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇</a></li><li class="post-series-list-item"><a href="http://r12f.com/posts/learning-chrome-1-threading-model-and-messageloop/">Chrome学习笔记（一）：线程模型，消息循环</a></li></ul></div>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-chrome-2-ui-and-skin-engine-infrastructures/" target="_blank">Chrome学习笔记（二）：UI组件，皮肤引擎 —— 基础设施篇</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/chrome/" rel="tag"># chrome</a>
+              <a href="/tags/DirectUI/" rel="tag"># DirectUI</a>
+              <a href="/tags/ui/" rel="tag"># ui</a>
+              <a href="/tags/%E7%9A%AE%E8%82%A4%E5%BC%95%E6%93%8E/" rel="tag"># 皮肤引擎</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/fix-chromium-compile-error-dom-css-related-files-not-found/" rel="prev" title="解决Chromium编译出现无法找到DOM和CSS相关文件的问题">
+                  <i class="fa fa-chevron-left"></i> 解决Chromium编译出现无法找到DOM和CSS相关文件的问题
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/learning-chrome-3-ui-and-skin-engine-controls/" rel="next" title="Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库">
+                  Chrome学习笔记（三）：UI组件，皮肤引擎 —— 控件库 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>

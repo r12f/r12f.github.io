@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha256-HtsXJanqjKTc8vVQjO4YMhiqFoXkfBsjBWcX91T1jr8=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"r12f.com","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.16.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"flat"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="最近突然对Go语言产生了兴趣，主要是因为在使用python的时候遇到了一些不爽的问题，然后发现了Go。Go是Google出的一个动态语言，语法和C++接近，性能也非常的好，而且还支持编译成exe发布，并且不依赖任何虚拟机（其实是打包在exe里面了），这种好语言怎么能够错过？所以便一时兴起，开始学习了起来。由于本人还处于异常小白的阶段，所以文章中可能不免有些错误，欢迎大家各种指正。 1. 安装Go">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go语言学习笔记：搭建Windows下的Go开发环境">
+<meta property="og:url" content="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/index.html">
+<meta property="og:site_name" content="Soul Orbit">
+<meta property="og:description" content="最近突然对Go语言产生了兴趣，主要是因为在使用python的时候遇到了一些不爽的问题，然后发现了Go。Go是Google出的一个动态语言，语法和C++接近，性能也非常的好，而且还支持编译成exe发布，并且不依赖任何虚拟机（其实是打包在exe里面了），这种好语言怎么能够错过？所以便一时兴起，开始学习了起来。由于本人还处于异常小白的阶段，所以文章中可能不免有些错误，欢迎大家各种指正。 1. 安装Go">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-env.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-run.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-build.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/hello-dependency.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/liteide.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/eclipse-install-goclipse.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/goclipse-set-gocode.png">
+<meta property="og:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/eclipse-goclipse.png">
+<meta property="article:published_time" content="2013-10-01T19:17:17.000Z">
+<meta property="article:modified_time" content="2013-10-02T02:17:17.000Z">
+<meta property="article:author" content="r12f">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="go">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-env.png">
+
+
+<link rel="canonical" href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/","path":"posts/learning-golang-1-building-dev-environment-on-windows/","title":"Go语言学习笔记：搭建Windows下的Go开发环境"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Go语言学习笔记：搭建Windows下的Go开发环境 | Soul Orbit</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-20527248-4"></script>
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"UA-20527248-4","only_pageview":false}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Soul Orbit" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Soul Orbit</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">I'll take a quiet life. A handshake of carbon monoxide.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>Sitemap</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Go"><span class="nav-text">1. 安装Go</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hello-Go"><span class="nav-text">2. Hello Go!</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IDE"><span class="nav-text">3. IDE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LiteIDE"><span class="nav-text">3.1. LiteIDE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Eclipse-GoClipse"><span class="nav-text">3.2. Eclipse + GoClipse</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#GoCode"><span class="nav-text">3.2.1. GoCode</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">r12f</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">72</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">102</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/r12f" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;r12f" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.youtube.com/channel/UCeWewreVD6kJo6KWFW_ekKg" title="YouTube → https:&#x2F;&#x2F;www.youtube.com&#x2F;channel&#x2F;UCeWewreVD6kJo6KWFW_ekKg" rel="noopener me" target="_blank"><i class="fab fa-youtube fa-fw"></i>YouTube</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/atom.xml" title="RSS → &#x2F;atom.xml" rel="noopener me"><i class="fa fa-rss fa-fw"></i>RSS</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-inner sidebar-blogroll">
+      <div class="links-of-blogroll animated">
+        <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+          Links
+        </div>
+        <ul class="links-of-blogroll-list">
+            <li class="links-of-blogroll-item">
+              <a href="https://www.qtmuniao.com/" title="https:&#x2F;&#x2F;www.qtmuniao.com&#x2F;" rel="noopener" target="_blank">青藤木鸟</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://muqix.github.io/" title="https:&#x2F;&#x2F;muqix.github.io&#x2F;" rel="noopener" target="_blank">民国文艺少女Muqi</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="http://wuhenqs.com/" title="http:&#x2F;&#x2F;wuhenqs.com&#x2F;" rel="noopener" target="_blank">无痕的碎碎念</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://victoryang00.cn/wordpress" title="https:&#x2F;&#x2F;victoryang00.cn&#x2F;wordpress" rel="noopener" target="_blank">victoryang</a>
+            </li>
+            <li class="links-of-blogroll-item">
+              <a href="https://captdam.com/" title="https:&#x2F;&#x2F;captdam.com&#x2F;" rel="noopener" target="_blank">小明</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="r12f">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Go语言学习笔记：搭建Windows下的Go开发环境 | Soul Orbit">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go语言学习笔记：搭建Windows下的Go开发环境
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
+
+      <time title="Created: 2013-10-01 12:17:17 / Modified: 19:17:17" itemprop="dateCreated datePublished" datetime="2013-10-01T12:17:17-07:00">2013-10-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/01-Binary-Life/" itemprop="url" rel="index"><span itemprop="name">01 Binary Life</span></a>
+        </span>
+    </span>
+
+  
+    <span id="/posts/learning-golang-1-building-dev-environment-on-windows/" class="post-meta-item leancloud_visitors" data-flag-title="Go语言学习笔记：搭建Windows下的Go开发环境" title="Views">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">Views: </span>
+      <span class="leancloud-visitors-count"></span>
+    </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/posts/learning-golang-1-building-dev-environment-on-windows/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="posts/learning-golang-1-building-dev-environment-on-windows/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>最近突然对Go语言产生了兴趣，主要是因为在使用python的时候遇到了一些不爽的问题，然后发现了Go。Go是Google出的一个动态语言，<a target="_blank" rel="noopener" href="http://tour.golang.org/">语法和C++接近</a>，<a target="_blank" rel="noopener" href="http://jaxbot.me/articles/benchmarks_nodejs_vs_go_vs_php_3_14_2013">性能也非常的好</a>，而且还支持编译成exe发布，并且不依赖任何虚拟机（其实是打包在exe里面了），这种好语言怎么能够错过？所以便一时兴起，开始学习了起来。由于本人还处于异常小白的阶段，所以文章中可能不免有些错误，欢迎大家各种指正。</p>
+<h2 id="安装Go">1. 安装Go</h2>
+<p>前往Go语言的官方网站：<a target="_blank" rel="noopener" href="http://golang.org/">http://golang.org/</a>，下载对应平台的安装包。如果是x86的系统可以就下载i386的，如果是x64的系统，那么就安装amd64的就可以了。另外Go语言在Windows下的的安装包有两种：msi和zip的。zip的是免安装的，解压在配置一些环境变量之后就可以使用，msi的则是安装包版本的，安装的时候会设置好对应的环境变量。为了方便，我就下了x64上的msi安装包：go1.1.2.windows-amd64.msi。下好安装包后，安装过程就很简单了，下一步到底就好了。 虽然msi会自动配置一些环境变量，但是本人在安装完之后还是遇到了部分环境变量丢失的情况，所以在安装完Go之后，我们最后还是检查一些所有的环境变量是否正常。主要的环境变量有以下几个：</p>
+<ul>
+<li>GOROOT：Go的安装目录</li>
+<li>GOPATH：用于存放Go语言Package的目录，这个目录不能在Go的安装目录中</li>
+<li>GOBIN：Go二进制文件存放目录，写成%GOROOT%\bin就好</li>
+<li>GOOS：操作系统</li>
+<li>GOARCH：指定系统环境，i386表示x86，amd64表示x64</li>
+<li>PATH：需要将%GOBIN%加在PATH变量的最后，方便在命令行下运行Go</li>
+<li>我们还可以使用go env来查看所有其他的环境变量的定义<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-env.png" alt="go-env"></li>
+</ul>
+<p>当环境变量都配置正常之后，Go就已经安装完毕了。现在打开命令行，运行go，大家应该就可以看到如下的提示了。</p>
+<span id="more"></span>
+<h2 id="Hello-Go">2. Hello Go!</h2>
+<p>现在就让我们一起来Hello World吧！</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;fmt&quot;</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(<span class="string">&quot;Hello, World!&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将上面的程序保存成hello.go，然后在命令行中执行：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go run hello.go</span><br></pre></td></tr></table></figure>
+<p>Tada！结果就出来了！<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-run.png" alt="go-run"></p>
+<p>而且Go语言还可以将go程序直接编译成exe，再发布出去，相比python更为方便（需要使用py2exe），只需要在命令行中运行：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build hello.go</span><br></pre></td></tr></table></figure>
+<p>就可以看到并执行编译好的exe了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/go-build.png" alt="go-build"></p>
+<p>另外，我们还可以看到，这个hello.exe居然有1.5M之多，这个应该是因为go把整个虚拟机都打包到了exe里面的缘故，从exe的依赖上来看，他对go已经完全没有依赖了，只有几个系统的dll了。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/hello-dependency.png" alt="hello-dependency"></p>
+<h2 id="IDE">3. IDE</h2>
+<p>关于IDE每个人的喜好都不同，你可以使用较为独立的开发环境LiteIDE，也可以是VS或者Eclipse，甚至是notepad++，当然更不用说vim和emacs了。在这里，介绍两种比较常见的IDE：LiteIDE和Eclipse。</p>
+<h3 id="LiteIDE">3.1. LiteIDE</h3>
+<p>LiteIDE算是集成的非常好Go IDE了，编译，调试，代码补全，功能可谓应有尽有。而且免费，开源，基于QT所以还跨平台。其安装异常简单，从官网（<a target="_blank" rel="noopener" href="https://code.google.com/p/liteide/">https://code.google.com/p/liteide/</a>）上下载对应平台的安装包，然后解压到指定目录即可。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/liteide.png" alt="liteide"></p>
+<h3 id="Eclipse-GoClipse">3.2. Eclipse + GoClipse</h3>
+<p>Eclipse是非常著名的IDE了，所以具体要怎么安装，我就不太多说了，简单介绍一下过程。</p>
+<ol>
+<li>在<a target="_blank" rel="noopener" href="http://java.com/">http://java.com/</a>上下载并装好最新的JRE</li>
+<li>从<a target="_blank" rel="noopener" href="http://www.eclipse.org/">http://www.eclipse.org/</a>上下载最新的Eclipse，解压即可</li>
+</ol>
+<p>刚下载下来的Eclipse是不支持Go的，为了让其支持Go语言，我们需要安装一个插件：GoClipse。</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://code.google.com/p/goclipse/">https://code.google.com/p/goclipse/</a></p>
+<p>安装过程十分简单，只需要在Eclipse中添加一个源：<a target="_blank" rel="noopener" href="http://goclipse.googlecode.com/svn/trunk/goclipse-update-site/">http://goclipse.googlecode.com/svn/trunk/goclipse-update-site/</a>，然后选中GoClipse，安装即可，如下图。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/eclipse-install-goclipse.png" alt="eclipse-install-goclipse"></p>
+<p>安装完之后，重启Eclipse，我们便可以使用Eclipse来编写Go语言的程序了。</p>
+<h4 id="GoCode">3.2.1. GoCode</h4>
+<p>使用GoClipse写代码的时候，我们会发现其没有代码补全，为了增加代码补全，我们需要安装gocode。LiteIDE就不需要了，因为其已经内置了gocode。</p>
+<p>GoCode是host在github上，使用go写的用来做go语言代码补全的工程，项目地址是：<a target="_blank" rel="noopener" href="https://github.com/nsf/gocode">https://github.com/nsf/gocode</a>，里面有非常详细的安装方法。由于go内置了和包管理器类似的工具，所以安装方式也就很简单了。</p>
+<ol>
+<li>安装git：由于安装过程中由于需要用到git，所以需要先安装msysgit或者cygwin，如果你觉得这样很麻烦，有一个更为简单的方法：安装github for windows：<a target="_blank" rel="noopener" href="http://windows.github.com/">http://windows.github.com/</a>。</li>
+<li>启动git shell，并运行：go get -u -ldflags -H=windowsgui <a target="_blank" rel="noopener" href="http://github.com/nsf/gocode%E3%80%82">github.com/nsf/gocode。</a></li>
+<li>现在到%GOBIN%目录下看一下，就会发现有gocode.exe了。</li>
+</ol>
+<p>接下来就需要配置一下Eclipse。打开Windows-&gt;Preferences，找到Go-&gt;Gocode标签，设置好gocode.exe的路径即可。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/goclipse-set-gocode.png" alt="goclipse-set-gocode"></p>
+<p>完成，现在好好写代码吧。<br>
+<img src="http://r12f-cdn.azureedge.net/r12f-assets/post_assets/2013-10-01-learning-golang-1-building-dev-environment-on-windows/eclipse-goclipse.png" alt="eclipse-goclipse"></p>
+<b>原创文章，转载请标明出处：</b><a href="http://r12f.com" target="_blank">Soul Orbit</a><br><b>本文链接地址：</b><a href="http://r12f.com/posts/learning-golang-1-building-dev-environment-on-windows/" target="_blank">Go语言学习笔记：搭建Windows下的Go开发环境</a>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/go/" rel="tag"># go</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/pe-file-parser-libpe-v0-1-preview/" rel="prev" title="PE文件解析库 – LibPE v0.1 Preview">
+                  <i class="fa fa-chevron-left"></i> PE文件解析库 – LibPE v0.1 Preview
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/introduction-to-wpa-1-why-it-is-slow/" rel="next" title="WPA入门（一） —— 到底为什么这么慢？">
+                  WPA入门（一） —— 到底为什么这么慢？ <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  <div class="comments" id="disqus_thread">
+    <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+  </div>
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2011 – 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">r12f</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js","integrity":"sha256-e0o3JYsdjqKajf9eOe22FhioYSz9WofRY4dLKo3F6do="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/wavedrom.min.js","integrity":"sha512-/ZL0uQxVV1wYyWlpO4klZ1a39eaBz4zESSamuBMaMsZ6le3YejJ07hmLlHoCTXrKz5eYtEuO5K1BcTo+lQpQJA=="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.2.0/skins/default.js","integrity":"sha512-GV5gOBpCHd3M5Af9Ooz+I9dQdwcDKPR2F8ulzCpoF4W6uwmtLTh/pT8Q1XupPmQJO+Kt88/DrIiK7PzR1YLvwQ=="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+
+
+  
+
+
+  <script class="next-config" data-name="leancloud_visitors" type="application/json">{"enable":true,"app_id":"aanH10fNtc25mqFK1gSRqjo9-gzGzoHsz","app_key":"4AhjDuBCXDyUgpY0Cvh4wEol","server_url":"https://aanh10fn.lc-cn-n1-shared.com","security":false}</script>
+  <script src="/js/third-party/statistics/lean-analytics.js"></script>
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"ams","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<script class="next-config" data-name="disqus" type="application/json">{"enable":true,"shortname":"r12f-blog","count":true,"i18n":{"disqus":"disqus"}}</script>
+<script src="/js/third-party/comments/disqus.js"></script>
+
+</body>
+</html>
